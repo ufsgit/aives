@@ -1,0 +1,1045 @@
+@if(view == 'list') {
+<section class="border border-gray-300 shadow p-4 rounded-lg bg-white mt-4">
+
+  <!-- Search and Filters Section -->
+  <div class="p-4 bg-white border-b border-gray-200">
+    <div class="flex flex-col md:flex-row gap-4 items-center">
+      <!-- Search Input -->
+      <div class="relative flex-grow w-full md:w-1/2">
+            <input 
+              type="text" 
+              [(ngModel)]="searchTerm" 
+              (input)="onSearchChange()" 
+              placeholder="Search faculty by name or email" 
+              class="w-full pl-10 pr-4 h-[42px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300 text-gray-700"
+            >
+            <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+            </svg>
+          </div>
+
+      <!-- Add Faculty Button -->
+      <button *ngIf="isSave" (click)="Create_New()"
+        class="w-full md:w-auto bg-blue hover:bg-blue text-white font-semibold h-[42px] px-6 rounded-lg transition duration-300 ease-in-out transform hover:scale-105 flex items-center justify-center gap-2" style="background-color: blue !important; color: white !important;">
+        <i class="material-symbols-outlined">add_circle</i>
+        Add Staff
+      </button>
+    </div>
+
+  </div>
+
+  <!-- Faculty List -->
+  @for( item of user_Data; track $index) {
+  <div class="mt-4 border border-gray-300 p-4 rounded-lg relative">
+
+    <div class="flex gap-4 justify-between">
+      <div class="w-4/12">
+        <div class="flex items-center gap-6">
+          <span class="text-base leading-6">{{ item.First_Name }} {{item.Last_Name}}</span>
+          <span class="text-base leading-6 text-gray-500">{{ item.PhoneNumber || '' }}</span>
+        </div>
+        @if(item.User_Type_Id == 3 ){
+        <div class="flex  justify-between items-center">
+          <span class="col-span-2 xl:col-span-2 lg:col-span-4 font-medium textName">Course Name </span>
+          <span class="col-span-12 xl:col-span-3 text-base  leading-6">{{ item.Course_Name || '' }}</span>
+        </div>
+        }
+
+        @if(item.User_Type_Id == 2){
+        <div class="flex gap-2 mt-2">
+          @if(item['has_batch_wise'] && item['has_slot_wise']){
+          <span
+            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+            <span class="material-symbols-outlined text-sm mr-1">groups</span>
+            Batch & One-on-One
+          </span>
+          } @else if(item['has_batch_wise']){
+          <span
+            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blueGray-500 text-white">
+            <span class="material-symbols-outlined text-sm mr-1">groups</span>
+            Batch Classes
+          </span>
+          } @else if(item['has_slot_wise']){
+          <span
+            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            <span class="material-symbols-outlined text-sm mr-1">person</span>
+            One-on-One
+          </span>
+          }
+        </div>
+        }
+      </div>
+      <div class="flex  flex-wrap gap-3 cursor-pointer items-center">
+
+        <button (click)="View_team(item.User_ID, item.First_Name, item.Last_Name)" title="view Team"
+          class="flex items-center px-4 py-2 h-10 text-[#0f766e] bg-[#ecfeff] rounded-md hover:bg-[#cffafe] transition-all duration-300 transform hover:scale-105">
+          <span class="material-symbols-outlined mr-2">groups</span>
+          <span class="font-medium">Team</span>
+        </button>
+
+        <button (click)="View_permissions(item.User_ID,item.User_Type_Id)" title="view Permissions"
+          class="flex items-center px-4 py-2   h-10  text-[#fefffe] bg-[#3f9b23] rounded-md hover:bg-[#dbeafe] transition-all duration-300 transform hover:scale-105">
+          <span class="material-symbols-outlined mr-2">view_list</span>
+          <span class="font-medium">View Permissions</span>
+        </button> 
+
+
+        <button (click)="View_courses(item.User_ID,item.User_Type_Id)" title="view Courses"
+          class="flex items-center px-4 py-2   h-10  text-[#1d4ed8] bg-[#eff6ff] rounded-md hover:bg-[#dbeafe] transition-all duration-300 transform hover:scale-105">
+          <span class="material-symbols-outlined mr-2">view_list</span>
+          <span class="font-medium">View Courses / Batch</span>
+        </button>
+        <!-- <button (click)="Get_Teacher_Students(item.User_ID)" title="view Students" class="flex items-center px-4 py-2   h-10  bg-green-50 text-green-700 rounded-md hover:bg-green-100  transition-all duration-300 transform hover:scale-105">
+                        <span class="material-symbols-outlined mr-2"> group</span>
+                        <span class="font-medium">One-On-One Students</span>
+                      </button> -->
+        <!-- <button (click)="View_Invoice(item.User_ID)"
+          class="flex items-center px-4 py-2 h-10 bg-violet-50 text-white rounded-md hover:bg-bg-amber-500 transition-all duration-300 transform hover:scale-105">
+          <span class="material-symbols-outlined mr-2 text-violet-800">book</span>
+          <span class="font-medium text-violet-800">Invoices</span>
+        </button> -->
+        <button *ngIf="isEdit" (click)="Edit_user(item)"
+          class="flex items-center px-4 py-2 h-10  bg-yellow-50 text-yellow-700 rounded-md hover:bg-yellow-100 transition-all duration-300 transform hover:scale-105">
+          <span class="material-symbols-outlined mr-2">edit</span>
+          <!-- <span class="font-medium">Edit</span> -->
+        </button>
+        <button *ngIf="isDelete" (click)="Delete_user(item.User_ID, $index)"
+          class="flex items-center px-4 py-2 h-10 bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-all duration-300 transform hover:scale-105">
+          <span class="material-symbols-outlined mr-2">delete</span>
+          <!-- <span class="font-medium">Delete</span> -->
+        </button>
+
+
+
+
+
+      </div>
+    </div>
+  </div>
+  }
+</section>
+} @else if(view == 'edit'){
+<section class="border border-gray-300 shadow p-6 rounded-lg bg-white mt-5">
+  <div style="text-align: end;">
+    <button
+      class="flex items-center h-10 px-4 py-2 bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-all duration-300 transform hover:scale-105 shadow-sm border border-red-200 ml-auto"
+      (click)="closeClick()">
+      <span class="material-symbols-outlined mr-2">arrow_back</span>
+      <span class="font-medium">Back</span>
+    </button>
+  </div>
+
+
+  <form [formGroup]="user_Form" (ngSubmit)="Save_user()">
+    <label for="photo" class="block text-sm font-medium leading-6 text-gray-900">Photo
+      <!-- <span class="text-red-700">*</span> -->
+    </label>
+    <div class="mt-2 mb-4 flex items-center gap-x-3">
+      <input #fileInput5 (change)="onFileSelected($event)" id="file-upload" style="display: none;" name="file-upload"
+        type="file" class="sr-only">
+
+      <div class="image-preview-container">
+        @if (previewUrl) {
+        <img class="h-40 w-40 text-gray-300" style="    border-radius: 50%;" [src]="previewUrl" alt="Image Preview"> }
+        @else if (shouldShowExistingImage()) {
+        <img class="h-40 w-40 text-gray-300" style="    border-radius: 50%;"
+          [src]="getImage(user_Form.value.Profile_Photo_Path)" alt="Image Preview"> } @else {
+        <svg class="h-40 w-40 text-gray-300" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
+          data-slot="icon">
+          <path fill-rule="evenodd"
+            d="M18.685 19.097A9.723 9.723 0 0 0 21.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 0 0 3.065 7.097A9.716 9.716 0 0 0 12 21.75a9.716 9.716 0 0 0 6.685-2.653Zm-12.54-1.285A7.486 7.486 0 0 1 12 15a7.486 7.486 0 0 1 5.855 2.812A8.224 8.224 0 0 1 12 20.25a8.224 8.224 0 0 1-5.855-2.438ZM15.75 9a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"
+            clip-rule="evenodd" />
+        </svg> }
+
+      </div>
+      <button (click)="fileInput5.click()" type="button"
+        class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Change</button>
+    </div>
+
+
+
+    <div class="grid grid-cols-3 gap-4">
+      <div class="mb-4">
+        <label for="categoryName" class="block text-sm font-medium text-gray-700">First Name<span
+            class="text-red-700">*</span></label>
+        <input type="text" formControlName="First_Name" maxlength="50" required
+          class="mt-1 px-2 py-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+        <div *ngIf="user_Form.get('First_Name')?.invalid && (user_Form.get('First_Name')?.touched || submitted)" class="text-red-500 text-xs mt-1">
+          First Name is required.
+        </div>
+      </div>
+      <div class="mb-4">
+        <label for="numberOfQuestions" class="block text-sm font-medium text-gray-700">Last Name <span
+            class="text-red-700">*</span></label>
+        <input type="text" formControlName="Last_Name"
+          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+        <div *ngIf="user_Form.get('Last_Name')?.invalid && (user_Form.get('Last_Name')?.touched || submitted)" class="text-red-500 text-xs mt-1">
+          Last Name is required.
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label for="passMark" class="block text-sm font-medium text-gray-700">Email<span
+            class="text-red-700">*</span></label>
+        <input type="email" formControlName="Email" (blur)="checkUniqueness('Email')"
+          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+        <div *ngIf="user_Form.get('Email')?.invalid && (user_Form.get('Email')?.touched || submitted)" class="text-red-500 text-xs mt-1">
+          <span *ngIf="user_Form.get('Email')?.errors?.['required']">Email is required.</span>
+          <span *ngIf="user_Form.get('Email')?.errors?.['email']">Please enter a valid email address.</span>
+          <span *ngIf="user_Form.get('Email')?.errors?.['serverError']">{{ user_Form.get('Email')?.errors?.['serverError'] }}</span>
+        </div>
+      </div>
+
+
+
+      <div class="mb-4">
+        <label for="duration" class="block text-sm font-medium text-gray-700">Phone Number <span
+            class="text-red-700">*</span></label>
+        <input type="number" formControlName="PhoneNumber" (blur)="checkUniqueness('PhoneNumber')"
+          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+        <div *ngIf="user_Form.get('PhoneNumber')?.invalid && (user_Form.get('PhoneNumber')?.touched || submitted)" class="text-red-500 text-xs mt-1">
+          <span *ngIf="user_Form.get('PhoneNumber')?.errors?.['required']">Phone Number is required.</span>
+          <span *ngIf="user_Form.get('PhoneNumber')?.errors?.['serverError']">{{ user_Form.get('PhoneNumber')?.errors?.['serverError'] }}</span>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <label for="password" class="block text-sm font-medium text-gray-700">
+          Password <span class="text-red-700">*</span>
+        </label>
+        <div class="relative mt-1">
+          <input [type]="showPassword ? 'text' : 'password'" formControlName="password"
+            class="block w-full rounded-md border border-gray-300 px-3 py-2 pr-10 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+          <button type="button" (click)="togglePasswordVisibility()"
+            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700">
+            <span class="material-icons">{{ showPassword ? 'visibility':'visibility_off'}}</span>
+          </button>
+        </div>
+        <div *ngIf="user_Form.get('password')?.invalid && (user_Form.get('password')?.touched || submitted)" class="text-red-500 text-xs mt-1">
+          Password is required.
+        </div>
+      </div>
+      <div class="mb-4 relative">
+        <label for="Branch" class="block text-sm font-medium text-gray-700">
+          Branch
+        </label>
+        <select formControlName="Branch_Id"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          <option *ngFor="let branch of Search_Branch_Data" [value]="branch.Branch_Id">
+            {{ branch.Branch_Name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="mb-4 relative">
+        <label for="User" class="block text-sm font-medium text-gray-700">
+          User Type
+        </label>
+        <select formControlName="User_Type_Id"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          <option *ngFor="let User of Search_User_Type" [value]="User.User_Type_Id">
+            {{ User.User_Name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="mb-4">
+        <label for="basicPay" class="block text-sm font-medium text-gray-700">Basic Pay</label>
+        <input type="number" formControlName="Basic_Pay"
+          class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          placeholder="Enter Basic Pay">
+      </div>
+
+      <div class="mb-4">
+        @if(user_Form.get('Hod')?.value) {
+        <label for="course" class="block text-sm font-medium text-gray-700">
+          Course <span class="text-red-700">*</span>
+        </label>
+        <mat-form-field class="w-full mt-1">
+          <mat-select id="Course" formControlName="Course_ID" [multiple]="true" placeholder="Select Course(s)"
+            class="block w-full rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+            @for (Course of CourseList; track Course['Course_ID']; let i = $index) {
+            <mat-option [value]="Course['Course_ID']">
+              {{ Course['Course_Name'] }}
+            </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        @if ((this.user_Form.value.Course_ID.length === 0 || this.user_Form.value.Course_ID == null) && submitted) {
+        <div class="text-red-500 text-sm mt-1">
+          Course is required
+        </div>
+        } }
+
+      </div>
+
+      <!-- <div class="mb-4 relative">
+                <label for="hod" class="flex items-center mt-5">
+                    <input 
+                        type="checkbox" 
+                        id="hod" 
+                        formControlName="Hod" 
+                        class="mr-2" 
+                        (change)="onHodChange($event)" />
+                    <span class="block text-sm font-semibold text-gray-700">HOD</span>
+                </label>
+            </div> -->
+
+
+    </div>
+    @if(!user_Form.get('Hod')?.value) {
+    <div class="w-full">
+      <div class="mt-4">
+        <div formArrayName="teacherCourses" *ngIf="!isLoading" class="grid gap-2 grid-cols-2">
+          @for (courseGroup of teacherCourses.controls; track $index; let courseIndex = $index) {
+
+          @if (courseGroup.get('Delete_Status')?.value === 1) {
+          <ng-container class="relative">
+            <button type="button" (click)="undoCourseDelection(courseIndex)"
+              class="text-blue  absolute top-1 hover:text-blueGray-700 text-xs">
+              Undo
+            </button>
+          </ng-container>
+          }
+          <div [formGroupName]="courseIndex" class="relative bg-white p-6 rounded-lg shadow-sm border border-gray-200"
+            [ngClass]="{
+                          'opacity-50 pointer-events-none': courseGroup.get('Delete_Status')?.value === 1,
+                          'border-red-300': courseGroup.get('Delete_Status')?.value === 1
+                        }">
+            <!-- Remove Course Button -->
+            <!-- @if (teacherCourses.length > 1) { -->
+            <button type="button" (click)="removeCourse(courseIndex)"
+              class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd"
+                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                  clip-rule="evenodd" />
+              </svg>
+            </button>
+            <!-- } -->
+
+            <!-- Deletion Indicator -->
+            @if (courseGroup.get('Delete_Status')?.value === 1) {
+            <div class="absolute top-2 left-4 text-red-500 text-xs">
+              (Marked for Deletion)
+            </div>
+            }
+
+            <!-- Course Selection -->
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Course <span class="text-red-500">*</span>
+              </label>
+              <select formControlName="Course_ID" (change)="onCourseChange(courseIndex)"
+                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                <option value="">Select Course</option>
+                @for (course of CourseList; track $index) {
+                <option [value]="course.Course_ID">{{course.Course_Name}}</option>
+                }
+              </select>
+              @if (courseGroup.get('Course_ID')?.invalid && (courseGroup.get('Course_ID')?.touched || submitted)) {
+              <p class="text-red-500 text-sm mt-1">Course is required</p>
+              }
+            </div>
+            @if (courseGroup.hasError('noTimeSlots') && submitted) {
+            <p class="text-red-500 text-sm mt-1">
+              At least one time slot is required for the course
+            </p>
+            }
+            <!-- Time Slots Section -->
+            <div formArrayName="timeSlots">
+
+
+              @for (timeSlot of getTimeSlots(courseGroup); track timeSlot.value.Slot_Id; let slotIndex = $index) {
+              @if (timeSlot.get('isLive')?.value &&
+              timeSlot.get('Batch_ID')?.invalid &&
+              (timeSlot.get('Batch_ID')?.touched || submitted)) {
+              <p class="text-red-500 text-sm mt-1">Batch is required for live classes</p>
+              }
+              <div [formGroupName]="slotIndex" class="mb-4 border-t pt-4" [ngClass]="{
+                                'opacity-50 pointer-events-none': timeSlot.get('Delete_Status')?.value === 1,
+                                'border-red-300': timeSlot.get('Delete_Status')?.value === 1
+                              }">
+                <!-- Add/Remove Time Slot Buttons -->
+                <div class="flex justify-end relative  mb-4">
+
+                  @if (getTimeSlotLength(courseGroup) > 1) {
+                  <button type="button" mat-icon-button (click)="removeTimeSlot(courseIndex, slotIndex)"
+                    class="text-red-500 hover:text-red-700" [disabled]="courseGroup.get('Delete_Status')?.value === 1">
+
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                  }
+                </div>
+                <div class="editable-dial-example flex flex-col gap-4 p-4" style="display: none;">
+                  <!-- Start Time Input -->
+                  <div class="relative">
+                    <label for="start-time" class="block text-sm font-medium text-gray-700 mb-2">
+                      Start Time
+                    </label>
+                    <input id="start-time" placeholder="Start Time" formControlName="start_time" aria-label="Start Time"
+                      [ngxTimepicker]="editableDial" readonly
+                      class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400" />
+                    <ngx-material-timepicker #editableDial></ngx-material-timepicker>
+                    @if (timeSlot.get('start_time')?.invalid && (timeSlot.get('start_time')?.touched || submitted)) {
+                    <p class="text-red-500 text-sm mt-1">Start time is required</p>
+                    }
+                  </div>
+
+                  <!-- End Time Input -->
+                  <div class="relative">
+                    <label for="end-time" class="block text-sm font-medium text-gray-700 mb-2">
+                      End Time
+                    </label>
+                    <input id="end-time" placeholder="End Time" formControlName="end_time" aria-label="End Time"
+                      [ngxTimepicker]="editableDial2" readonly
+                      class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400" />
+                    <ngx-material-timepicker #editableDial2></ngx-material-timepicker>
+                    @if (timeSlot.get('end_time')?.invalid && (timeSlot.get('end_time')?.touched || submitted)) {
+                    <p class="text-red-500 text-sm mt-1">End time is required</p>
+                    }
+                  </div>
+                </div>
+
+
+
+
+                <!-- Live Class Toggle -->
+                <div class="mb-4" style="display: none;">
+                  <label class="flex items-center">
+                    <input type="checkbox" formControlName="isLive" (change)="onLiveChange(courseIndex, slotIndex)"
+                      class="mr-2">
+                    Assign To Group Call
+                  </label>
+                </div>
+
+                <!-- Batch Selection (Conditional) -->
+                @if (true) {
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Batch <span class="text-red-500">*</span>
+                  </label>
+                  <select formControlName="Batch_ID"
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <option value="">Select Batch</option>
+                    @for (batch of filteredBatchLists[courseGroup.get('Course_ID')?.value] || []; track batch.Batch_ID)
+                    {
+                    <option [value]="batch.Batch_ID">{{batch.Batch_Name}}</option>
+                    }
+                  </select>
+
+                </div>
+                }
+              </div>
+
+              }
+              <button type="button" (click)="addTimeSlot(courseIndex)" class="text-green-500 hover:text-green-700"
+                [disabled]="courseGroup.get('Delete_Status')?.value === 1" style="display: none;">
+                + Add Time Slot
+              </button>
+            </div>
+          </div>
+          }
+        </div>
+
+        <!-- Optional: Add Course Button -->
+        <div class="mt-4">
+          <button type="button" (click)="addCourse()" class="bg-blue text-white px-4 py-2 rounded hover:bg-blue" style="background-color: blue !important; color: white !important;">
+            + Add Course (Optional)
+          </button>
+        </div>
+
+      </div>
+    </div>
+    }
+    <div class="w-full flex justify-end gap-4">
+      <button
+        class="px-4 py-2 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-all duration-300 transform hover:scale-105 font-medium border border-red-200"
+        (click)="closeClick()">
+        Cancel
+      </button>
+      <button type="submit"
+        class="bg-sky-500 hover:bg-blueGray-hover text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring focus:ring-zinc-500 focus:ring-opacity-50" style="background-color: blue !important; color: white !important;">
+        Save
+      </button>
+    </div>
+    @if (user_Form.get('Profile_Photo_Path')?.invalid && submitted) {
+    <div class="text-red-500 text-sm mt-1">
+      Profile photo is required
+    </div>
+    }
+  </form>
+</section>
+} @else if(view == 'courses') {
+<section class="border border-gray-300 shadow p-6 rounded-lg bg-white mt-5">
+  <div class="flex justify-between">
+    <label for="">Assigned courses</label>
+    <button
+      class="flex items-center h-10 px-4 py-2 bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-all duration-300 transform hover:scale-105 shadow-sm border border-red-200 mb-3"
+      (click)="closeClick()">
+      <span class="material-symbols-outlined mr-2">close</span>
+      <span class="font-medium">Close</span>
+    </button>
+  </div>
+  <div class="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead>
+          <tr class="bg-gray-50">
+            <th scope="col" class="px-8 py-5 text-left">
+              <div class="text-sm font-semibold text-gray-900">Course </div>
+            </th>
+            @if(!isHodCourse){
+            <th scope="col" class="px-8 py-5 text-left">
+              <div class="text-sm font-semibold text-gray-900">Details </div>
+            </th>
+            <th scope="col" class="px-8 py-5 text-left">
+              <div class="text-sm font-semibold text-gray-900">Timing Details</div>
+            </th>
+            }
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-gray-100">
+          @for(item of courseList; track $index) {
+          <tr class="group hover:bg-blueGray-50/30 transition-all duration-200">
+            <!-- Course Details -->
+            <td class="px-8 py-6">
+              <div class="flex items-center gap-4">
+                <!-- Course Icon with gradient -->
+                <!-- <div class="flex-shrink-0">
+                      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blueGray-100 to-blueGray-200 
+                                flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-200">
+                        <i class="fas fa-book text-blueGray-600 text-lg"></i>
+                      </div>
+                    </div> -->
+                <!-- Course Info -->
+                <div>
+                  <div class="text-base font-semibold text-gray-900 mb-1">{{ item.Course_Name }}</div>
+                  <div class="text-sm text-gray-500 flex items-center gap-2">
+                    <!-- <span class="px-2 py-1 rounded-md bg-gray-100 text-gray-600">
+                          ID: {{ item.Course_ID }}
+                        </span> -->
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            @if(!isHodCourse){
+            <!-- Session Type -->
+            <td class="px-8 py-6">
+              @if(item.Batch_Name && item.Start_Date && item.End_Date) {
+              <div class="space-y-3">
+                <!-- Batch Info -->
+                <div class="flex items-center gap-3">
+                  <!-- <div class="w-10 h-10 rounded-full bg-gradient-to-br from-green-100 to-green-200 
+                                    flex items-center justify-center shadow-sm">
+                            <i class="fas fa-users text-green-600"></i>
+                          </div> -->
+                  <div>
+                    <div class="font-medium text-gray-900">{{ item.Batch_Name }}</div>
+                    <div class="text-sm text-gray-500">Batch Course</div>
+                  </div>
+                </div>
+                <!-- Date Range -->
+                <div class="flex items-start gap-2 m-0">
+                  <div class="flex items-start gap-2 px-3 py-1.5 rounded-lg bg-gray-50 text-sm text-gray-600 ps-0 pt-0">
+                    <span>{{ item.Start_Date | date:'mediumDate' }}</span>
+                    <span class="text-gray-400">→</span>
+                    <span>{{ item.End_Date | date:'mediumDate' }}</span>
+                  </div>
+                </div>
+              </div>
+              } @else {
+              <div class="flex items-center gap-3">
+                <!-- <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-purple-200 
+                                  flex items-center justify-center shadow-sm">
+                          <i class="fas fa-user text-purple-600"></i>
+                        </div> -->
+                <!-- <div>
+                          <div class="font-medium text-gray-900">One-on-One Session</div>
+                          <div class="text-sm text-gray-500">Personal Training</div>
+                        </div>-->
+              </div>
+              }
+            </td>
+
+            <!-- Timing Details -->
+            <td class="px-8 py-6">
+              <div class="flex items-center gap-3">
+
+                <div>
+                  <div class="text-sm text-gray-500 mt-0.5">
+                    <span class="inline-flex items-center gap-1">
+                      <i class="fas fa-sync-alt text-xs text-gray-400"></i>
+                      @if(item.Batch_Name){
+
+                      Live Class Time
+                      }@else {
+                      One on One time
+                      }
+                    </span>
+                  </div>
+                  <div class="text-base font-medium text-gray-900">
+                    {{ item.start_time }} - {{ item.end_time }}
+                  </div>
+
+                </div>
+              </div>
+            </td>
+            }
+          </tr>
+          }
+
+          <!-- Empty State with premium design -->
+
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+} @else if(view == 'TeacherStudents') {
+<div class="container mx-auto px-4 py-6 bg-gray-50 min-h-screen">
+  <div class="bg-white shadow-xl rounded-lg overflow-hidden">
+    <!-- Header -->
+    <div class="px-6 py-4 bg-gray-100 flex items-center justify-between border-b border-gray-200">
+      <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+        <i class="material-symbols-outlined mr-2 text-blue-600">group</i>
+        One On One - Assigned Students
+      </h2>
+      <button (click)="closeClick()"
+        class="flex items-center h-10 px-4 py-2 bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-all duration-300 transform hover:scale-105 shadow-sm border border-red-200">
+        <span class="material-symbols-outlined mr-2">close</span>
+        <span class="font-medium">Close</span>
+      </button>
+    </div>
+
+    <!-- Students Table -->
+    <div class="overflow-x-auto">
+      <!-- Add this before the table -->
+      <div class="px-6 py-4 flex items-center gap-4">
+        <label class="text-sm font-medium text-gray-700">Filter by Course:</label>
+        <select [(ngModel)]="selectedCourseId" (change)="onCourseFilterChange($event)"
+          class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+          <option [value]="0">All Courses</option>
+          <option *ngFor="let course of CourseList" [value]="course.Course_ID">
+            {{course.Course_Name}}
+          </option>
+        </select>
+      </div>
+      <table class="w-full">
+        <thead class="bg-gray-100 sticky top-0">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              Student Name
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              Batch Name
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              Course Name
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              Start Time
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              End Time
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngIf="teacherStudentList.length > 0; else noData">
+            <tr *ngFor="let item of teacherStudentList; let i = index"
+              class="hover:bg-gray-50 transition duration-150 ease-in-out border-b last:border-b-0">
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                <div class="flex items-center">
+                  <div class="w-10 h-10 bg-blue rounded-full mr-3 flex items-center justify-center text-white">
+                    {{ (item.First_Name || 'S')[0] }}
+                  </div>
+                  {{ item.First_Name }}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                <span
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  {{ item.Batch_Name || '1 on 1 Section' }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                {{ item.Course_Name }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                <i class="material-symbols-outlined text-sm mr-1 text-blue-500">schedule</i>
+                {{ item.start_time }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                <i class="material-symbols-outlined text-sm mr-1 text-red-500">timer_off</i>
+                {{ item.end_time }}
+              </td>
+            </tr>
+          </ng-container>
+          <ng-template #noData>
+            <tr>
+              <td colspan="5" class="text-center py-10 text-gray-500">
+                <div class="flex flex-col items-center justify-center">
+                  <i class="material-symbols-outlined text-6xl text-gray-300 mb-4">group_off</i>
+                  <p class="text-lg">No students assigned</p>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+} @else if(view == 'invoices') {
+<div class="space-y-4 p-6">
+  <div class="flex gap-4">
+
+    <button class="bg-sky-500 hover:bg-blueGray-hover text-white font-bold py-2 px-4 rounded"
+      (click)=" Create_Invoice()">
+      Create Invoice
+    </button>
+    <button
+      class="flex items-center h-10 px-4 py-2 bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-all duration-300 transform hover:scale-105 shadow-sm border border-red-200"
+      (click)="closeClick()">
+      <span class="material-symbols-outlined mr-2">close</span>
+      <span class="font-medium">Close</span>
+    </button>
+  </div>
+  @if (invoiceData.length === 0) {
+  <div class="flex justify-center items-center p-8">
+    <span class="text-gray-600">No invoices found</span>
+  </div>
+  } @else { @for (invoice of invoiceData; track invoice.Invoice_Id; let i = $index) {
+  <div class="mt-5 border border-gray-300 p-8 rounded-lg">
+    <div class="flex justify-between">
+      <div class="w-full">
+        <div class="grid grid-cols-12 mb-3">
+          <span class="col-span-2 xl:col-span-2 lg:col-span-4 text-gray-600">Invoice Date </span>
+          <span class="col-span-12 xl:col-span-3 text-base font-medium leading-7">
+            {{ invoice.invoice_date | date:'mediumDate' }}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-12 mb-3">
+          <span class="col-span-2 xl:col-span-2 lg:col-span-4 text-gray-600">Name</span>
+          <span class="col-span-12 xl:col-span-3 text-base font-medium leading-7">
+            {{ invoice.name }}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-12 mb-3">
+          <span class="col-span-2 xl:col-span-2 lg:col-span-4 text-gray-600">Course</span>
+          <span class="col-span-12 xl:col-span-3 text-base font-medium leading-7">
+            {{ invoice.course_name }}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-12">
+          <span class="col-span-2 xl:col-span-2 lg:col-span-4 text-gray-600">Amount</span>
+          <span class="col-span-12 xl:col-span-3 text-base font-medium leading-7">
+            ₹{{ invoice.total_amount }}
+          </span>
+        </div>
+      </div>
+
+      <div class="flex gap-3 cursor-pointer">
+        <span (click)="Edit_Invoice(invoice)"
+          class="material-symbols-outlined flex justify-center items-center h-12 w-12 p-2 border border-[#B8D0DE] rounded-full bg-[#D9EFF4]">
+          edit
+        </span>
+        <span (click)="printInvoice(invoice)"
+          class="material-symbols-outlined flex justify-center items-center h-12 w-12 p-2 border border-[#B8D0DE] rounded-full bg-[#D9EFF4]">
+          Print
+        </span>
+        <span (click)="Delete_Invoice(invoice.Invoice_Id, i)"
+          class="material-symbols-outlined flex justify-center items-center h-12 w-12 p-2 border border-[#E8A0A7] rounded-full bg-[#F4EDF0] text-[#D11A2A]">
+          delete
+        </span>
+      </div>
+    </div>
+  </div>
+  } }
+</div>
+} @else if(view == 'Create_Invoice') {
+<div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-full mx-auto">
+    <!-- Header Section -->
+    <div class="bg-white rounded-t-lg shadow-sm px-8 py-6 border-b border-gray-200">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Create New Invoice</h1>
+          <p class="mt-1 text-sm text-gray-500">Please fill in all required fields</p>
+        </div>
+        <!-- <div class="text-right">
+                    <div class="text-sm text-gray-500">Invoice #</div>
+                    <div class="text-lg font-semibold text-gray-900">INV-2024-001</div>
+                </div> -->
+      </div>
+    </div>
+
+    <!-- Main Form -->
+    <form [formGroup]="invoiceForm" (ngSubmit)="Save_Invoice()" class="bg-white shadow-sm">
+      <!-- Top Section: Basic Info -->
+      <div class="grid grid-cols-2 gap-8 px-8 py-6 border-b border-gray-200">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Basic Information</h2>
+          <div class="space-y-4">
+            <div>
+              <label for="invoice_date" class="block text-sm font-medium text-gray-700">Invoice Date<span
+                  class="text-red-600">*</span></label>
+              <input id="invoice_date" type="date" formControlName="invoice_date"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blueGray-500 focus:ring-blueGray-500 sm:text-sm"
+                [ngClass]="{'border-red-300': invoiceForm.get('invoice_date')?.invalid && invoiceForm.get('invoice_date')?.touched}" />
+              @if (invoiceForm.get('invoice_date')?.invalid && invoiceForm.get('invoice_date')?.touched) {
+              <p class="mt-1 text-sm text-red-600">Invoice date is required</p>
+              }
+            </div>
+
+            <div>
+              <label for="name" class="block text-sm font-medium text-gray-700">Name <span
+                  class="text-red-600">*</span></label>
+              <input id="name" type="text" formControlName="name"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blueGray-500 focus:ring-blueGray-500 sm:text-sm"
+                [ngClass]="{'border-red-300': invoiceForm.get('name')?.invalid && invoiceForm.get('name')?.touched}" />
+              @if (invoiceForm.get('name')?.invalid && invoiceForm.get('name')?.touched) {
+              <p class="mt-1 text-sm text-red-600">Name is required</p>
+              }
+            </div>
+
+            <div class="grid col-span-2">
+              <label for="position" class="block text-sm font-medium text-gray-700">Position <span
+                  class="text-red-600">*</span></label>
+              <input id="position" type="text" formControlName="position"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blueGray-500 focus:ring-blueGray-500 sm:text-sm"
+                [ngClass]="{'border-red-300': invoiceForm.get('position')?.invalid && invoiceForm.get('position')?.touched}" />
+              @if (invoiceForm.get('position')?.invalid && invoiceForm.get('position')?.touched) {
+              <p class="mt-1 text-sm text-red-600">Position is required</p>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900 mb-4">Course Details</h2>
+          <div class="space-y-4">
+            <div>
+              <label for="course_name" class="block text-sm font-medium text-gray-700">Course Name <span
+                  class="text-red-600">*</span></label>
+              <input id="course_name" type="text" formControlName="course_name"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blueGray-500 focus:ring-blueGray-500 sm:text-sm"
+                [ngClass]="{'border-red-300': invoiceForm.get('course_name')?.invalid && invoiceForm.get('course_name')?.touched}" />
+              @if (invoiceForm.get('course_name')?.invalid && invoiceForm.get('course_name')?.touched) {
+              <p class="mt-1 text-sm text-red-600">Course name is required</p>
+              }
+            </div>
+
+            <div>
+              <label for="payment_period" class="block text-sm font-medium text-gray-700">Payment Period <span
+                  class="text-red-600">*</span></label>
+              <input id="payment_period" type="text" formControlName="payment_period"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blueGray-500 focus:ring-blueGray-500 sm:text-sm"
+                [ngClass]="{'border-red-300': invoiceForm.get('payment_period')?.invalid && invoiceForm.get('payment_period')?.touched}" />
+              @if (invoiceForm.get('payment_period')?.invalid && invoiceForm.get('payment_period')?.touched) {
+              <p class="mt-1 text-sm text-red-600">Payment period is required</p>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Middle Section: Hours and Amount -->
+      <div class="px-8 py-6 border-b border-gray-200 bg-gray-50">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Payment Details</h2>
+        <div class="grid grid-cols-2 gap-8">
+          <div>
+            <label for="class_hours" class="block text-sm font-medium text-gray-700">Class Hours <span
+                class="text-red-600">*</span></label>
+            <div class="mt-1 relative rounded-md shadow-sm">
+              <input id="class_hours" type="text" formControlName="class_hours"
+                class="block w-full rounded-md border-gray-300 pl-3 pr-12 focus:border-blueGray-500 focus:ring-blueGray-500 sm:text-sm"
+                [ngClass]="{'border-red-300': invoiceForm.get('class_hours')?.invalid && invoiceForm.get('class_hours')?.touched}" />
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <span class="text-gray-500 sm:text-sm">hrs</span>
+              </div>
+            </div>
+            @if (invoiceForm.get('class_hours')?.invalid && invoiceForm.get('class_hours')?.touched) {
+            <p class="mt-1 text-sm text-red-600">Class hours are required</p>
+            }
+          </div>
+
+          <div>
+            <label for="total_amount" class="block text-sm font-medium text-gray-700">Total Amount <span
+                class="text-red-600">*</span></label>
+            <div class="mt-1 relative rounded-md shadow-sm">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <span class="text-gray-500 sm:text-sm">$</span>
+              </div>
+              <input id="total_amount" type="text" formControlName="total_amount"
+                class="block w-full rounded-md border-gray-300 pl-7 pr-12 focus:border-blueGray-500 focus:ring-blueGray-500 sm:text-sm"
+                [ngClass]="{'border-red-300': invoiceForm.get('total_amount')?.invalid && invoiceForm.get('total_amount')?.touched}" />
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <span class="text-gray-500 sm:text-sm">RS</span>
+              </div>
+            </div>
+            @if (invoiceForm.get('total_amount')?.invalid && invoiceForm.get('total_amount')?.touched) {
+            <p class="mt-1 text-sm text-red-600">Total amount is required and must be a number</p>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Section: Approval -->
+      <div class="px-8 py-6 bg-white">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Approval Information</h2>
+        <div class="grid grid-cols-1 gap-8">
+          <div>
+            <label for="approved_by" class="block text-sm font-medium text-gray-700">Approved By <span
+                class="text-red-600">*</span></label>
+            <input id="approved_by" type="text" formControlName="approved_by"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blueGray-500 focus:ring-blueGray-500 sm:text-sm"
+              [ngClass]="{'border-red-300': invoiceForm.get('approved_by')?.invalid && invoiceForm.get('approved_by')?.touched}" />
+            @if (invoiceForm.get('approved_by')?.invalid && invoiceForm.get('approved_by')?.touched) {
+            <p class="mt-1 text-sm text-red-600">Approval signature is required</p>
+            }
+          </div>
+
+          <!-- <div>
+              <label for="user_Id" class="block text-sm font-medium text-gray-700">User ID</label>
+              <input
+                id="user_Id"
+                type="text"
+                formControlName="user_Id"
+                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blueGray-500 focus:ring-blueGray-500 sm:text-sm"
+                [ngClass]="{'border-red-300': invoiceForm.get('user_Id')?.invalid && invoiceForm.get('user_Id')?.touched}"
+              />
+              @if (invoiceForm.get('user_Id')?.invalid && invoiceForm.get('user_Id')?.touched) {
+                <p class="mt-1 text-sm text-red-600">User ID is required</p>
+              }
+            </div> -->
+        </div>
+      </div>
+
+      <!-- Footer Section -->
+      <div class="px-8 py-4 bg-gray-50 rounded-b-lg border-t border-gray-200">
+        <div class="flex gap-3  items-center justify-end space-x-4">
+
+          <button type="submit"
+            class="px-6 py-2 text-sm font-medium text-white bg-blue border border-transparent rounded-md shadow-sm hover:bg-blueGray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blueGray-500" style="background-color: blue !important; color: white !important;">
+            {{invoiceForm.get('Invoice_Id')?.value>0?'Save Invoice':'Create Invoice'}}
+          </button>
+          <button class="border border-blue hover:bg-gray-500 hover:text-white text-black font-bold py-2 px-4 rounded"
+            (click)="View_Invoice(invoiceForm.get('user_Id')?.value)">
+            Close
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+} @else if (view == 'View_permissions') {
+<app-view-permissions  [userId]="User_Type_Id_status" (userIdChange)="onUserIdChange($event)"></app-view-permissions>
+} @else if (view == 'View_team') {
+<app-view-team-assignment
+  [teamLeadId]="selectedTeamLeadId"
+  [teamLeadName]="selectedTeamLeadName"
+  (closeView)="onTeamAssignmentClose()">
+</app-view-team-assignment>
+}
+
+<div #invoiceContainer *ngIf="printInvoice_view"
+  style="padding: 40px; max-width: 1000px; margin: 0 auto; background-color: white; font-family: Arial, sans-serif;display: none;">
+  <!-- Header Section -->
+  <div style="margin-bottom: 40px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h1 style="font-size: 32px; color: #1a365d; margin-bottom: 20px;">Invoice</h1>
+      <div style="text-align: right;">
+        <img src="assets/images/logo2.svg" alt="Trackbox Logo" style="width: 50px; height: auto;">
+      </div>
+    </div>
+
+
+
+    <div style="display: flex; justify-content: space-between;">
+      <div>
+        <p style="color: #4a5568; margin: 5px 0; font-size: 18px;">Invoice no : #{{ currentInvoice.Invoice_Id }}</p>
+         <p style="color: #4a5568; margin: 5px 0; font-size: 18px;">Date : {{ currentInvoice.invoice_date | date:'MMM d,
+          yyyy' }}</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Billing Info -->
+  <div style="margin-bottom: 40px; display: flex; justify-content: space-between;">
+    <div>
+      <p style="color: #4a5568; margin: 5px 0; font-size: 18px;">Bill to : {{ currentInvoice.name }}</p>
+      <p style="color: #4a5568; margin: 5px 0; font-size: 18px;">Position : {{ currentInvoice.position }}</p>
+      <p style="color: #4a5568; margin: 5px 0; font-size: 18px;">Course : {{ currentInvoice.course_name }}</p>
+    </div>
+    <div style="text-align: right;">
+      <p style="color: #4a5568; margin: 5px 0; font-size: 16px;">Trackbox Tower, 176/10, Vazhappally west,</p>
+      <p style="color: #4a5568; margin: 5px 0; font-size: 16px;">Thuruthy p.o, Changanassery,</p>
+      <p style="color: #4a5568; margin: 5px 0; font-size: 16px;">Kottayam - 686535</p>
+      <p style="color: #4a5568; margin: 5px 0; font-size: 16px;">8891505777</p>
+      <p style="color: #4a5568; margin: 5px 0; font-size: 16px;">info&#64;trackbox.in</p>
+    </div>
+  </div>
+
+  <!-- Invoice Details -->
+  <div style="margin-bottom: 40px;">
+    <div
+      style="display: flex; justify-content: space-between; margin-bottom: 10px; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+      <span style="color: #4a5568; font-size: 18px;">Course Name</span>
+      <span style="color: #1a365d; font-size: 18px; font-weight: 500;">{{ currentInvoice.course_name }} </span>
+    </div>
+    <div
+      style="display: flex; justify-content: space-between; margin-bottom: 10px; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+      <span style="color: #4a5568; font-size: 18px;">Payment period</span>
+      <span style="color: #1a365d; font-size: 18px; font-weight: 500;">{{ currentInvoice.payment_period }}</span>
+    </div>
+    <div
+      style="display: flex; justify-content: space-between; margin-bottom: 10px; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+      <span style="color: #4a5568; font-size: 18px;">Hours</span>
+      <span style="color: #1a365d; font-size: 18px; font-weight: 500;">{{ currentInvoice.class_hours }}</span>
+    </div>
+    <div
+      style="display: flex; justify-content: space-between; margin-bottom: 10px; padding: 10px 0; border-bottom: 1px solid #e2e8f0;">
+      <span style="color: #4a5568; font-size: 18px;">Rate</span>
+      <span style="color: #1a365d; font-size: 18px; font-weight: 500;">{{ currentInvoice.total_amount /
+        currentInvoice.class_hours }}</span>
+    </div>
+    <div
+      style="display: flex; justify-content: space-between; margin-top: 20px; padding: 15px 0; border-bottom: 2px solid #1a365d;">
+      <span style="color: #1a365d; font-size: 20px; font-weight: 600;">Total Amount</span>
+      <span style="color: #1a365d; font-size: 20px; font-weight: 600;">₹{{ currentInvoice.total_amount }}</span>
+    </div>
+  </div>
+
+  <!-- Approval Section -->
+  <div style="display: flex; justify-content: space-between; margin-bottom: 40px;">
+    <div>
+      <p style="color: #4a5568; margin-bottom: 10px; font-size: 18px;">Approved By :</p>
+      <p style="color: #1a365d; font-size: 18px;font-weight: 600;">{{ currentInvoice.approved_by }}</p>
+    </div>
+    <div style="text-align: right;">
+      <p style="color: #4a5568; margin-bottom: 10px; font-size: 18px;">Authorized Signature :</p>
+      <p style="color: #1a365d; font-size: 18px; font-weight: 500;"></p>
+    </div>
+  </div>
+
+  <!-- Terms Section -->
+  <div style="margin-top: 40px;">
+    <h3 style="color: #1a365d; font-size: 18px; margin-bottom: 15px;">Terms & Conditions:</h3>
+    <ul style="color: #4a5568; font-size: 16px; list-style-type: disc; padding-left: 20px;">
+      <li style="margin-bottom: 5px;">Payment is due within 30 days</li>
+      <li style="margin-bottom: 5px;">Please include invoice number on your payment</li>
+      <li style="margin-bottom: 5px;">Make all checks payable to company name</li>
+    </ul>
+  </div>
+</div>
+<app-loading [isLoading]="isLoading"></app-loading>
+

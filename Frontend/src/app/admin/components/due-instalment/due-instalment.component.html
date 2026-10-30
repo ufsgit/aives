@@ -1,0 +1,171 @@
+<div style="overflow: hidden;">
+    @if(!student_edit){
+    <!-- Filters Section -->
+    <section class="container-section">
+        <div class="flex flex-wrap gap-4 items-center p-1">
+
+            <!-- Course Filter -->
+            <div class="flex-1 min-w-[200px]">
+                <div class="relative">
+                    <select [formControl]="selectedCourse" (change)="filterBatchData()"
+                        class="w-full h-[42px] appearance-none bg-white border-2 border-gray-300 rounded-md pl-4 pr-10 focus:outline-none focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-300">
+                        <option [ngValue]="null">Select Course</option>
+                        <option *ngFor="let course of courseDatas" [ngValue]="course">
+                            {{course.Course_Name}}
+                        </option>
+                    </select>
+                    <!-- <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none"
+                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                            clip-rule="evenodd" />
+                    </svg> -->
+                </div>
+            </div>
+
+            <!-- Student Filter -->
+            <div class="flex-1 min-w-[200px]">
+                <div class="relative">
+                    <select [formControl]="selectedStudent"
+                        class="w-full h-[42px] appearance-none bg-white border-2 border-gray-300 rounded-md pl-4 pr-10 focus:outline-none focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-300">
+                        <option [ngValue]="null">Select Student</option>
+                        <option *ngFor="let student of studentDatas" [ngValue]="student">
+                            {{student.First_Name}} {{student.Last_Name}}
+                        </option>
+                    </select>
+                    <!-- <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none"
+                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                            clip-rule="evenodd" />
+                    </svg> -->
+                </div>
+            </div>
+
+            <!-- Batch Filter -->
+            <div class="flex-1 min-w-[200px]">
+                <div class="relative">
+                    <select [formControl]="selectedBatch"
+                        class="w-full h-[42px] appearance-none bg-white border-2 border-gray-300 rounded-md pl-4 pr-10 focus:outline-none focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-300">
+                        <option [ngValue]="null">Select Batch</option>
+                        <option *ngFor="let batch of tempBatchData" [ngValue]="batch">
+                            {{batch.Batch_Name}}
+                        </option>
+                    </select>
+                    <!-- <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none"
+                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                            clip-rule="evenodd" />
+                    </svg> -->
+                </div>
+            </div>
+
+            <!-- More Options Toggle (Immediately after Batch) -->
+            <button (click)="showMoreOptions = !showMoreOptions"
+                class="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold h-[42px] px-6 rounded-md transition duration-300 ease-in-out focus:outline-none"
+                style="background-color: blue !important; color: white !important;">
+                Options
+                <mat-icon class="ml-2">{{ showMoreOptions ? 'expand_less' : 'expand_more' }}</mat-icon>
+            </button>
+
+            <!-- Conditional Action Group -->
+            <ng-container *ngIf="showMoreOptions">
+                <button (click)="fetchReportData()"
+                    class="flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold h-[42px] px-6 rounded-md transition duration-300 ease-in-out"
+                    style="background-color: blue !important; color: white !important;">
+                    <mat-icon class="mr-2">search</mat-icon>
+                    Search
+                </button>
+
+                <button (click)="exportToExcel()"
+                    class="flex items-center justify-center bg-gray-600 hover:bg-gray-700 text-white font-semibold h-[42px] px-6 rounded-md transition duration-300">
+                    Export to Excel
+                </button>
+
+                <button (click)="downloadPDF()"
+                    class="flex items-center justify-center bg-red-600 hover:bg-red-700 text-white font-semibold h-[42px] px-6 rounded-md transition duration-300">
+                    Download PDF
+                </button>
+            </ng-container>
+        </div>
+    </section>
+
+    <!-- Table Section -->
+    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+        <table class="w-full text-sm text-left text-gray-500">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                <tr>
+                    <th *ngFor="let column of displayedColumns" class="px-2 py-2 font-semibold tracking-wider">
+                        {{ column.replace('_', ' ') }}
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let row of tableData" class="bg-white border-b hover:bg-gray-50 transition duration-150"
+                    (click)="student_List_Update(row)">
+                    <td *ngFor="let column of displayedColumns" class="px-2 py-2 whitespace-nowrap">
+                        {{ column === 'Next_Due_Date' ? (row[column] | date:'dd-MM-yyyy') : row[column] }}
+                    </td>
+                </tr>
+                <tr *ngIf="!tableData?.length">
+                    <td [attr.colspan]="displayedColumns.length" class="px-6 py-4 text-center text-gray-500">
+                        No data available
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex items-center justify-between p-4 bg-white border-t">
+        <div class="flex items-center space-x-2">
+            <label>per page</label>
+            <select [(ngModel)]="pageSize" (change)="onPageChange({ pageIndex: 0, pageSize: pageSize })"
+                style="width: 80px; padding-right: 8px;" class="border rounded px-2 py-1 text-sm">
+                <option [value]="10">10</option>
+                <option [value]="25">25</option>
+                <option [value]="50">50</option>
+                <option [value]="75">75</option>
+                <option [value]="100">100</option>
+            </select>
+            <span class="text-sm font-medium text-gray-700">
+                Entries: {{totalRecords}}
+            </span>
+        </div>
+
+        <div class="px-4 py-2 bg-gray-100 rounded-md shadow-sm border border-gray-300">
+            <div class="text-sm text-gray-700 font-medium">
+                <div class="flex items-center space-x-1">
+                    <span class="text-gray-500">Total:</span>
+                    <span class="font-semibold text-blue-600">
+                        {{ Closing_Amount }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-4">
+            <button (click)="onPageChange({pageIndex: currentPage - 2, pageSize: pageSize})"
+                [disabled]="currentPage === 1"
+                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                Previous
+            </button>
+            <span class="text-sm text-gray-700">
+                Page {{ currentPage }} of {{ Math.ceil(totalRecords / pageSize) }}
+            </span>
+            <button (click)="onPageChange({pageIndex: currentPage, pageSize: pageSize})"
+                [disabled]="currentPage >= Math.ceil(totalRecords / pageSize)"
+                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                Next
+            </button>
+        </div>
+    </div>
+    }
+    @else if(student_edit){
+    <app-studentlist [followUps]="student_Details" [mode]="'list'" (cancel)="onCancelEdit()"
+        (save)="onSaveStudent($event)">
+    </app-studentlist>
+    }
+</div>

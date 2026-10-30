@@ -1,0 +1,41 @@
+<div class="container">
+  <h1>Permissions</h1>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 40%;">Menu Name</th>
+        <th style="width: 15%;">
+          <input type="checkbox" [(ngModel)]="viewAll" (change)="toggleAll('View', viewAll)" />
+           View
+        </th>
+        <th style="width: 15%;">
+          <input type="checkbox" [(ngModel)]="saveAll" (change)="toggleAll('Save', saveAll)" />
+          Save
+        </th>
+        <th style="width: 15%;">
+          <input type="checkbox" [(ngModel)]="editAll" (change)="toggleAll('Edit', editAll)" />
+          Edit
+        </th>
+        <th style="width: 15%;">
+          <input type="checkbox" [(ngModel)]="deleteAll" (change)="toggleAll('Delete', deleteAll)" />
+          Delete
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let menu of menuItems">
+        <td>{{ menu.Menu_Name }}</td>
+        <td><input type="checkbox" [(ngModel)]="menu.View" /></td>
+        <td><input type="checkbox" [(ngModel)]="menu.Save" /></td>
+        <td><input type="checkbox" [(ngModel)]="menu.Edit" /></td>
+        <td><input type="checkbox" [(ngModel)]="menu.Delete" /></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="action-buttons">
+    <button type="button" (click)="Cancel()" class="cancel-btn">Cancel</button>
+    <button type="submit" (click)="Save_Permission()" class="save-btn" style="background-color: blue !important; color: white !important;">Save</button>
+  </div>
+</div>

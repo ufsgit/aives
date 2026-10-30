@@ -1,0 +1,58 @@
+version: 0.2
+
+env:
+  variables:
+    ANGULAR_APP_NAME: "briffni-frontend"
+    S3_BUCKET: "breffni"
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - npm install -g @angular/cli
+      - npm install
+      - echo "Starting build for $ANGULAR_APP_NAME"
+
+  pre_build:
+    commands:
+      - echo "Current directory structure:"
+      - pwd
+      - ls -R
+
+  build:
+    commands:
+      - echo "Building Angular project..."
+      - ng build --configuration=production
+      
+  post_build:
+    commands:
+      - echo "Build output directory contents:"
+      - ls -la dist/briffni-frontend/browser
+      
+      - echo "Detailed file listing:"
+      - find dist/briffni-frontend/browser -type f
+      
+      - echo "Starting precise deployment to S3 bucket: breffni"
+      # Explicitly sync only files, not directories
+      - |
+        aws s3 sync dist/briffni-frontend/browser s3://breffni \
+          --delete \
+          --exclude ".DS_Store" \
+          --exclude ".git" \
+          --exclude ".gitignore" \
+          --exact-timestamps
+
+      - echo "Verifying S3 contents after sync:"
+      - aws s3 ls s3://breffni
+
+artifacts:
+  files:
+    - 'dist/briffni-frontend/browser/**/*'
+  base-directory: 'dist/briffni-frontend/browser'
+  discard-paths: yes
+
+cache:
+  paths:
+    - 'node_modules/**/*'
+    - '.angular/**/*'

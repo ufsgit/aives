@@ -1,0 +1,95 @@
+<div class="dialog-container">
+  <h2 class="text-xl font-semibold mb-4">Create New Exam</h2>
+
+  <form [formGroup]="examForm">
+    <!-- Course Info (readonly) -->
+    <div class="mb-4">
+      <label class="block mb-1 text-sm font-medium">Course</label>
+      <input type="text"
+             [value]="data.examcourseName"
+             readonly
+             class="w-full border border-gray-300 rounded px-3 py-2 bg-gray-100 text-gray-700 cursor-not-allowed" />
+    </div>
+
+    <!-- Exam Title -->
+    <div class="mb-4">
+      <label class="block mb-1 text-sm font-medium">Exam Title</label>
+      <input formControlName="Main_Question" class="w-full border rounded px-3 py-2" />
+    </div>
+
+    <!-- Time Limit -->
+    <div class="mb-4">
+      <label class="block mb-1 text-sm font-medium">Time Limit (mins)</label>
+      <input type="number" formControlName="Time_Limit" class="w-full border rounded px-3 py-2" />
+    </div>
+
+    <!-- Passing Score -->
+    <div class="mb-4">
+      <label class="block mb-1 text-sm font-medium">Passing Score (%)</label>
+      <input type="number" formControlName="Passing_Score" class="w-full border rounded px-3 py-2" />
+    </div>
+
+    <!-- Questions Section -->
+    <div class="mt-6 border-t pt-4" style="overflow: auto;">
+      <h3 class="text-lg font-medium mb-2">Questions</h3>
+
+      <div *ngFor="let q of questions; let i = index" class="mb-6 border border-gray-200 p-4 rounded relative">
+        <button type="button" class="absolute top-2 right-2 text-red-600 text-xs" (click)="removeQuestion(i)">✖ Remove</button>
+
+        <!-- Question Text -->
+        <label class="block text-sm font-medium mb-1">Question Text</label>
+        <input [(ngModel)]="q.Question_Text"
+               [ngModelOptions]="{ standalone: true }"
+               class="w-full border rounded px-3 py-2 mb-3"
+               name="question{{i}}" />
+
+        <!-- Dynamic Answer Options -->
+        <div class="grid grid-cols-2 gap-4 mb-3">
+          <div *ngFor="let key of getOptionKeys(q.Answer_Options)">
+
+            <label class="block text-sm font-medium mb-1">Option {{ key }}</label>
+            <input [(ngModel)]="q.Answer_Options[key]"
+                   [ngModelOptions]="{ standalone: true }"
+                   class="w-full border rounded px-3 py-2"
+                   name="opt{{key}}{{i}}" />
+          </div>
+          <div class="flex justify-end">
+  <button type="button"
+          (click)="addOptionToQuestion(i)"
+          class="px-2 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm">
+    + Add Option
+  </button>
+</div>
+        </div>
+
+        <!-- Correct Answer Dropdown -->
+        <label class="block text-sm font-medium mb-1">Correct Answer</label>
+        <select [(ngModel)]="q.Correct_Answer"
+                [ngModelOptions]="{ standalone: true }"
+                class="w-full border rounded px-3 py-2 bg-white"
+                name="correct{{i}}">
+          <option value="" disabled>Select correct option</option>
+          <option *ngFor="let opt of getFilledOptions(q.Answer_Options)" [value]="opt">
+            {{ opt }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Add Question Button -->
+      <button type="button"
+              (click)="addQuestion()"
+              class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+        + Add Question
+      </button>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex justify-end gap-2 mt-6">
+      <button type="button" (click)="onCancel()" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+    <button type="button" (click)="onSave()" class="px-4 py-2 bg-blue-600 text-white rounded" style="background-color: blue !important; color: white !important;">
+  {{ data.isEdit ? 'Update' : 'Save' }}
+</button>
+
+    </div>
+  </form>
+</div>

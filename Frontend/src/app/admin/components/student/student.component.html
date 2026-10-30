@@ -1,0 +1,1074 @@
+@if(view == 'list')
+{
+<section class="container-section">
+  <div class="filter-row">
+    <!-- Search Input -->
+    <div class="flex-1">
+      <div class="relative">
+        <input id="search" type="text" [(ngModel)]="searchTerm" (input)="onSearchChange()"
+          placeholder="Search by name or contact" class="w-full">
+      </div>
+    </div>
+
+    <!-- Roll Number Search -->
+    <div class="flex-1">
+      <div class="relative">
+        <input id="searchRoll" type="text" [(ngModel)]="searchRollNumber" (input)="onSearchChange()"
+          placeholder="Roll Number" class="w-full">
+      </div>
+    </div>
+
+    <!-- Active Status Filter -->
+    <div class="flex-1">
+      <div class="relative">
+        <select id="activeStatus" [(ngModel)]="activeStatus" (ngModelChange)="onSearchChange()" class="w-full">
+          <option value="all">All Statuses</option>
+          <option value="Active">Active</option>
+          <option value="Dropout">Dropout</option>
+          <option value="Completed">Completed</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Subscribed Status Filter -->
+    <div class="flex-1">
+      <div class="relative">
+        <select id="subscribedStatus" [(ngModel)]="subscribedStatus" (ngModelChange)="onSearchChange()" class="w-full">
+          <option value="all">All Subscribed Statuses</option>
+          <option value="yes">Yes (Subscribed)</option>
+          <option value="no">No (Not Subscribed)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Course Filter -->
+    <div class="flex-1">
+      <div class="relative">
+        <select id="course" [(ngModel)]="selectedCourseId" (change)="onCourseChange()" class="w-full">
+          <option [ngValue]="null">All Courses</option>
+          <option *ngFor="let course of allCourse" [value]="course.Course_ID">
+            {{ course.Course_Name }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Add Student Button -->
+    <div *ngIf="isSave" class="action-group ml-auto">
+      <button (click)="Create_New()" class="btn-blue-modern">
+        <span>Add Enquiry</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+  <!-- Student List -->
+  <!-- @for (item of student_Data; track $index) { -->
+  <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+    <table class="w-full text-left text-gray-800 border-collapse">
+      <thead class="text-gray-700 uppercase bg-gray-50">
+        <tr>
+          <!-- <th class=" text-center whitespace-nowrap">Actions</th> -->
+          <th class="font-semibold tracking-wider text-left whitespace-nowrap">Name</th>
+          <th class="font-semibold tracking-wider text-left whitespace-nowrap">Roll Number</th>
+          <th class="font-semibold tracking-wider text-left whitespace-nowrap">Course</th>
+          <th class="font-semibold tracking-wider text-left whitespace-nowrap">Batch Name</th>
+          <th class="font-semibold tracking-wider text-left whitespace-nowrap">Email</th>
+          <th class="font-semibold tracking-wider text-left whitespace-nowrap">Contact</th>
+          <!-- <th class="font-semibold tracking-wider text-left whitespace-nowrap">Remark</th>
+          <th class="font-semibold tracking-wider text-left whitespace-nowrap">Status</th> -->
+          <th class="font-semibold tracking-wider text-left whitespace-nowrap">Registered</th>
+          <th class="font-semibold tracking-wider text-left whitespace-nowrap">Status</th>
+          <th class="font-semibold tracking-wider text-left whitespace-nowrap">Branch</th>
+          <!-- <th class="font-semibold tracking-wider text-left whitespace-nowrap">To Staff</th> -->
+          <th class="font-semibold tracking-wider text-left whitespace-nowrap">Enrolled</th>
+          <th class="font-semibold tracking-wider text-left whitespace-nowrap">Subscribed</th>
+          <th class="font-semibold tracking-wider text-left whitespace-nowrap">Package Name</th>
+          <!-- <th class="font-semibold tracking-wider text-left whitespace-nowrap">Follow-up</th> -->
+          <!-- <th class="font-semibold tracking-wider text-left whitespace-nowrap">Follow-up Date</th> -->
+        
+        </tr>
+      </thead>
+
+      <tbody class="divide-y divide-gray-100">
+        <tr *ngFor="let item of student_Data; let i = index" class="bg-white border-b hover:bg-gray-50 transition duration-150 cursor-pointer"
+          (click)="student_List_Update(item)">
+ <!-- <td class=" text-center whitespace-nowrap">
+            <button (click)="openFollowUp(item); $event.stopPropagation()"
+              class="bg-green-100 text-green-700 px-3 py-1 rounded-md text-xs hover:bg-green-200">
+              Follow-up
+            </button>
+          </td> -->
+          <td class=" whitespace-nowrap">{{ item.First_Name }} {{ item.Last_Name }}</td>
+          <td class=" whitespace-nowrap">{{ item['Roll_No_Character'] || (item['Roll_No'] ? ('TEP-' + item['Roll_No']) : '-') }}</td>
+          <td class=" whitespace-nowrap">{{ item['Course_Name'] || '-' }}</td>
+          <td class=" whitespace-nowrap">{{ item['Batch_Name'] || '-' }}</td>
+          <td class=" whitespace-nowrap">{{ item.Email || '-' }}</td>
+          <td class=" whitespace-nowrap">{{ item.Country_Code }} {{ item.Phone_Number }}</td>
+          <!-- <td class=" whitespace-nowrap">{{ item['Status_Name'] || item['Follow_Up_Status_Name'] || '-' }}</td> -->
+          <td class=" whitespace-nowrap">{{ item['Is_Registered'] ? 'Yes' : 'No' }}</td>
+          <td class="whitespace-nowrap">
+            <span [ngClass]="{
+              'text-green-600 font-semibold': item['Active_Status'] === 'Active',
+              'text-red-600 font-semibold': item['Active_Status'] === 'Dropout',
+              'text-blue-600 font-semibold': item['Active_Status'] === 'Completed'
+            }">
+              {{ item['Active_Status'] }}
+            </span>
+          </td>
+          <td class=" whitespace-nowrap">{{ item['Branch_Name'] || '-' }}</td>
+          <!-- <td class=" whitespace-nowrap">{{ item['To_User_Name'] || '-' }}</td> -->
+          <td class=" whitespace-nowrap">{{ item['is_enrolled'] ? 'Yes' : 'No' }}</td>
+          <td class=" whitespace-nowrap">
+            <span [ngClass]="item['Mock_Test_Subscribed'] === 1 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'">
+              {{ item['Mock_Test_Subscribed'] === 1 ? 'Yes' : 'No' }}
+            </span>
+          </td>
+          <td class=" whitespace-nowrap">{{ item['Mock_Test_Subscribed'] === 1 ? (item['Mock_Test_Package'] || '-') : '-' }}</td>
+          <!-- <td class=" whitespace-nowrap">
+            <span [ngClass]="item['Followup_Status'] == 1 ? 'text-green-600 font-semibold' : 'text-gray-500'">
+               {{ item['Status_Name'] || item['Follow_Up_Status_Name'] ? 'Yes' : 'No' }}
+            </span>
+          </td> -->
+          <!-- <td class="whitespace-nowrap">
+            {{ item['Follow_Up_Date'] ? (item['Follow_Up_Date'] | date: 'dd-MM-yyyy') : '-' }}
+          </td> -->
+         
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+
+  <!-- } -->
+
+
+  <!-- Pagination -->
+  <div class="pagination-container">
+    <div class="flex items-center space-x-2">
+      <label class="text-sm text-gray-600">per page</label>
+      <select [(ngModel)]="pageSize" (change)="onPageChange(1)"
+        class="border rounded px-2 py-1 text-sm">
+        <option [value]="12">12</option>
+        <option [value]="25">25</option>
+        <option [value]="50">50</option>
+        <option [value]="75">75</option>
+        <option [value]="100">100</option>
+      </select>
+      <span class="text-sm font-medium text-gray-700">
+        Total Entries: {{ Total_Entries }}
+      </span>
+    </div>
+
+    <div class="flex items-center space-x-4">
+      <button (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1"
+        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+        Previous
+      </button>
+      <span class="text-sm text-gray-700">
+        Page {{ currentPage }} of {{ getTotalPages() }}
+      </span>
+      <button (click)="onPageChange(currentPage + 1)" [disabled]="currentPage >= getTotalPages()"
+        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+        Next
+      </button>
+    </div>
+  </div>
+}
+<!-- Student List -->
+@else if(view == 'student_list'){
+<app-studentlist [followUps]="student_Details" [mode]="'list'" (cancel)="onCancelEdit()" (save)="onSaveStudent($event)">
+  <!--  [totalFollowUps]="totalFollowUps"
+  [missedFollowUps]="missedFollowUps" -->
+
+</app-studentlist>
+}
+<!-- Follow-up View -->
+
+@else if(view == 'followup') {
+<section class="border border-gray-300 shadow p-2 rounded-lg bg-white">
+  <div class="flex items-center justify-between mb-2">
+    <div>
+      <h2 class="text-lg font-semibold text-gray-800">Student Follow-up - {{ selectedStudentForFollowup?.First_Name }} {{ selectedStudentForFollowup?.Last_Name }}</h2>
+    </div>
+    <button type="button" (click)="closeFollowUp()"
+      class="flex items-center h-10  bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-all duration-300 transform hover:scale-105 shadow-sm border border-red-200">
+      <span class="material-symbols-outlined mr-2">close</span>
+      <span class="font-medium">Close</span>
+    </button>
+  </div>
+
+  <div class="space-y-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <!-- Branch Selection -->
+      <div class="space-y-2">
+        <label for="Branch" class="block text-sm font-medium text-gray-700">
+          Branch
+        </label>
+        <select [(ngModel)]="Search_Branch" name="Search_Branch" [compareWith]="compareBranch"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+
+          <option *ngFor="let branch of Search_Branch_Data" [ngValue]="branch">
+            {{ branch.Branch_Name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Department Selection -->
+      <div class="space-y-2">
+        <label for="department-select" class="block text-sm font-medium text-gray-700">
+          Department
+        </label>
+        <select [(ngModel)]="Search_Department" name="Search_Department" [compareWith]="compareDepartment"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+
+          <option *ngFor="let department of Search_Department_Data" [ngValue]="department">
+            {{ department.Department_Name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Staff/User Assignment -->
+      <div class="space-y-2">
+        <label for="staff-select" class="block text-sm font-medium text-gray-700">
+          Assign To Staff
+        </label>
+        <select [(ngModel)]="Search_staff" name="Search_staff" [compareWith]="compareStaff"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+
+          <option *ngFor="let staff of staffData" [ngValue]="staff">
+            {{ staff.First_Name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Follow-up Status -->
+      <div class="space-y-2">
+        <label for="status-select" class="block text-sm font-medium text-gray-700">
+          Follow-up Status
+        </label>
+        <select [(ngModel)]="Search_status" name="Search_status" [compareWith]="compareStatus"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+
+          <option (ngModelChange)="Status_Change()"  *ngFor="let status of followUpStatusData" [ngValue]="status">
+            {{ status.Status_Name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Next Follow-up Date -->
+      <div class="space-y-2">
+        <label for="next-followup-date" class="block text-sm font-medium text-gray-700">
+          Next Follow-up Date
+        </label>
+        <input type="date" id="next-followup-date" [(ngModel)]="nextFollowUpDate" name="nextFollowUpDate"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          [min]="getCurrentDate()">
+      </div>
+
+      <!-- Email Template Selection -->
+      <div class="space-y-2">
+        <label for="email-template-student" class="block text-sm font-medium text-gray-700">
+          Email Template
+        </label>
+        <div class="flex gap-2">
+          <select id="email-template-student" [(ngModel)]="selectedTemplateId" name="selectedTemplateId"
+            class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <option [ngValue]="null">-- Select Template To Send --</option>
+            <option *ngFor="let template of emailTemplates" [value]="template.Template_ID">
+              {{ template.Template_Name }}
+            </option>
+          </select>
+          <button type="button" 
+                  (click)="sendSelectedEmail(selectedStudent.Email, selectedStudent.First_Name + ' ' + selectedStudent.Last_Name)"
+                  [disabled]="!selectedTemplateId || !selectedStudent?.Email"
+                  class=" bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 transition-colors flex items-center">
+            <span class="material-symbols-outlined">send</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Remark Text Area -->
+    <div class="space-y-2">
+      <label for="remark" class="block text-sm font-medium text-gray-700">
+        Remark
+      </label>
+      <textarea id="remark" [(ngModel)]="remark" name="remark" rows="4"
+        placeholder="Enter follow-up remarks, notes, or action items (optional)..."
+        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        maxlength="1000"></textarea>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="w-full flex justify-end gap-3 mt-4">
+      <button
+        class=" bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-all duration-300 transform hover:scale-105 font-medium border border-red-200"
+        (click)="closeFollowUp()">
+        Cancel
+      </button>
+      <button type="submit" [disabled]="isLoading" (click)="Save_student()"
+        class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring focus:ring-green-500 focus:ring-opacity-50" style="background-color: blue !important; color: white !important;">
+        <span *ngIf="isLoading"
+          class="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></span>
+        Save Follow-up
+      </button>
+    </div>
+  </div>
+
+  <!-- Follow-up History Section -->
+  @if(selectedStudentForFollowup?.Student_ID) {
+  <div class="mt-6 border-t pt-6">
+    <!-- History Button -->
+    <button type="button" (click)="toggleFollowupHistory()"
+      class="flex items-center  bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 transition-colors">
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <span>{{ showFollowupHistory ? 'Hide' : 'Show' }} Follow-up History</span>
+      @if(followupHistoryList && followupHistoryList.length > 0) {
+      <span class="ml-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full">
+        {{ followupHistoryList.length }}
+      </span>
+      }
+    </button>
+
+    <!-- History List -->
+    @if(showFollowupHistory) {
+    <div class="mt-3 bg-white border border-gray-200 rounded-lg overflow-hidden">
+      <!-- Header -->
+      <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
+        <h4 class="text-lg font-medium text-gray-900">Follow-up History Records</h4>
+      </div>
+
+      <!-- Loading State -->
+      @if(loadingFollowupHistory) {
+      <div class="p-6 text-center">
+        <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+        <p class="mt-2 text-gray-600">Loading follow-up history...</p>
+      </div>
+      }
+
+      <!-- History List -->
+      @else if(followupHistoryList && followupHistoryList.length > 0) {
+      <div class="divide-y divide-gray-200 max-h-80 overflow-y-auto">
+        @for(followup of followupHistoryList; track followup.Follow_Up_ID) {
+        <div class="p-4 hover:bg-gray-50 transition-colors">
+          <!-- Follow-up Header -->
+          <div class="flex justify-between items-start mb-3">
+            <div class="flex-1">
+              <div class="flex items-center space-x-3">
+                <span class="text-sm font-medium text-gray-900">
+                  Follow-up on {{ formatFollowupDate(followup.Created_Date) }}
+                </span>
+                @if(followup.Follow_Up_Status_Name) {
+                <span
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {{ followup.Follow_Up_Status_Name }}
+                </span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Follow-up Details -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-600">
+            @if(followup.Assigned_Staff_Name) {
+            <div>
+              <span class="font-medium">Staff:</span> {{ followup.Assigned_Staff_Name }}
+            </div>
+            }
+            @if(followup.Branch_Name) {
+            <div>
+              <span class="font-medium">Branch:</span> {{ followup.Branch_Name }}
+            </div>
+            }
+            @if(followup.Department_Name) {
+            <div>
+              <span class="font-medium">Department:</span> {{ followup.Department_Name }}
+            </div>
+            }
+            @if(followup.Next_Follow_Up_Date) {
+            <div>
+              <span class="font-medium">Next Follow-up:</span> {{ formatFollowupDate(followup.Next_Follow_Up_Date) }}
+            </div>
+            }
+          </div>
+
+          <!-- Remark -->
+          @if(followup.Remark && followup.Remark.trim()) {
+          <div class="mt-3">
+            <span class="text-sm font-medium text-gray-700">Remark:</span>
+            <p class="mt-1 text-sm text-gray-600 bg-gray-50 p-2 rounded">
+              {{ followup.Remark }}
+            </p>
+          </div>
+          }
+
+          <!-- Additional Info Row -->
+          <!-- <div class="mt-2 flex justify-between items-center text-xs text-gray-500">
+            <span>Branch ID: {{ followup.Branch_Id }} | Department ID: {{ followup.Department_Id }}</span>
+            @if(followup.Assigned_Staff_ID) {
+            <span>Staff ID: {{ followup.Assigned_Staff_ID }}</span>
+            }
+          </div> -->
+        </div>
+        }
+      </div>
+      }
+
+      <!-- No History Found -->
+      @else {
+      <div class="p-8 text-center">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+          </path>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No Follow-up History</h3>
+        <p class="mt-1 text-sm text-gray-500">No follow-up records found for this student.</p>
+      </div>
+      }
+    </div>
+    }
+  </div>
+  }
+</section>
+}
+
+@else if(view == 'edit') {
+<app-studentlist [mode]="'add'" (cancel)="onCancelEdit()" (save)="onSaveStudent($event)"></app-studentlist>
+}
+@else if (view == 'Student_Fees') {
+<div style="text-align: end;">
+  <button
+    class="flex items-center h-10  bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-all duration-300 transform hover:scale-105 shadow-sm border border-red-200 ml-auto mt-4"
+    (click)="closeClick()">
+    <span class="material-symbols-outlined mr-2">close</span>
+    <span class="font-medium">Close</span>
+  </button>
+</div>
+
+<mat-tab-group [(selectedIndex)]="selectedTabIndex" class="fee-tabs">
+
+  <!-- Tab 1: Fee List -->
+  <mat-tab label="Fee List">
+
+    <div *ngIf="feesList.length > 0" class="fees-list">
+      <h2>Installments</h2>
+      <table mat-table [dataSource]="feesList" class="mat-elevation-z8">
+
+        <!-- <ng-container matColumnDef="Installment_Index">
+          <th mat-header-cell *matHeaderCellDef> Installment  </th>
+          <td mat-cell *matCellDef="let fee; let i = index">
+            {{ i + 1 }}
+          </td>
+        </ng-container> -->
+
+        <ng-container matColumnDef="Due_Date">
+          <th mat-header-cell *matHeaderCellDef> Due Date </th>
+          <td mat-cell *matCellDef="let fee"> {{ fee.Due_Date }} </td>
+        </ng-container>
+
+
+        <ng-container matColumnDef="Total_Amount">
+          <th mat-header-cell *matHeaderCellDef> Amount </th>
+          <td mat-cell *matCellDef="let fee"> ₹{{ fee.Total_Amount }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="Paid_Amount">
+          <th mat-header-cell *matHeaderCellDef> Paid </th>
+          <td mat-cell *matCellDef="let fee"> ₹{{ fee.Paid_Amount }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="Remaining_Amount">
+          <th mat-header-cell *matHeaderCellDef> Remaining </th>
+          <td mat-cell *matCellDef="let fee"> ₹{{ fee.Remaining_Amount }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="Fee_Status">
+          <th mat-header-cell *matHeaderCellDef> Status </th>
+          <td mat-cell *matCellDef="let fee">
+            <button *ngIf="fee.Fee_Status === 'Pending';" mat-raised-button color="primary" class="pay-button"
+              (click)="payFee(fee)">
+              Pay
+            </button>
+            <button *ngIf="fee.Fee_Status === 'Paid';" mat-raised-button style="background-color: gray;">
+              {{ fee.Fee_Status }}
+            </button>
+          </td>
+
+        </ng-container>
+
+
+
+        <tr mat-header-row
+          *matHeaderRowDef="['Due_Date', 'Total_Amount', 'Paid_Amount', 'Remaining_Amount', 'Fee_Status']">
+        </tr>
+        <tr mat-row
+          *matRowDef="let row; columns: ['Due_Date', 'Total_Amount', 'Paid_Amount', 'Remaining_Amount', 'Fee_Status'];">
+        </tr>
+      </table>
+    </div>
+    <div *ngIf="feesList.length === 0" class="empty-list">
+      <p>No Installment details found for this student/course.</p>
+    </div>
+  </mat-tab>
+
+  <!-- Tab 2: Receipts -->
+  <mat-tab label="Receipts">
+    @if (isEditingReceipt) {
+    <div class="receipt-edit-form">
+      <h3>Edit Receipt</h3>
+      <form [formGroup]="receiptForm" (ngSubmit)="updateReceipt()">
+
+        <mat-form-field appearance="fill">
+          <mat-label>Date</mat-label>
+          <input matInput formControlName="Entry_Date" type="date">
+        </mat-form-field>
+
+
+        <mat-form-field appearance="fill">
+          <mat-label>Amount</mat-label>
+          <input matInput formControlName="Amount" type="number">
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Mode</mat-label>
+          <input matInput formControlName="Payment_mode">
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Account Name</mat-label>
+          <input matInput formControlName="Account_Name">
+        </mat-form-field>
+
+        <mat-form-field appearance="fill">
+          <mat-label>Voucher Number</mat-label>
+          <input matInput formControlName="Voucher_Number">
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" type="submit">Update</button>
+        <button mat-raised-button color="warn" type="button" (click)="cancelEdit()">Cancel</button>
+      </form>
+    </div>
+
+    }@else {
+    <div *ngIf="receipList.length > 0" class="fees-list">
+      <h2>Receipts</h2>
+      <table mat-table [dataSource]="receipList" class="mat-elevation-z8">
+        <ng-container matColumnDef="Entry_Date">
+          <th mat-header-cell *matHeaderCellDef> Date </th>
+          <td mat-cell *matCellDef="let fee"> {{ fee.Entry_Date }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="Amount">
+          <th mat-header-cell *matHeaderCellDef> Amount </th>
+          <td mat-cell *matCellDef="let fee"> ₹{{ fee.Amount }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="Payment_mode">
+          <th mat-header-cell *matHeaderCellDef> Mode </th>
+          <td mat-cell *matCellDef="let fee"> {{ fee.Payment_mode }} </td>
+        </ng-container>
+        <ng-container matColumnDef="Account_Name">
+          <th mat-header-cell *matHeaderCellDef> Account Name </th>
+          <td mat-cell *matCellDef="let fee"> {{ fee.Account_Name }} </td>
+        </ng-container>
+        <ng-container matColumnDef="Voucher_Number">
+          <th mat-header-cell *matHeaderCellDef> Voucher Number </th>
+          <td mat-cell *matCellDef="let fee"> {{ fee.Voucher_Number }} </td>
+        </ng-container>
+        <ng-container matColumnDef="Tax_Type_Name">
+          <th mat-header-cell *matHeaderCellDef> Tax Type </th>
+          <td mat-cell *matCellDef="let fee"> {{ fee.Tax_Type_Name }} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="Edit">
+          <th mat-header-cell *matHeaderCellDef> Action</th>
+          <td mat-cell *matCellDef="let fee">
+            <div style="display: flex;gap: 4px;">
+              <div>
+                <button (click)="Edit_FeesByReceipt_ID(fee)" title="Edit "
+                  class="flex items-center  h-12 bg-yellow-50 text-yellow-700 rounded-md hover:bg-yellow-100 transition-all duration-300 transform hover:scale-105">
+                  <span class="material-symbols-outlined mr-2">edit</span>
+                </button>
+              </div>
+              <div>
+                <button (click)="Delete_Receipt(fee)" title="Delete Student"
+                  class="flex items-center  h-12 bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-all duration-300 transform hover:scale-105">
+                  <span class="material-symbols-outlined mr-2">delete</span>
+                </button>
+              </div>
+              <button (click)="printReceipt(fee)" title="Print Receipt"
+                class="flex items-center  h-12 bg-green-50 text-green-700 rounded-md hover:bg-green-100 transition-all duration-300 transform hover:scale-105">
+                <span class="material-symbols-outlined mr-2">print</span>
+              </button>
+            </div>
+          </td>
+
+        </ng-container>
+
+        <ng-container matColumnDef="Delete">
+          <th mat-header-cell *matHeaderCellDef> </th>
+          <td mat-cell *matCellDef="let fee">
+          </td>
+
+        </ng-container>
+
+
+        <tr mat-header-row
+          *matHeaderRowDef="['Entry_Date', 'Amount', 'Payment_mode','Account_Name','Voucher_Number', 'Tax_Type_Name','Edit', 'Delete']">
+        </tr>
+        <tr mat-row
+          *matRowDef="let row; columns: ['Entry_Date', 'Amount', 'Payment_mode','Account_Name','Voucher_Number', 'Tax_Type_Name', 'Edit', 'Delete'];">
+        </tr>
+      </table>
+    </div>
+    <div *ngIf="receipList.length === 0" class="empty-list">
+      <p>No receipts found for this student/course.</p>
+    </div>
+
+
+    }
+  </mat-tab>
+</mat-tab-group>
+
+
+
+}
+@else if (view == 'Student_Documents'){
+<app-student-documents [student]="selectedStudentForDocuments" (cancel)="handleDocumentsCancel($event)">
+</app-student-documents>
+}
+@else if(view == 'courses') {
+<section class="border border-gray-300 shadow p-2 rounded-lg bg-white">
+  <div class="flex justify-between mb-3">
+    <div class="">
+      <div>
+
+        <label for="" class="font-semibold mb-5">{{studentName}}</label>
+      </div>
+      <div class="mt-2">
+
+        <label for="">Enrolled courses</label>
+      </div>
+
+    </div>
+    <button
+      class="flex items-center h-10  bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-all duration-300 transform hover:scale-105 shadow-sm border border-red-200"
+      (click)="closeClick()">
+      <span class="material-symbols-outlined mr-2">close</span>
+      <span class="font-medium">Close</span>
+    </button>
+  </div>
+
+  @if(courseList.length){
+  <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+    <!-- Search and Filter (Optional) -->
+
+
+    <!-- Table -->
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <!-- Table Header -->
+        <thead class="bg-gray-50">
+          <tr>
+            <th class=" text-left text-sm font-semibold text-gray-700">
+              Course Details
+            </th>
+            <th class=" text-left text-sm font-semibold text-gray-700">
+              Group Class Schedule
+            </th>
+            <th class=" text-left text-sm font-semibold text-gray-700">
+              One-on-One Sessions
+            </th>
+            <!-- <th class=" text-left text-sm font-semibold text-gray-700">
+              Action
+            </th> -->
+            <th class=" text-left text-sm font-semibold text-gray-700">
+              Manage
+            </th>
+
+          </tr>
+        </thead>
+
+        <!-- Table Body -->
+        <tbody class="divide-y divide-gray-200">
+          @for(course of courseList; track $index) {
+          <tr class="hover:bg-gray-50 transition-colors duration-150">
+            <!-- Course Details Column -->
+            <td class="">
+              <div class="space-y-2">
+                <div class="font-medium text-gray-900">{{ course.Course_Name }}</div>
+                @if(course.Batch_Name) {
+                <div class="text-sm text-gray-600">
+                  <span class="font-medium">Batch:</span> {{ course.Batch_Name }}
+                </div>
+                <div class="text-sm text-gray-600">
+                  <span class="font-medium">Duration:</span>
+                  <br>
+                  {{ course.Batch_start_Date | date }} to {{ course.Batch_End_Date | date }}
+                </div>
+                }
+              </div>
+            </td>
+
+            <!-- Live Class Details -->
+            <td class="">
+              <div class="space-y-3">
+                @if(course.Teacher_Name_Batch) {
+                <div class="text-sm">
+                  <span class="text-gray-600">Group Class Faculty:</span>
+                  <div class="font-medium text-gray-900">{{ course.Teacher_Name_Batch }}</div>
+                </div>
+                }
+                @if(course.Batch_Timings?.length) {
+                <div class="text-sm">
+                  <span class="text-gray-600">Schedule:</span>
+                  @for(time of course.Batch_Timings; track $index) {
+                  <div class="font-medium text-gray-900 mt-1">{{ time }}</div>
+                  }
+                </div>
+                }
+              </div>
+            </td>
+
+            <!-- One-on-One Details -->
+            <td class="">
+              <div class="space-y-3">
+                @if(course.Teacher_Name_One_On_One) {
+                <div class="text-sm">
+                  <span class="text-gray-600">One On One Faculty :</span>
+                  <div class="font-medium text-gray-900">
+                    {{ course.Teacher_Name_One_On_One }}
+                  </div>
+                </div>
+                }
+                @if(course.start_time && course.end_time) {
+                <div class="text-sm">
+                  <span class="text-gray-600">Session Time:</span>
+                  <div class="font-medium text-gray-900">
+                    {{ course.start_time }} - {{ course.end_time }}
+                  </div>
+                </div>
+                }
+              </div>
+            </td>
+
+            <!-- <td>
+              <button (click)="Student_Fees(course)"
+                class="flex items-center h-10  bg-orange-50 text-orange-700 rounded-md hover:bg-orange-100 transition-all duration-300 transform hover:scale-105 whitespace-nowrap min-w-[120px]">
+                <span class="material-symbols-outlined mr-2">payments</span>
+                <span class="font-medium">Fees</span>
+              </button>
+            </td> -->
+
+            <!-- Actions Column -->
+            <td class="">
+              <div class="space-y-3">
+                @if(course.Batch_ID) {
+                <!-- Add Result Button -->
+                <button (click)="openAddResultModal(course)"
+                  class="w-full  bg-blue text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center gap-2">
+                  <i class="fas fa-plus-circle"></i>
+                  <span>Add Result</span>
+                </button>
+
+                <!-- Certificate Section -->
+                <div class="bg-gray-50 p-4 rounded-lg space-y-3">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <i class="fas fa-certificate text-blue-600"></i>
+                      <span class="text-sm font-medium">Certificate</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" [ngModel]="course?.Certificate_Issued"
+                        (ngModelChange)="updateCertificateStatus(course, $event)" class="sr-only peer">
+                      <div class="w-11 h-6 bg-gray-200 rounded-full peer 
+                                            peer-checked:bg-blue 
+                                            after:content-[''] 
+                                            after:absolute 
+                                            after:top-[2px] 
+                                            after:left-[2px] 
+                                            after:bg-white 
+                                            after:rounded-full 
+                                            after:h-5 
+                                            after:w-5 
+                                            after:transition-all
+                                            peer-checked:after:translate-x-full">
+                      </div>
+                    </label>
+                  </div>
+
+                  @if(course?.Certificate_Issued) {
+                  <div class="flex gap-2">
+                    <button (click)="viewCertificate(course)"
+                      class="flex-1 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200 flex items-center justify-center gap-1">
+                      <i class="fas fa-eye"></i>
+                      <span>View</span>
+                    </button>
+                    <button (click)="downloadCertificate(course)"
+                      class="flex-1 px-3 py-2 bg-blueGray-500 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center gap-1">
+                      <i class="fas fa-download"></i>
+                      <span>Download</span>
+                    </button>
+                  </div>
+                  }
+                </div>
+                } @else {
+                <button (click)="assignBatch(course)"
+                  class="w-full  bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center justify-center gap-2">
+                  <i class="fas fa-user-plus"></i>
+                  <span>Join Batch</span>
+                </button>
+                }
+              </div>
+            </td>
+
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    @if(courseList.length === 0) {
+    <div class="p-8 text-center">
+      <div class="text-gray-500 mb-2">No courses found</div>
+      <button class=" bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+        Browse Courses
+      </button>
+    </div>
+    }
+  </div>
+
+
+  }
+  @else {
+  <form [formGroup]="student_Course" (ngSubmit)="Enrole_Course()" class="space-y-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+
+      <div class="space-y-2">
+        <label for="course-id" class="block text-sm font-medium text-gray-700">Course <span
+            class="text-red-700">*</span></label>
+        <select id="course-id" formControlName="Course_ID"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition duration-150 ease-in-out">
+          <option *ngFor="let course of allCourse" [value]="course.Course_ID">{{ course.Course_Name }}</option>
+        </select>
+      </div>
+      @if(student_Course.get('Course_ID')?.value){
+
+      <!-- <div class="space-y-2">
+        <label for="slot-id" class="block text-sm font-medium text-gray-700">One on One Slot </label>
+
+
+        <select id="slot-id" formControlName="Slot_Id"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition duration-150 ease-in-out">
+          <option [value]="0">No selection </option>
+          <option *ngFor="let slot of available_Time_Slots" [value]="slot.Slot_Id">{{ slot.start_time }} - {{
+            slot.end_time }}</option>
+        </select>
+      </div> -->
+      <div class="space-y-2">
+        <label for="slot-id" class="block text-sm font-medium text-gray-700">Batch <span
+            class="text-red-700">*</span></label>
+        <select id="slot-id" formControlName="Batch_ID"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition duration-150 ease-in-out">
+          <ng-container *ngFor="let batch of batch_Data">
+
+
+            <option *ngIf="batch.is_expired==0" [value]="batch.Batch_ID">{{ batch.Batch_Name }}</option>
+          </ng-container>
+        </select>
+      </div>
+      <div class="space-y-2">
+        <label for="Price" class="block text-sm font-medium text-gray-700">Price <span
+            class="text-red-700">*</span></label>
+        <input type="number" name="Price" id="Price" formControlName="Price" min="0"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+      </div>
+
+      }
+
+
+
+
+    </div>
+    <div class="flex justify-end">
+      <button type="submit" [ngClass]="{
+                  'bg-sky-500 hover:bg-blue-hover': student_Course.valid,
+                  'bg-gray-400 cursor-not-allowed': student_Course.invalid
+                }"
+        class="text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring focus:ring-zinc-500 focus:ring-opacity-50 h-10 w-20 transition-opacity duration-300"
+        [style.opacity]="student_Course.invalid ? 0.5 : 1" style="background-color: blue !important; color: white !important;">
+        Save
+      </button>
+    </div>
+
+
+  </form>
+  }
+
+
+
+</section>
+}
+@else if(view == 'Add_Result') {
+<div class="container mx-auto p-6">
+  <div class="bg-gray-100 p-6 rounded mb-6">
+    <div class="flex justify-end">
+      <button type="submit" (click)="closeClick()"
+        class="bg-blue hover:bg-blueGray-700 text-white font-bold py-2 px-4 rounded">
+        Close
+      </button>
+    </div>
+    <h2 class="text-lg font-bold mb-4">Add Exam Result</h2>
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <!-- <div>
+                <label class="block text-sm font-medium text-gray-700">Select Exam</label>
+                <select [(ngModel)]="newExamResult.Exam_ID" 
+                        (change)="onExamChange($event)" 
+                        name="Exam_ID" 
+                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                    <option *ngFor="let exam of examsList" [value]="exam.Exam_ID">{{ exam.Content_Name }}</option>
+                </select>
+            </div> -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Exam Name</label>
+        <input type="text" [(ngModel)]="Student_Exam_Name" name="Student_Exam_Name"
+          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+      </div>
+      <div>
+        <label for="fromDate" class="block text-sm font-medium text-gray-700">Choose Result Date</label>
+        <input id="fromDate" type="date" [(ngModel)]="newExamResult.Result_Date"
+          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+      </div>
+
+
+    </div>
+
+    <div class="grid grid-cols-3 gap-4 mb-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Listening</label>
+        <input type="text" [(ngModel)]="newExamResult.Listening" name="Listening"
+          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Reading</label>
+        <input type="text" [(ngModel)]="newExamResult.Reading" name="Reading"
+          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Writing</label>
+        <input type="text" [(ngModel)]="newExamResult.Writing" name="Writing"
+          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Speaking</label>
+        <input type="text" [(ngModel)]="newExamResult.Speaking" name="Speaking"
+          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Overall Score</label>
+        <input type="text" [(ngModel)]="newExamResult.Overall_Score" name="Overall_Score"
+          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">CEFR Level</label>
+        <input type="text" [(ngModel)]="newExamResult.CEFR_level" name="CEFR_level"
+          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+      </div>
+    </div>
+    <div class=" flex gap-5">
+
+      <button type="submit" (click)="addExamResult()"
+        class="bg-blue hover:bg-blueGray-700 text-white font-bold py-2 px-4 rounded" style="background-color: blue !important; color: white !important;">
+        {{this.newExamResult.StudentExam_ID>0?'Save Result':'Add Result'}}
+      </button>
+      <button type="submit" (click)="resetForm()"
+        class="bg-blue hover:bg-blueGray-700 text-white font-bold py-2 px-4 rounded">
+        Clear
+      </button>
+    </div>
+  </div>
+
+  <!-- Bottom Section: Display Added Results -->
+  <div class="bg-white p-6 rounded">
+    <h2 class="text-lg font-bold mb-4">Added Results</h2>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class=" text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Exam</th>
+            <th class=" text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Result Date</th>
+            <th class=" text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Listening</th>
+            <th class=" text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reading</th>
+            <th class=" text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Writing</th>
+            <th class=" text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Speaking</th>
+            <th class=" text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Overall Score
+            </th>
+            <th class=" text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CEFR Level</th>
+            <th class=" text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+            <th class=" text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr *ngFor="let result of examResults">
+            <td class=" whitespace-nowrap text-sm">{{ result.Exam_Name }}</td>
+            <td class=" whitespace-nowrap text-sm">{{ result.Result_Date }}</td>
+            <td class=" whitespace-nowrap text-sm">{{ result.Listening }}</td>
+            <td class=" whitespace-nowrap text-sm">{{ result.Reading }}</td>
+            <td class=" whitespace-nowrap text-sm">{{ result.Writing }}</td>
+            <td class=" whitespace-nowrap text-sm">{{ result.Speaking }}</td>
+            <td class=" whitespace-nowrap text-sm">{{ result.Overall_Score }}</td>
+            <td class=" whitespace-nowrap text-sm">{{ result.CEFR_level }}</td>
+
+
+            <td class=" whitespace-nowrap text-sm">
+              <span (click)="editResult(result)"
+                class="material-symbols-outlined flex justify-center items-center h-12 w-12 p-2 border border-[#B8D0DE] rounded-full bg-[#D9EFF4]">
+                edit
+              </span>
+            </td>
+            <td class=" whitespace-nowrap text-sm">
+              <span (click)="deleteResult(result.StudentExam_ID)"
+                class="material-symbols-outlined flex justify-center items-center h-12 w-12 p-2 border border-[#E8A0A7] rounded-full bg-[#F4EDF0] text-[#D11A2A]">
+                delete
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+}@else if(view == 'Add_Fees') {
+<app-student-fees [feesDetails]="feesForm" [isEditMode]="isEditingFees"
+  (cancel)="handleCancel($event)"></app-student-fees>
+}
+
+<app-loading [isLoading]="isLoading"></app-loading>
+
+<div #certificateContainer class="certificate-container" id="certificateContainer" *ngIf="currentStudent"
+  style="width: 100%; height: 100vh; position: absolute; left: -9999px;">
+  <div style="width: 100%; height: 100%; position: relative; aspect-ratio: 297/210;">
+    <img src="assets/images/certificate.jpg" alt="Certificate background"
+      style="width: 100%; height: 100%; object-fit: contain; position: absolute; top: 0; left: 0;" />
+    <div
+      style="position: absolute; top: 58%; left: 68%; transform: translate(-50%, -50%); text-align: center; width: 60%; z-index: 1;">
+      <div class="certificate-name"
+        style="font-size: 38px; font-weight: bold; margin-bottom: 20px; color: #000; white-space: normal; line-height: 1.2; font-family: Arial, sans-serif;">
+        {{currentStudent.name}}
+      </div>
+      <div style="font-size: 18px; color: #000; line-height: 1.5; white-space: normal; font-family: Arial, sans-serif;">
+        Has successfully completed the <b>{{currentStudent.Course_Name}}</b> at Track Box, demonstrating
+        proficiency and commitment to advancing their language and career skills.
+      </div>
+    </div>
+  </div>
+</div>

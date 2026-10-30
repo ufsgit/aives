@@ -1,0 +1,405 @@
+// Base Reset
+:host {
+  display: block;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+// Section Containers
+section {
+  margin-top: 1rem;
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 1rem 0.75rem;
+  margin-bottom: 1rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead {
+    background-color: #f8fafc !important;
+  }
+
+  th {
+    background-color: #f8fafc !important;
+    font-size: 18px !important;
+    text-transform: capitalize !important;
+    color: #475569 !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.05em !important;
+    padding: 0.5rem 1rem !important;
+    text-align: left !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+  }
+
+  td {
+    font-size: 16px !important;
+    // padding: 0.5rem 1rem !important;
+    color: #64748b !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    font-weight: 400 !important;
+  }
+
+  tr:hover {
+    background-color: #f8fafc !important;
+  }
+}
+
+
+// Filter Section Styling
+.filter-row { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 0.75rem; 
+  align-items: center; // Center items vertically since labels are removed
+  
+  // Target all filter inputs and selects for consistent sizing
+  select, input[type="text"], input[type="date"] {
+    height: 42px !important;
+    padding: 0 1rem !important;
+    font-size: 18px !important;
+    line-height: normal !important;
+    box-sizing: border-box !important;
+    border-radius: 6px !important;
+    border: 2px solid #e5e7eb !important;
+    background-clip: padding-box;
+    
+    &:focus {
+      border-color: #3b82f6 !important;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+      outline: none !important;
+    }
+  }
+
+  .flex-1 {
+    flex: 1;
+    min-width: 200px;
+  }
+}
+
+.action-group { 
+  display: flex; 
+  gap: 1rem; 
+  align-items: center; 
+}
+
+
+
+// Pagination
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #ffffff;
+  border-top: 1px solid #e5e7eb;
+
+  select {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    outline: none;
+
+    &:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 1px #3b82f6;
+    }
+  }
+}
+
+// Modern Buttons
+.btn-blue-modern { 
+  background-color: #0000ff !important; 
+  color: white !important;
+  font-weight: 600;
+  height: 42px;
+  padding: 0 1.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background-color: #0000cc !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.btn-xs {
+     padding: 0.20rem 0.70rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 10px;
+
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+\n
+/* Standardized Table Styling from My Students Page */
+:host {
+  font-family: 'Inter', sans-serif !important;
+}
+
+:host table {
+  border-collapse: collapse !important;
+  width: 100% !important;
+}
+
+:host th {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+  text-transform: uppercase !important;
+  font-size: 18px !important;
+  font-weight: normal !important;
+  padding: 0.375rem 0.5rem !important;
+  letter-spacing: 0.05em !important;
+  text-align: left !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+}
+
+:host td {
+  color: #64748b !important;
+  font-size: 17px !important;
+  padding: 0.375rem 0.5rem !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+
+:host tr:hover {
+  background-color: #f8fafc !important;
+  cursor: pointer !important;
+}
+
+/* Today's Follow-up Badge Styles */
+.today-followup-badge-container {
+  display: flex;
+  align-items: center;
+}
+
+.today-followup-badge-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 42px;
+  padding: 0 1.1rem;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 15px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
+  transition: all 0.25s ease;
+
+  &:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.45);
+  }
+
+  .bell-icon {
+    font-size: 16px;
+    animation: bell-ring 2s infinite ease-in-out;
+  }
+
+  .badge-text {
+    white-space: nowrap;
+  }
+
+  .badge-count {
+    background-color: #ffffff;
+    color: #dc2626;
+    padding: 0.15rem 0.55rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 14px;
+  }
+}
+
+@keyframes bell-ring {
+  0%, 100% { transform: rotate(0deg); }
+  10%, 30% { transform: rotate(14deg); }
+  20%, 40% { transform: rotate(-14deg); }
+  50% { transform: rotate(0deg); }
+}
+
+/* Today's Follow-up Modal Styles */
+.tfu-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(3px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.tfu-modal-content {
+  background-color: #ffffff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  animation: modal-slide-in 0.2s ease-out;
+}
+
+@keyframes modal-slide-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.tfu-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+
+  .tfu-modal-title {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .tfu-close-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.6rem;
+    line-height: 1;
+    color: #64748b;
+    cursor: pointer;
+
+    &:hover {
+      color: #0f172a;
+    }
+  }
+}
+
+.tfu-modal-body {
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.tfu-loading, .tfu-empty {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  font-size: 1rem;
+  color: #64748b;
+}
+
+.tfu-table-wrapper {
+  overflow-x: auto;
+}
+
+.tfu-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+
+  th {
+    background-color: #f1f5f9;
+    color: #475569;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 0.6rem 0.8rem;
+    border-bottom: 2px solid #cbd5e1;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 0.65rem 0.8rem;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 14px;
+    color: #334155;
+    vertical-align: middle;
+  }
+
+  .tfu-row:hover {
+    background-color: #f8fafc;
+  }
+}
+
+.tfu-date-tag {
+  background-color: #fef2f2;
+  color: #991b1b;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.tfu-status-pill {
+  background-color: #dbeafe;
+  color: #1e40af;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.tfu-action-btn {
+  background-color: #2563eb;
+  color: #ffffff;
+  border: none;
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #1d4ed8;
+  }
+}
+
+.tfu-modal-footer {
+  padding: 0.85rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  background-color: #f8fafc;
+
+  .tfu-btn-secondary {
+    background-color: #64748b;
+    color: #ffffff;
+    border: none;
+    padding: 0.45rem 1.25rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #475569;
+    }
+  }
+}
+

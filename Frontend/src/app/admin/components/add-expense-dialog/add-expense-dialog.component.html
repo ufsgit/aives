@@ -1,0 +1,146 @@
+<div class="container mx-auto px-4">
+    <div class="flex flex-col md:flex-row items-center justify-between mb-4">
+<h2 *ngIf="!showForm" class="text-xl font-semibold mb-2 md:mb-0 text-center md:text-left flex-1">
+      Expense List</h2> 
+<h2 *ngIf="showForm" class="text-xl font-semibold mb-2 md:mb-0 text-center md:text-left flex-1">{{ isEditMode ? 'Edit Expense for:' : 'Add Expense for:' }} {{ student.First_Name }}</h2>
+
+    <button (click)="toggleForm()"
+      class="bg-green-700 text-white px-4 py-2 rounded-lg hover:bg-green-900 transition-colors w-full md:w-auto" style="background-color: blue !important; color: white !important;">
+      {{ showForm ? 'Cancel' : '+ Add Expense' }}
+    </button>
+</div >
+
+<!-- Expense List Table -->
+     @if (!showForm) {
+    @if (ExpenseList && ExpenseList.length > 0) {
+    <div class="overflow-y-auto max-h-[500px] border border-gray-200 rounded-md">
+      <table class="min-w-full bg-white border-collapse table-auto">
+        <thead class="sticky top-0 z-10 bg-white">
+          <tr class="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+            <th class="py-3 px-6 text-center" style="width: 90px;">ID</th>
+            <th class="py-3 px-6 text-center" style="width: 250px;">Date</th>
+            <th class="py-3 px-6 text-center" style="width: 170px;">Amount</th>
+            <th class="py-3 px-6 text-center" style="width: 295px;">Description</th>
+            <th class="py-3 px-6 text-center" style="width: 200px;">Account</th>
+            <th class="py-3 px-6 text-center" style="width: 150px;">User</th>
+            <th class="py-3 px-6 text-center" style="width: 150px;">Expense Type</th>
+            <th class="py-3 px-6 text-center" style="width: 150px;">Student Name</th>
+            <th class="py-3 px-6 text-center">Action</th>
+          </tr>
+        </thead>
+        <tbody class="text-gray-600 text-sm font-light">
+          <tr *ngFor="let expense of paginatedExpenses; let i = index"
+            class="border-b border-gray-200 hover:bg-gray-100">
+            <td class="py-3 px-6 text-center">{{ (currentPage - 1) * pageSize + i + 1 }}</td>
+            <td class="py-3 px-6 text-center">{{ expense.Entry_Date | date: 'dd-MM-yyyy hh:mm a' }}</td>
+            <td class="py-3 px-6 text-center">{{ expense.Amount }}</td>
+            <td class="py-3 px-6 text-center">{{ expense.Description }}</td>
+            <td class="py-3 px-6 text-center">
+              {{ expense.Account_Name }}
+              <span *ngIf="expense.Expense_Type">
+                ({{ expense.Expense_Type.Expense_Type_Name }})
+              </span>
+            </td>
+            <td class="py-3 px-6 text-center">{{ expense.First_Name }}</td>
+            <td class="py-3 px-6 text-center">
+              {{ expense.Expense_Type_Name ? expense.Expense_Type_Name : 'N/A' }}
+            </td>
+            <td>{{ expense.StudentName }}</td>
+            <td class="py-3 px-6 text-center">
+              <div class="flex gap-2 justify-center">
+                <button (click)="editExpense(expense)"
+                  class="flex items-center h-10 px-4 py-2 bg-yellow-50 text-yellow-700 rounded-md hover:bg-yellow-100 transition-all duration-300 transform hover:scale-105 whitespace-nowrap">
+                  <span class="material-symbols-outlined mr-2">edit</span>
+                </button>
+
+                <button (click)="deleteExpense(expense.Expense_Id)"
+                  class="flex items-center h-10 px-4 py-2 bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-all duration-300 transform hover:scale-105 whitespace-nowrap">
+                  <span class="material-symbols-outlined mr-2">delete</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    }
+
+    <!-- Pagination Controls -->
+    <div class="flex justify-end items-center gap-4 mt-4 px-4" style="justify-content: space-between;">
+      <div class="flex items-center gap-2 text-sm text-gray-700">
+        <label for="pageSizeSelect">Rows per page:</label>
+        <select style="width: 80px;" id="pageSizeSelect" [(ngModel)]="pageSize" (change)="onPageSizeChange()"
+          class="border rounded px-2 py-1 focus:outline-none" >
+          <option *ngFor="let size of pageSizeOptions" [value]="size">{{size}}</option>
+        </select>
+      </div>
+
+          <!-- No data fallback -->
+    @if (ExpenseList && ExpenseList.length === 0) {
+    <p>No expenses found.</p>
+    }
+
+    
+      <div class="pagination-buttons">
+        <button class="px-3 py-1 border rounded hover:bg-gray-100" [disabled]="currentPage === 1" (click)="prevPage()">
+          Prev
+        </button>
+        <span>{{ currentPage }} / {{ totalPages }}</span>
+
+        <button class="px-3 py-1 border rounded hover:bg-gray-100" [disabled]="currentPage === totalPages"
+          (click)="nextPage()">
+          Next
+        </button>
+      </div>
+    </div>
+
+
+
+    }
+
+
+    <form *ngIf="showForm" (ngSubmit)="saveSelectedExpense()" #expenseForm="ngForm" class="space-y-4">
+      <!-- Expense Type -->
+  <div>
+    <label class="block font-medium mb-1">Expense Type:</label>
+    <select [(ngModel)]="selectedExpenseType" name="expenseType" required
+      class="w-full border border-gray-300 p-2 rounded">
+      <option *ngFor="let type of Expens_Type" [value]="type.Expense_Type_Id">
+        {{ type.Expense_Type_Name }}
+      </option>
+    </select>
+  </div>
+
+  <!-- Amount -->
+  <div>
+    <label class="block font-medium mb-1">Amount:</label>
+    <input type="number" [(ngModel)]="amount" name="amount" required
+      class="w-full border border-gray-300 p-2 rounded" />
+  </div>
+
+  <!-- Description -->
+  <div>
+    <label class="block font-medium mb-1">Description:</label>
+    <input type="text" [(ngModel)]="description" name="description" maxlength="200"
+      class="w-full border border-gray-300 p-2 rounded" />
+  </div>
+
+  <!-- Account -->
+  <div>
+    <label class="block text-sm font-medium text-gray-700">Account:</label>
+    <select [(ngModel)]="selectedAccount" name="accountId"  [compareWith]="compareAccounts" required
+      class="w-full border border-gray-300 p-2 rounded">
+      <option *ngFor="let account of allAccounts" [ngValue]="account">
+        {{ account.Account_Name }}
+      </option>
+    </select>
+  </div>
+
+  <!-- Submit -->
+  <button type="submit" [disabled]="expenseForm.invalid" class="w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition" style="background-color: blue !important; color: white !important;">
+    Save
+  </button>
+</form>
+<app-loading [isLoading]="isLoading"></app-loading>
+</div>
+

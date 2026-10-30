@@ -1,0 +1,447 @@
+:host {
+  display: block;
+  padding: 0;
+  font-family: 'Inter', sans-serif !important;
+}
+
+:host * {
+  font-family: 'Inter', sans-serif !important;
+}
+
+// Section Containers
+section.container-section {
+  margin-top: 1rem;
+  background-color: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 1rem 0.75rem;
+  margin-bottom: 1rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead {
+    background-color: #f8fafc !important;
+  }
+
+  th {
+    background-color: #f8fafc !important;
+    font-size: 18px !important;
+    text-transform: capitalize !important;
+    color: #475569 !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.05em !important;
+    padding: 0.5rem 1rem !important;
+    text-align: left !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+  }
+
+  td {
+    font-size: 17px !important;
+    padding: 0.5rem 1rem !important;
+    color: #64748b !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+  }
+
+  tr:hover {
+    background-color: #f8fafc !important;
+  }
+}
+
+// Filter Section Styling
+.filter-row { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 0.75rem; 
+  align-items: center; 
+  
+  select, input[type="text"], input[type="date"] {
+    height: 42px !important;
+    padding: 0 1rem !important;
+    font-size: 18px !important;
+    line-height: normal !important;
+    box-sizing: border-box !important;
+    border-radius: 6px !important;
+    border: 2px solid #e5e7eb !important;
+    background-clip: padding-box;
+    
+    &:focus {
+      border-color: #3b82f6 !important;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+      outline: none !important;
+    }
+  }
+
+  .flex-1 {
+    flex: 1;
+    min-width: 200px;
+  }
+}
+
+.action-group { 
+  display: flex; 
+  gap: 1rem; 
+  align-items: center; 
+}
+
+// Pagination
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #ffffff;
+  border-top: 1px solid #e5e7eb;
+
+  select {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    outline: none;
+
+    &:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 1px #3b82f6;
+    }
+  }
+}
+
+// Modern Buttons
+.btn-blue-modern { 
+  background-color: #0000ff !important; 
+  color: white !important;
+  font-weight: 600;
+  height: 42px;
+  padding: 0 1.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  
+  &:hover {
+    background-color: #0000cc !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+}
+
+  @media print {
+
+    #certificateContainer {
+      page-break-inside: avoid;
+    }
+    @page {
+      size: landscape;
+    }
+  }
+ 
+  @page {
+    margin: 0;
+  }
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  .certificateContainer {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .certificate-template {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+  .certificate-template img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .certificate-content {
+    position: absolute;
+    top: 58%;
+    left: 68%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: 60%;
+  }
+  .certificate-name {
+    font-size: 38px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #000;
+  }
+  .certificate-text {
+    font-size: 18px;
+    color: #000;
+    line-height: 1.5;
+  }
+
+
+  .vertical-tab-container {
+  display: flex;
+  height: 100%;
+  min-height: 400px;
+}
+
+::ng-deep .vertical-tabs {
+  flex-direction: row;
+  display: flex;
+  width: 100%;
+
+  .mat-tab-labels {
+    flex-direction: column;
+    border-right: 1px solid #ddd;
+    min-width: 160px;
+    background-color: #f9fafb;
+  }
+
+  .mat-tab-label {
+    justify-content: flex-start;
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid #eee;
+    font-weight: 500;
+    color: #4b5563; // gray-700
+  }
+
+  .mat-tab-label-active {
+    background-color: #e0f2fe; // blue-100
+    color: #1d4ed8; // blue-700
+  }
+
+  .mat-tab-body-wrapper {
+    flex: 1;
+    padding: 24px;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-left: none;
+    border-radius: 0 8px 8px 0;
+  }
+}
+
+
+.pay-button {
+  background-color: #43a047 !important; // Material green[600]
+  color: white;
+  font-weight: 500;
+  padding: 2px 12px;
+  font-size: 13px;
+  min-width: 64px;
+}
+
+
+.fees-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  background-color: #fafafa;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+  h2 {
+    text-align: center;
+    margin-bottom: 8px;
+    color: #3f51b5;
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  mat-form-field {
+    width: 100%;
+  }
+
+  .btn-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 20px;
+
+    button {
+      min-width: 100px;
+    }
+  }
+}
+
+// =============================
+// Fee List Section
+// =============================
+.fees-list {
+  margin-top: 32px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
+
+  h3 {
+    font-size: 18px;
+    margin-bottom: 16px;
+    color: #424242;
+  }
+
+  table {
+    width: 100%;
+
+    th {
+      background-color: #f5f5f5;
+      color: #333;
+      font-weight: 500;
+      font-size: 16px;
+    }
+
+    td {
+      font-size: 15px;
+    }
+
+    tr.mat-header-row {
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    tr.mat-row:hover {
+      background-color: #f0f8ff;
+    }
+  }
+}
+
+// =============================
+// Responsive (Mobile-friendly)
+// =============================
+@media (max-width: 768px) {
+  .fees-form-container {
+    padding: 16px;
+
+    mat-form-field {
+      width: 100%;
+    }
+
+    .btn-group {
+      flex-direction: column;
+      align-items: stretch;
+
+      button {
+        width: 100%;
+      }
+    }
+  }
+
+  .fees-list {
+    padding: 16px;
+    overflow-x: auto;
+
+    table {
+      min-width: 600px;
+    }
+  }
+}
+
+
+.receipt-edit-form {
+  margin-top: 20px;
+  padding: 20px;
+  background: #f3f3f3;
+  border-radius: 8px;
+}
+.receipt-edit-form form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+// =============================
+// Fee List & Receipts Tab Styles
+// =============================
+::ng-deep .fee-tabs {
+  .mat-mdc-tab-header {
+    background-color: #f3f4f6 !important;
+    border-radius: 8px 8px 0 0;
+  }
+
+  .mat-mdc-tab {
+    min-width: 140px !important;
+  }
+
+  .mdc-tab {
+    background-color: transparent !important;
+  }
+
+  .mdc-tab--active {
+    background-color: #e5e7eb !important;
+    border-radius: 8px 8px 0 0;
+  }
+
+  .mdc-tab__text-label {
+    font-weight: 600 !important;
+    color: #4b5563 !important;
+  }
+
+  .mdc-tab--active .mdc-tab__text-label {
+    color: #111827 !important;
+  }
+
+  .mdc-tab-indicator__content--underline {
+    border-color: #4b5563 !important;
+    border-top-width: 3px !important;
+  }
+}
+\n
+/* Standardized Table Styling from My Students Page */
+:host {
+  font-family: 'Inter', sans-serif !important;
+}
+
+:host table {
+  border-collapse: collapse !important;
+  width: 100% !important;
+}
+
+:host th {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+  text-transform: uppercase !important;
+  font-size: 18px !important;
+  font-weight: normal !important;
+  padding: 0.375rem 0.5rem !important;
+  letter-spacing: 0.05em !important;
+  text-align: left !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+}
+
+:host td {
+  color: #64748b !important;
+  font-size: 17px !important;
+  padding: 0.375rem 0.5rem !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+
+:host tr:hover {
+  background-color: #f8fafc !important;
+  cursor: pointer !important;
+}
+
+// Custom Scrollbar for the table container
+.overflow-x-auto {
+    &::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    &::-webkit-scrollbar-track {
+        background: #F1F5F9;
+        border-radius: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: #CBD5E1;
+        border-radius: 4px;
+        border: 2px solid #F1F5F9;
+        &:hover {
+            background: #94A3B8;
+        }
+    }
+}

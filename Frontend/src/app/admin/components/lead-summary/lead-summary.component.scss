@@ -1,0 +1,38 @@
+/* Lead Summary SCSS styles */
+.scrollbar-none {
+  scrollbar-width: none; /* Firefox */
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+}
+
+/* Card zoom hover and micro-transitions */
+article {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, box-shadow;
+
+  &:hover {
+    box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.1), 0 8px 10px -6px rgba(99, 102, 241, 0.1);
+  }
+}
+
+/* Biometric pulses */
+button svg {
+  transition: transform 0.2s ease;
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+.lead-status-icon {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  .material-symbols-outlined {
+    font-weight: 600;
+    font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 24;
+  }
+}
+
+article:hover .lead-status-icon {
+  transform: translateY(-1px) scale(1.04);
+}
+

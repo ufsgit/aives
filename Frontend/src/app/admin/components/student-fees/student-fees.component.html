@@ -1,0 +1,129 @@
+<div class="main">
+  <div style="text-align: end;">
+    <button class="border border-blue hover:bg-gray-500 hover:text-white text-black font-bold py-2 px-4 rounded mt-4"
+      style="align-items:end;gap: 5px;margin-right: 25px;" (click)="onCancel()">Close</button>
+  </div>
+
+  @if (feesList.length) {
+  <form #feesForm="ngForm">
+    <div *ngFor="let fee of feesList; let i = index" class="fee-item">
+
+      <div class="space-y-2 mb-5">
+        <label class="block text-sm font-medium text-gray-700">Fee Type</label>
+        <input type="text" [(ngModel)]="fee.Fee_Type_Name" name="feeTypeName{{i}}"
+          class="w-full px-3 py-2 border border-gray-300 bg-gray-100 rounded-md text-gray-500 cursor-not-allowed focus:outline-none"
+          readonly>
+      </div>
+
+      <div class="space-y-2">
+        <label for="Branch" class="block text-sm font-medium text-gray-700">
+          Tax Type
+        </label>
+        <select [(ngModel)]="fee.Tax_Type_Id" name="Tax_Type_Id{{i}}"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          <option *ngFor="let branch of alltaxtypes" [value]="branch.Tax_Type_Id">
+            {{ branch.Tax_Type_Name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group mt-5">
+        <label>Paying Amount</label>
+        <input type="number" [(ngModel)]="fee.tempPaidAmount" name="paidAmount{{i}}" class="form-control" required />
+      </div>
+      
+      <!-- <div class="form-group" *ngIf="calculateFine(fee) > 0">
+        <label class="text-red-600 font-bold">Late Fine Applied</label>
+        <div class="text-red-600 font-bold">Rs. {{ calculateFine(fee) }}</div>
+      </div> -->
+
+      <div class="form-group">
+        <label>Payment Date</label>
+        <input type="date" [(ngModel)]="fee.Payment_Date" name="paymentDate{{i}}" class="form-control" />
+      </div>
+
+      <!-- <div class="form-group">
+        <label>Payment Mode</label>
+        <input type="text" [(ngModel)]="fee.Payment_Mode" name="paymentMode{{i}}" class="form-control" />
+      </div> -->
+      <div class="form-group">
+        <label>Payment Mode</label>
+        <select [(ngModel)]="fee.Payment_Id" name="paymentId{{i}}" (change)="change_payment(fee.Payment_Id)"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          required>
+          <option *ngFor="let payment of allPaymentMode" [value]="payment.Payment_Id">
+            {{ payment.Payment_Name }}
+          </option>
+        </select>
+        <!-- Validation Message -->
+        <p class="text-red-500 text-sm" *ngIf="!fee.Payment_Id">
+          Please select an payment.
+        </p>
+      </div>
+
+      <div class="form-group">
+        <label>Transaction ID</label>
+        <input type="text" [(ngModel)]="fee.Transaction_ID" name="transactionId{{i}}" class="form-control" />
+      </div>
+
+      <div class="space-y-2">
+        <label for="Branch" class="block text-sm font-medium text-gray-700">
+          Account
+        </label>
+        <select [(ngModel)]="fee.Account_Id" name="accountId{{i}}"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          required>
+          <option *ngFor="let branch of allAccounts" [value]="branch.Account_id">
+            {{ branch.Account_Name }}
+          </option>
+        </select>
+        <!-- Validation Message -->
+        <p class="text-red-500 text-sm" *ngIf="!fee.Account_Id">
+          Please select an account.
+        </p>
+      </div>
+
+      <!-- <div class="space-y-2">{{Tax_type_Id}}
+  <label for="taxType" class="block text-sm font-medium text-gray-700 mt-5">
+    Tax Option in Receipt
+  </label>
+  <select
+    id="taxType"
+    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+    [(ngModel)]="Tax_type_Id"
+    (change)="onTaxTypeChange($event)"
+    name="taxType"
+  >
+    <option [value]="1">With Tax</option>
+    <option [value]="2">Without Tax</option>
+  </select>
+</div> -->
+
+    </div>
+      <div class="form-group mt-5">
+        <label>Email Template</label>
+        <select [(ngModel)]="selectedTemplateId" name="selectedTemplateId"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+          <option [ngValue]="null">-- Select Template To Send --</option>
+          <option *ngFor="let template of emailTemplates" [value]="template.Template_ID">
+            {{ template.Template_Name }}
+          </option>
+        </select>
+      </div>
+
+      <div style="text-align: end;margin-right: 25px;">
+      <!-- <button mat-raised-button color="primary" *ngIf="isEditMode" (click)="saveFees()">
+        Update Fee
+      </button>
+      <button mat-raised-button color="accent" *ngIf="!isEditMode" [disabled]="!areAllAccountsSelected()" (click)="saveFees()">
+        Create Fee
+      </button> -->
+      <button mat-raised-button [color]="isEditMode ? 'primary' : 'accent'"
+        [disabled]="!isEditMode && !areAllAccountsSelected()" (click)="isEditMode ? updateFee() : saveFees()">
+        {{ isEditMode ? 'Update Fee' : 'Create Fee' }}
+      </button>
+    </div>
+
+  </form>
+  }
+</div>

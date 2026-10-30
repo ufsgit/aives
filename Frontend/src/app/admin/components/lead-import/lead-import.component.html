@@ -1,0 +1,164 @@
+<div class="lead-import-page">
+  <div class="main-card">
+    <form [formGroup]="importForm">
+      <!-- Metadata Row -->
+      <div class="metadata-grid">
+        <div class="form-group">
+          <label>Branch</label>
+          <select formControlName="Branch" [compareWith]="compareObjects" class="custom-select">
+            <option [ngValue]="null" disabled>Select Branch</option>
+            @for (branch of branchData; track branch) {
+              <option [ngValue]="branch">{{ branch.Branch_Name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Department</label>
+          <select formControlName="Department" [compareWith]="compareObjects" class="custom-select">
+            <option [ngValue]="null" disabled>Select Department</option>
+            @for (dept of departmentData; track dept) {
+              <option [ngValue]="dept">{{ dept.Department_Name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Assign To Staff</label>
+          <select formControlName="AssignToStaff" [compareWith]="compareObjects" class="custom-select">
+            <option [ngValue]="null" disabled>Select Staff</option>
+            @for (staff of staffData; track staff) {
+              <option [ngValue]="staff">{{ staff.First_Name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Next Follow-up Date</label>
+          <div class="date-input-container">
+            <input [matDatepicker]="picker" formControlName="NextFollowUpDate" placeholder="dd-mm-yyyy">
+            <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Follow-up Status</label>
+          <select formControlName="FollowUpStatus" [compareWith]="compareObjects" class="custom-select">
+            <option [ngValue]="null" disabled>Select Status</option>
+            @for (status of followUpStatusData; track status) {
+              <option [ngValue]="status">{{ status.Status_Name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Enquiry Source</label>
+          <select formControlName="EnquirySource" [compareWith]="compareObjects" class="custom-select">
+            <option [ngValue]="null" disabled>Select Enquiry Source</option>
+            @for (source of enquirySources; track source) {
+              <option [ngValue]="source">{{ source.Enquiry_Source_Name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <!-- Remarks Row -->
+      <div class="remarks-container mt-4">
+        <label>Remarks</label>
+        <textarea formControlName="Remarks" placeholder="Enter follow-up details..." rows="3"></textarea>
+      </div>
+    </form>
+
+    <!-- Template Preview Section -->
+    <div class="template-preview-section mt-6">
+      <table class="template-table">
+        <thead>
+          <tr>
+            <th><strong>A</strong><br>Name</th>
+            <th><strong>B</strong><br>Phone Number</th>
+            <th><strong>C</strong><br>Alternative Number</th>
+            <th><strong>D</strong><br>Email</th>
+            <th><strong>E</strong><br>Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>John Doe</td>
+            <td>9876543210</td>
+            <td>8756945264</td>
+            <td>john&#64;example.com</td>
+            <td>Follow up next week</td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Actions Row -->
+    <div class="actions-row mt-4">
+      <button class="btn-download" (click)="downloadTemplate()">DOWNLOAD EXCEL FORMAT</button>
+      <div class="file-uploader">
+        <input type="file" #fileInput (change)="onFileSelected($event)" accept=".xlsx, .xls" hidden>
+        <button class="btn-choose" (click)="fileInput.click()" style="background-color: blue !important; color: white !important;">{{ file ? file.name : 'CHOOSE FILE' }}</button>
+      </div>
+      
+      @if (sheetNames.length > 1) {
+        <div class="sheet-selector ml-4">
+          <label class="mr-2 text-sm font-medium">Select Sheet:</label>
+          <select [ngModel]="selectedSheetName" (ngModelChange)="onSheetChange($event)" class="custom-select-small">
+            @for (name of sheetNames; track name) {
+              <option [value]="name">{{ name }}</option>
+            }
+          </select>
+        </div>
+      }
+    </div>
+
+    <!-- Results Table -->
+    <div class="results-container mt-6">
+      <table class="results-table">
+        <thead>
+          <tr>
+            <th>S.No</th>
+            <th>Name</th>
+            <th>Phone Number</th>
+            <th>Alternative Number</th>
+            <th>Email</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (lead of importedLeads; track lead) {
+            <tr>
+              <td>{{ lead.SNo }}</td>
+              <td>{{ lead.Name }}</td>
+              <td>{{ lead.Phone_Number }}</td>
+              <td>{{ lead.Alternative_Number }}</td>
+              <td>{{ lead.Email }}</td>
+              <td>{{ lead.Remarks }}</td>
+            </tr>
+          }
+          @if (importedLeads.length === 0) {
+            <tr>
+              <td colspan="6" class="no-data">No data imported yet.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Final Action -->
+    <div class="final-action mt-6 text-right">
+      <button class="btn-import" [disabled]="isImporting || !file" (click)="importLeads()">
+        {{ isImporting ? 'IMPORTING...' : 'IMPORT' }}
+      </button>
+    </div>
+  </div>
+</div>

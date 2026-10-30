@@ -1,0 +1,185 @@
+
+> briffni-frontend@0.0.0 start
+> ng serve --host 127.0.0.1 --port 4200
+
+[33m>[39m Building...
+[32m√[39m Building...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m                         [2m | [22m [1mRaw size[22m
+[32mstyles.css[39m         [2m | [22m[2mstyles[22m                        [2m | [22m[36m190.62 kB[39m[2m | [22m
+[32mchunk-WQMTGA4G.js[39m  [2m | [22m[2m-[22m                             [2m | [22m [36m95.93 kB[39m[2m | [22m
+[32mpolyfills.js[39m       [2m | [22m[2mpolyfills[22m                     [2m | [22m [36m89.77 kB[39m[2m | [22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m                          [2m | [22m [36m68.14 kB[39m[2m | [22m
+[32mchunk-VOP3KRNM.js[39m  [2m | [22m[2m-[22m                             [2m | [22m [36m10.27 kB[39m[2m | [22m
+[32mchunk-EVSPGG2W.js[39m  [2m | [22m[2m-[22m                             [2m | [22m  [36m1.64 kB[39m[2m | [22m
+[32mchunk-BDWINFJR.js[39m  [2m | [22m[2m-[22m                             [2m | [22m[36m770 bytes[39m[2m | [22m
+
+[1m [22m                  [2m | [22m[1mInitial total[22m                 [2m | [22m[1m457.14 kB[22m
+
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m                         [2m | [22m [1mRaw size[22m
+[32mchunk-F5SIJ7DX.js[39m  [2m | [22m[2madmin-routes[22m                  [2m | [22m  [36m3.29 MB[39m[2m | [22m
+[32mchunk-HUTJWKNE.js[39m  [2m | [22m[2menquiry-summary-component[22m     [2m | [22m [36m30.46 kB[39m[2m | [22m
+[32mchunk-ANOZNSCX.js[39m  [2m | [22m[2mmock-test-subscribed-component[22m[2m | [22m [36m22.07 kB[39m[2m | [22m
+[32mchunk-5I6OUGAI.js[39m  [2m | [22m[2m-[22m                             [2m | [22m [36m16.69 kB[39m[2m | [22m
+[32mchunk-SAPLCJ7M.js[39m  [2m | [22m[2mregistration-summary-component[22m[2m | [22m [36m15.88 kB[39m[2m | [22m
+[32mchunk-E37I3S32.js[39m  [2m | [22m[2m-[22m                             [2m | [22m [36m12.03 kB[39m[2m | [22m
+[32mchunk-SWCXWSHL.js[39m  [2m | [22m[2mlead-summary-component[22m        [2m | [22m[36m230 bytes[39m[2m | [22m
+[32mchunk-R5UV5L3G.js[39m  [2m | [22m[2mteacher-routes[22m                [2m | [22m[36m187 bytes[39m[2m | [22m
+
+Application bundle generation complete. [34.487 seconds]
+
+Watch mode enabled. Watching for file changes...
+NOTE: Raw file sizes do not reflect development server per-request transformations.
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m4200[22m/[39m
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+Application bundle generation failed. [44.499 seconds]
+
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m                         [2m | [22m [1mRaw size[22m
+[32mstyles.css[39m         [2m | [22m[2mstyles[22m                        [2m | [22m[36m190.69 kB[39m[2m | [22m
+[32mchunk-WQMTGA4G.js[39m  [2m | [22m[2m-[22m                             [2m | [22m [36m95.93 kB[39m[2m | [22m
+[32mpolyfills.js[39m       [2m | [22m[2mpolyfills[22m                     [2m | [22m [36m89.77 kB[39m[2m | [22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m                          [2m | [22m [36m68.14 kB[39m[2m | [22m
+[32mchunk-VOP3KRNM.js[39m  [2m | [22m[2m-[22m                             [2m | [22m [36m10.27 kB[39m[2m | [22m
+[32mchunk-EVSPGG2W.js[39m  [2m | [22m[2m-[22m                             [2m | [22m  [36m1.64 kB[39m[2m | [22m
+[32mchunk-BDWINFJR.js[39m  [2m | [22m[2m-[22m                             [2m | [22m[36m770 bytes[39m[2m | [22m
+
+[1m [22m                  [2m | [22m[1mInitial total[22m                 [2m | [22m[1m457.21 kB[22m
+
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m                         [2m | [22m [1mRaw size[22m
+[32mchunk-EZBFGMQJ.js[39m  [2m | [22m[2madmin-routes[22m                  [2m | [22m  [36m3.29 MB[39m[2m | [22m
+[32mchunk-HUTJWKNE.js[39m  [2m | [22m[2menquiry-summary-component[22m     [2m | [22m [36m30.46 kB[39m[2m | [22m
+[32mchunk-ANOZNSCX.js[39m  [2m | [22m[2mmock-test-subscribed-component[22m[2m | [22m [36m22.07 kB[39m[2m | [22m
+[32mchunk-TRE24JWU.js[39m  [2m | [22m[2m-[22m                             [2m | [22m [36m17.43 kB[39m[2m | [22m
+[32mchunk-SAPLCJ7M.js[39m  [2m | [22m[2mregistration-summary-component[22m[2m | [22m [36m15.88 kB[39m[2m | [22m
+[32mchunk-E37I3S32.js[39m  [2m | [22m[2m-[22m                             [2m | [22m [36m12.03 kB[39m[2m | [22m
+[32mchunk-3UUELQOY.js[39m  [2m | [22m[2mlead-summary-component[22m        [2m | [22m[36m230 bytes[39m[2m | [22m
+[32mchunk-R5UV5L3G.js[39m  [2m | [22m[2mteacher-routes[22m                [2m | [22m[36m187 bytes[39m[2m | [22m
+
+Application bundle generation complete. [16.071 seconds]
+
+Page reload sent to client(s).
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m                 [2m | [22m [1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m                  [2m | [22m [36m68.14 kB[39m[2m | [22m
+
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m                 [2m | [22m [1mRaw size[22m
+[32mchunk-GHKFMMS4.js[39m  [2m | [22m[2madmin-routes[22m          [2m | [22m  [36m3.29 MB[39m[2m | [22m
+[32mchunk-IP6EDVCZ.js[39m  [2m | [22m[2m-[22m                     [2m | [22m [36m18.18 kB[39m[2m | [22m
+[32mchunk-H3HNTUJV.js[39m  [2m | [22m[2mlead-summary-component[22m[2m | [22m[36m230 bytes[39m[2m | [22m
+
+Application bundle generation complete. [7.247 seconds]
+
+Component update sent to client(s).
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m                 [2m | [22m [1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m                  [2m | [22m [36m68.14 kB[39m[2m | [22m
+
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m                 [2m | [22m [1mRaw size[22m
+[32mchunk-BB436SEM.js[39m  [2m | [22m[2madmin-routes[22m          [2m | [22m  [36m3.29 MB[39m[2m | [22m
+[32mchunk-T26LHORQ.js[39m  [2m | [22m[2m-[22m                     [2m | [22m [36m18.16 kB[39m[2m | [22m
+[32mchunk-XDHRMWSZ.js[39m  [2m | [22m[2mlead-summary-component[22m[2m | [22m[36m230 bytes[39m[2m | [22m
+
+Application bundle generation complete. [9.877 seconds]
+
+Page reload sent to client(s).
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m                 [2m | [22m [1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m                  [2m | [22m [36m68.14 kB[39m[2m | [22m
+
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m                 [2m | [22m [1mRaw size[22m
+[32mchunk-SS4BZ2UL.js[39m  [2m | [22m[2madmin-routes[22m          [2m | [22m  [36m3.29 MB[39m[2m | [22m
+[32mchunk-EPMHHXUO.js[39m  [2m | [22m[2m-[22m                     [2m | [22m [36m18.01 kB[39m[2m | [22m
+[32mchunk-N3UPWFU5.js[39m  [2m | [22m[2mlead-summary-component[22m[2m | [22m[36m230 bytes[39m[2m | [22m
+
+Application bundle generation complete. [8.836 seconds]
+
+Page reload sent to client(s).
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m       [2m | [22m [1mRaw size[22m
+[32mstyles.css[39m         [2m | [22m[2mstyles[22m      [2m | [22m[36m190.79 kB[39m[2m | [22m
+[32mchunk-OQNT5NX3.js[39m  [2m | [22m[2m-[22m           [2m | [22m [36m95.95 kB[39m[2m | [22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m        [2m | [22m [36m68.14 kB[39m[2m | [22m
+
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m       [2m | [22m [1mRaw size[22m
+[32mchunk-PABM5GP2.js[39m  [2m | [22m[2madmin-routes[22m[2m | [22m  [36m3.29 MB[39m[2m | [22m
+
+Application bundle generation complete. [2.992 seconds]
+
+Stylesheet update sent to client(s).
+Component update sent to client(s).
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m       [2m | [22m[1mRaw size[22m
+[32mchunk-5ZDSKTZH.js[39m  [2m | [22m[2m-[22m           [2m | [22m[36m95.96 kB[39m[2m | [22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m        [2m | [22m[36m68.14 kB[39m[2m | [22m
+
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m       [2m | [22m[1mRaw size[22m
+[32mchunk-JIDOCPUI.js[39m  [2m | [22m[2madmin-routes[22m[2m | [22m [36m3.29 MB[39m[2m | [22m
+
+Application bundle generation complete. [7.507 seconds]
+
+Component update sent to client(s).
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m       [2m | [22m[1mRaw size[22m
+[32mchunk-56HIKNDK.js[39m  [2m | [22m[2m-[22m           [2m | [22m[36m96.02 kB[39m[2m | [22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m        [2m | [22m[36m68.14 kB[39m[2m | [22m
+
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m       [2m | [22m[1mRaw size[22m
+[32mchunk-XRT64A23.js[39m  [2m | [22m[2madmin-routes[22m[2m | [22m [36m3.29 MB[39m[2m | [22m
+
+Application bundle generation complete. [1.996 seconds]
+
+Component update sent to client(s).
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+Application bundle generation failed. [2.109 seconds]
+
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+Application bundle generation failed. [6.411 seconds]
+
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+Application bundle generation failed. [1.752 seconds]
+
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+Application bundle generation failed. [0.867 seconds]
+
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+Application bundle generation failed. [1.168 seconds]
+
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m                         [2m | [22m [1mRaw size[22m
+[32mstyles.css[39m         [2m | [22m[2mstyles[22m                        [2m | [22m[36m190.79 kB[39m[2m | [22m
+[32mchunk-56HIKNDK.js[39m  [2m | [22m[2m-[22m                             [2m | [22m [36m96.02 kB[39m[2m | [22m
+[32mpolyfills.js[39m       [2m | [22m[2mpolyfills[22m                     [2m | [22m [36m89.77 kB[39m[2m | [22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m                          [2m | [22m [36m68.14 kB[39m[2m | [22m
+[32mchunk-VOP3KRNM.js[39m  [2m | [22m[2m-[22m                             [2m | [22m [36m10.27 kB[39m[2m | [22m
+[32mchunk-EVSPGG2W.js[39m  [2m | [22m[2m-[22m                             [2m | [22m  [36m1.64 kB[39m[2m | [22m
+[32mchunk-BDWINFJR.js[39m  [2m | [22m[2m-[22m                             [2m | [22m[36m770 bytes[39m[2m | [22m
+
+[1m [22m                  [2m | [22m[1mInitial total[22m                 [2m | [22m[1m457.40 kB[22m
+
+[1mLazy chunk files[22m   [2m | [22m[1mNames[22m                         [2m | [22m [1mRaw size[22m
+[32mchunk-53QQDKDV.js[39m  [2m | [22m[2madmin-routes[22m                  [2m | [22m  [36m3.29 MB[39m[2m | [22m
+[32mchunk-HUTJWKNE.js[39m  [2m | [22m[2menquiry-summary-component[22m     [2m | [22m [36m30.46 kB[39m[2m | [22m
+[32mchunk-ANOZNSCX.js[39m  [2m | [22m[2mmock-test-subscribed-component[22m[2m | [22m [36m22.07 kB[39m[2m | [22m
+[32mchunk-EPMHHXUO.js[39m  [2m | [22m[2m-[22m                             [2m | [22m [36m18.01 kB[39m[2m | [22m
+[32mchunk-SAPLCJ7M.js[39m  [2m | [22m[2mregistration-summary-component[22m[2m | [22m [36m15.88 kB[39m[2m | [22m
+[32mchunk-E37I3S32.js[39m  [2m | [22m[2m-[22m                             [2m | [22m [36m12.03 kB[39m[2m | [22m
+[32mchunk-N3UPWFU5.js[39m  [2m | [22m[2mlead-summary-component[22m        [2m | [22m[36m230 bytes[39m[2m | [22m
+[32mchunk-R5UV5L3G.js[39m  [2m | [22m[2mteacher-routes[22m                [2m | [22m[36m187 bytes[39m[2m | [22m
+
+Application bundle generation complete. [8.844 seconds]
+
+Page reload sent to client(s).

@@ -1,0 +1,124 @@
+<div class="follow-up-status-page">
+
+  <app-loading [isLoading]="isLoading"></app-loading>
+
+  <!-- Filter / Search / Form Card -->
+  <div class="filter-card">
+
+    @if (save_status_form) {
+      <!-- Add / Edit Form -->
+      <form #statusForm="ngForm" (ngSubmit)="saveStatus(statusForm)" novalidate>
+        <div class="form-row">
+
+          <div class="field">
+            <span>Status Name</span>
+            <input
+              [(ngModel)]="statusName"
+              required
+              #nameInput="ngModel"
+              name="statusName"
+              type="text"
+              placeholder="e.g. Pending"
+            />
+            <small class="error-msg" *ngIf="nameInput.invalid && nameInput.touched">
+              Status name is required
+            </small>
+          </div>
+
+          <div class="field">
+            <span>Follow Up</span>
+            <select [(ngModel)]="isActive" name="isActive">
+              <option [ngValue]="true">Yes</option>
+              <option [ngValue]="false">No</option>
+            </select>
+          </div>
+
+        </div>
+
+        <div class="form-actions">
+          <button type="button" (click)="cancelEdit()" class="ghost-btn">Cancel</button>
+          <button
+            [disabled]="statusForm.invalid"
+            type="submit"
+            class="primary-btn"
+            style="background-color: blue !important; color: white !important;">
+            {{ selectedStatusID ? 'Update' : 'Save' }}
+          </button>
+        </div>
+      </form>
+
+    } @else {
+      <!-- Search + Add row -->
+      <div class="search-row">
+        <div class="search-box">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+              clip-rule="evenodd" />
+          </svg>
+          <input
+            type="text"
+            [(ngModel)]="searchQuery"
+            (input)="filterStatus()"
+            placeholder="Search status..."
+          />
+        </div>
+
+        <button
+          *ngIf="isSave"
+          (click)="addStatus()"
+          class="primary-btn add-btn"
+          style="background-color: blue !important; color: white !important;">
+          <span class="material-symbols-outlined">add</span> Add Status
+        </button>
+      </div>
+    }
+
+  </div>
+
+  <!-- Status Table -->
+  <div class="table-card">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>No.</th>
+            <th>Status</th>
+            <th class="center-col">Follow Up</th>
+            <th *ngIf="isEdit || isDelete" class="action-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (status of filteredStatusList; track status.Status_Id; let i = $index) {
+            <tr>
+              <td>{{ i + 1 }}</td>
+              <td class="source-cell">{{ status.Status_Name }}</td>
+              <td class="center-col">
+                @if (status.Is_Active) {
+                  <span class="badge badge-yes">Yes</span>
+                } @else {
+                  <span class="badge badge-no">No</span>
+                }
+              </td>
+              <td *ngIf="isEdit || isDelete" class="action-col">
+                <div class="action-btns">
+                  <button *ngIf="isEdit" (click)="editStatus(status)" class="icon-btn edit-btn">
+                    <span class="material-symbols-outlined">edit</span>
+                  </button>
+                  <button *ngIf="isDelete" (click)="deleteStatus(status)" class="icon-btn delete-btn">
+                    <span class="material-symbols-outlined">delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4" class="empty-state">No statuses found matching your search.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

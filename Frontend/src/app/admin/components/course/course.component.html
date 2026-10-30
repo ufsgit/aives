@@ -1,0 +1,1579 @@
+@if(isLoading){
+<app-loading [isLoading]="isLoading"></app-loading>
+
+<!-- <div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-50">
+    <div class="flex flex-col items-center">
+      <div class="w-16 h-16 border-t-4 border-b-4 border-blue-500 rounded-full animate-spin"></div>
+    </div>
+  </div> -->
+}
+
+
+<section>
+    <nav *ngIf="view!=='exams' && view !== 'fees' && view !=='fees_Details'" class="flex items-center space-x-2 mt-2 mb-1" aria-label="Breadcrumb">
+    @for (item of navigationItems; track $index; let last = $last) {
+    @if (last) {
+    <div class="flex items-center">
+      <span class="text-gray-900 font-bold text-lg">{{item.label}}</span>
+    </div>
+    }
+    }
+  </nav>
+
+  @if(view=='students'){
+  <section class="border border-gray-300 shadow p-6 rounded-lg bg-white">
+    <div class="flex justify-between mb-4">
+      <h2 class="text-lg font-bold">Enrolled Students</h2>
+      <button class="border border-blue hover:bg-gray-500 hover:text-white text-black font-bold py-2 px-4 rounded"
+        (click)="Close_Click()">
+        Close
+      </button>
+    </div>
+
+    <div class="overflow-x-auto shadow-lg rounded-lg">
+      <table class="min-w-full bg-white border border-gray-300">
+        <thead class="bg-gray-100 border-b-2 border-gray-300">
+          <tr>
+            <th
+              class="px-6 py-3 border border-gray-300 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              Student Name
+            </th>
+            <th colspan="2"
+              class="px-6 py-3 border border-gray-300 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              Batch Information
+            </th>
+            <th colspan="2"
+              class="px-6 py-3 border border-gray-300 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              1 on 1 Information
+            </th>
+          </tr>
+          <tr class="bg-gray-50">
+            <th class="px-6 py-3 border border-gray-300"></th>
+            <th
+              class="px-6 py-3 border border-gray-300 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Batch
+            </th>
+            <th
+              class="px-6 py-3 border border-gray-300 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Batch Faculty Name
+            </th>
+            <th
+              class="px-6 py-3 border border-gray-300 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              1 on 1 Faculty Name
+            </th>
+            <th
+              class="px-6 py-3 border border-gray-300 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              1 on 1 Time Slot (Requested / Allocated)
+            </th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-gray-200">
+          @for(item of course_students; track $index) {
+          <tr class="hover:bg-gray-50 transition ease-in-out duration-150"
+            [ngClass]="{'bg-[#c2d6ff]': item.Student_ID == selectedStudentId}">
+            <td class="px-6 py-4 border border-gray-300 whitespace-nowrap text-sm font-medium text-gray-800">
+              {{ item.First_Name }} {{ item.Last_Name }}
+            </td>
+
+            <!-- Batch Information -->
+            <td class="px-6 py-4 border border-gray-300 whitespace-nowrap text-sm text-gray-600">
+              <div class="relative">
+                <select [(ngModel)]="item.Batch_ID" (change)="changeBatch(item.Student_ID, item.Batch_ID)"
+                  style="    font-size: 0.775rem !important;"
+                  class="block w-full px-3 py-2 pr-8 text-sm border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 appearance-none sm:max-w-xs">
+                  <option [value]="null">Select</option>
+                  @for(batch of course_Batches; track $index) {
+                  @if(!batch['is_expired']) {
+                  <option [value]="batch['Batch_ID']">{{ batch['Batch_Name'] }}</option>
+                  }
+                  }
+                </select>
+
+              </div>
+            </td>
+
+
+            <td class="px-6 py-4 border border-gray-300 whitespace-nowrap text-sm text-gray-600">
+              {{ item.Teacher_Name_Batch }}
+            </td>
+
+            <!-- 1 on 1 Information (with vertical line separator) -->
+            <td class="px-6 py-4 border border-gray-300 whitespace-nowrap text-sm text-gray-600">
+              @if(teacherEditMode[$index]) {
+              <div class="flex items-center">
+                <select [(ngModel)]="item.User_ID"
+                  (change)="changeTeacher(item.Student_ID, item.Course_ID, item.User_ID, $index)"
+                  class="block w-full px-3 py-2 text-sm border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:max-w-xs">
+                  @for(teacher of getUniqueTeachers(); track $index) {
+                  <option [value]="teacher.User_ID">{{ teacher.Teacher_Name }}</option>
+                  }
+                </select>
+                <span class="material-symbols-outlined cursor-pointer ml-2 text-gray-500"
+                  (click)="teacherEditMode[$index] = false">
+                  close
+                </span>
+              </div>
+              } @else {
+              <div class="flex items-center">
+                <span>{{ item.Teacher_Name_One_On_One }}</span>
+                <span class="material-symbols-outlined cursor-pointer ml-2 text-gray-500 text-lg"
+                  (click)="teacherEditMode[$index] = true">
+                  edit
+                </span>
+              </div>
+              }
+            </td>
+
+            <td class="px-6 py-4 border border-gray-300 whitespace-nowrap text-sm text-gray-600">
+              <div class="flex flex-col">
+                <span class="text-xs text-gray-500">Requested: {{ item.start_time }} - {{ item.end_time }}</span>
+                @if(slot_editMode[$index]) {
+                <div class="flex items-center mt-2">
+                  <select [(ngModel)]="item.Slot_Id"
+                    (change)="changeSlot(item.Student_ID, item.Course_ID, item.Slot_Id, $index)"
+                    class="block w-full px-3 py-2 text-sm border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:max-w-xs">
+                    @for(slot of getFilteredSlots(item.selectedTeacher); track $index) {
+                    <option [value]="slot.Slot_Id">{{ slot.start_time }} - {{ slot.end_time }} ({{ slot.Teacher_Name }})
+                    </option>
+                    }
+                  </select>
+                  <span class="material-symbols-outlined cursor-pointer ml-2 text-gray-500"
+                    (click)="slot_editMode[$index] = false">
+                    close
+                  </span>
+                </div>
+                } @else {
+                <div class="flex items-center mt-2">
+                  <span class="text-sm text-gray-800">Allocated: {{ item.allocatedStartTime }} - {{
+                    item.allocatedEndTime }}</span>
+                  <span class="material-symbols-outlined cursor-pointer ml-2 text-gray-500 text-lg"
+                    (click)="slot_editMode[$index] = true">
+                    edit
+                  </span>
+                </div>
+                }
+              </div>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+
+
+  </section>
+
+  } @else if(view=='Batch_Course'){
+  <app-batch (closeClicked)="Close_Click()" [Course_ID]="course_Form.get('Course_ID')?.value"></app-batch>
+  } @else if(view=='list') {
+
+
+
+  <div class="overflow-y-auto h-[69vh] pr-2 mt-1">
+    <!-- Search and Action Bar -->
+    <div class="flex flex-row items-center gap-3 mb-3 mt-3">
+      <!-- Search Input -->
+      <div class="relative flex-grow">
+        <input type="text" [(ngModel)]="searchTerm" (input)="onSearchChange()" placeholder="Search by name "
+          class="w-[50vw] pl-10 pr-4 py-2 border-2 border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition duration-300 rounded-md">
+        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400"
+          xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd"
+            d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+            clip-rule="evenodd" />
+        </svg>
+      </div>
+
+      <!-- Add Course Button (Visible in Month Grid View) -->
+      <button *ngIf="isSave && !selectedMonth" class="text-white font-bold py-2 px-4 rounded whitespace-nowrap" (click)="Create_New()" style="background-color: blue !important; color: white !important;">
+        Add Course
+      </button>
+    </div>
+
+    <!-- 1. MONTH GRID VIEW (Shown when no month is selected) -->
+    <div *ngIf="!selectedMonth">
+      <div class="mb-4">
+        <h2 class="text-lg font-bold text-gray-800">Course Months</h2>
+        <p class="text-xs text-gray-500">Select a month to view added courses</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mt-2">
+        <div *ngFor="let group of monthGroups" (click)="selectMonth(group)"
+             class="bg-white border-2 border-gray-100 hover:border-blue-500 rounded-2xl p-5 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer flex flex-col justify-between relative overflow-hidden group">
+          <div class="absolute top-0 right-0 w-20 h-20 bg-blue-50/50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+          <div>
+            <div class="w-11 h-11 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-3 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-300">
+              <span class="material-symbols-outlined text-2xl">calendar_month</span>
+            </div>
+            <h3 class="text-lg font-bold text-gray-800 mb-1 group-hover:text-blue-600 transition-colors">{{ group.monthLabel }}</h3>
+            <span class="inline-block px-2.5 py-0.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full">
+              {{ group.courses.length }} {{ group.courses.length === 1 ? 'Course' : 'Courses' }}
+            </span>
+          </div>
+          <div class="mt-5 flex items-center text-xs font-semibold text-blue-600 gap-1 group-hover:gap-2 transition-all">
+            <span>View Courses</span>
+            <span class="material-symbols-outlined text-base">arrow_forward</span>
+          </div>
+        </div>
+
+        <div *ngIf="monthGroups.length === 0" class="col-span-full text-center py-12 bg-white rounded-xl border border-gray-200 text-gray-500">
+          <span class="material-symbols-outlined text-4xl text-gray-400 mb-2">calendar_today</span>
+          <p class="text-base font-medium">No Course Months Available</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. SELECTED MONTH COURSES LIST VIEW (Shown when a month is selected) -->
+    <div *ngIf="selectedMonth">
+      <!-- Back Navigation Header -->
+      <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-200">
+        <div class="flex items-center gap-3">
+          <button (click)="backToMonths()" class="flex items-center gap-1 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-all border-none cursor-pointer">
+            <span class="material-symbols-outlined text-lg">arrow_back</span>
+            Back to Months
+          </button>
+          <div>
+            <h2 class="text-xl font-bold text-gray-800 m-0">{{ selectedMonth.monthLabel }} Courses</h2>
+            <span class="text-xs text-gray-500">{{ selectedMonth.courses.length }} {{ selectedMonth.courses.length === 1 ? 'course' : 'courses' }} found</span>
+          </div>
+        </div>
+
+        <button *ngIf="isSave" class="text-white font-bold py-2 px-4 rounded whitespace-nowrap" (click)="Create_New()" style="background-color: blue !important; color: white !important;">
+          Add Course
+        </button>
+      </div>
+
+      <!-- Course Cards Loop -->
+      <div *ngFor="let course of selectedMonth.courses; let i = index">
+        <div class="rounded-lg mt-2 p-2 shadow-lg border border-gray-200 bg-white">
+          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 w-full p-2">
+            <!-- Course Info Section -->
+            <div class="w-full lg:flex-1">
+              <div class="flex flex-col gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-info text-base break-words font-semibold text-gray-800">{{course.Course_Name}}</span>
+                  <span *ngIf="!course.Disable_Status || course.Disable_Status == 0" class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide rounded-full bg-green-100 text-green-700 border border-green-200 shadow-sm">Active</span>
+                  <span *ngIf="course.Disable_Status == 1" class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide rounded-full bg-red-100 text-red-700 border border-red-200 shadow-sm">Deactivated</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Buttons Section -->
+            <div class="w-full lg:w-auto">
+              <div class="flex flex-wrap lg:flex-nowrap gap-3 cursor-pointer items-center">
+                <button (click)="openMailHistory(course); clearRoute()"
+                  title="Mail History"
+                  class="flex items-center h-10 px-4 py-2 bg-purple-50 text-purple-700 rounded-md hover:bg-purple-100 transition-all duration-300 transform hover:scale-105 whitespace-nowrap min-w-[120px]">
+                  <span class="material-symbols-outlined mr-2">mark_email_read</span>
+                  <span class="font-medium">Mail History</span>
+                </button>
+
+                <button (click)="View_Course_Fees(course.Course_ID, course.Course_Name); clearRoute()"
+                  class="flex items-center h-10 px-4 py-2 bg-orange-50 text-orange-700 rounded-md hover:bg-orange-100 transition-all duration-300 transform hover:scale-105 whitespace-nowrap min-w-[120px]">
+                  <span class="material-symbols-outlined mr-2">payments</span>
+                  <span class="font-medium">Fees</span>
+                </button>
+
+                <button (click)="View_Batch_Course(course.Course_ID,course.Course_Name);clearRoute()"
+                  class="flex items-center h-10 px-4 py-2 bg-sky-50 text-sky-700 rounded-md hover:bg-blue-100 transition-all duration-300 transform hover:scale-105 whitespace-nowrap min-w-[120px]">
+                  <span class="material-symbols-outlined mr-2">live_tv</span>
+                  <span class="font-medium">View Batch</span>
+                </button>
+
+                <button (click)="View_Course_Students(course.Course_ID,course.Course_Name);clearRoute()"
+                  class="flex items-center h-10 px-4 py-2 bg-green-50 text-green-700 rounded-md hover:bg-green-100 transition-all duration-300 transform hover:scale-105 whitespace-nowrap min-w-[120px]">
+                  <span class="material-symbols-outlined mr-2">people</span>
+                  <span class="font-medium">Students</span>
+                </button>
+
+                <button *ngIf="isEdit" (click)="Edit_Course(course.Course_ID,course.Course_Name,'form');clearRoute()"
+                  class="flex items-center h-10 px-4 py-2 bg-yellow-50 text-yellow-700 rounded-md hover:bg-yellow-100 transition-all duration-300 transform hover:scale-105 whitespace-nowrap">
+                  <span class="material-symbols-outlined">edit</span>
+                </button>
+
+                <button *ngIf="isDelete" (click)="Delete_Course(course.Course_ID,i);clearRoute()"
+                  class="flex items-center h-10 px-4 py-2 bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-all duration-300 transform hover:scale-105 whitespace-nowrap">
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="selectedMonth.courses.length === 0" class="text-center py-12 bg-white rounded-xl border border-gray-200 text-gray-500">
+        <p class="text-base font-medium">No courses found in this month.</p>
+      </div>
+    </div>
+  </div>
+
+
+  }@else if(view=='exams') {
+
+  <div class="bg-white rounded-lg shadow p-3 mt-4" >
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">Exam List</h2>
+    <div class="flex justify-end">
+      <button (click)="openCreateExamModal()"
+        class="border  border-blue hover:bg-gray-500 me-3 mb-2 hover:text-white text-black font-bold py-2 px-4 rounded">
+        + Add Exam
+      </button>
+      <button
+        class="border  border-blue hover:bg-gray-500 me-3 mb-2 hover:text-white text-black font-bold py-2 px-4 rounded"
+        (click)="applyFeesdetails()">
+        Close
+      </button>
+    </div>
+
+    <table class="min-w-full bg-white border border-gray-300 rounded-md">
+      <thead class="bg-gray-100 text-gray-700 text-sm">
+        <tr>
+          <th class="py-2 px-4 text-left">Exam Name</th>
+          <th class="py-2 px-4 text-left">Course</th>
+          <th class="py-2 px-4 text-left">Questions</th>
+          <th class="py-2 px-4 text-left">Time Limit</th>
+          <th class="py-2 px-4 text-left">Passing Score</th>
+          <th class="py-2 px-4 text-left">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let exam of examList" class="border-t text-sm">
+          <td class="py-2 px-4">{{ exam.Main_Question }}</td>
+          <td class="py-2 px-4">{{ exam.Course_Name }}</td>
+          <td class="py-2 px-4">{{ exam.Total_Questions }}</td>
+          <td class="py-2 px-4">{{ exam.Time_Limit }} mins</td>
+          <td class="py-2 px-4">{{ exam.Passing_Score }}%</td>
+          <td class="py-2 px-4 flex gap-2">
+            <button (click)="editExam(exam)"
+              class="inline-flex items-center px-3 py-1 text-xs font-medium rounded-md text-white bg-blue hover:bg-blueGray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                </path>
+              </svg>
+              Edit
+            </button>
+            <button (click)="deleteExam(exam)" style="margin-left: 5px;"
+              class="inline-flex items-center px-3 py-1 text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                </path>
+              </svg>
+              Delete
+            </button>
+            <!-- <button (click)="editExam(exam)" class="text-blue-600 hover:text-blue-800 text-sm">✏️ Edit</button>
+            <button (click)="deleteExam(exam)" class="text-red-600 hover:text-red-800 text-sm">🗑️ Delete</button>
+            <button (click)="manageQuestions(exam)" class="text-green-600 hover:text-green-800 text-sm">
+              📋 Questions
+            </button> -->
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  } @else if(view=='fees_Details') {
+  <div class="mt-10">
+    <h3 class="text-lg font-semibold text-gray-800 mb-4">Existing Fee Records</h3>
+    <div class="flex justify-end">
+      <button
+        class="border  border-blue hover:bg-gray-500 me-3 mb-2 hover:text-white text-black font-bold py-2 px-4 rounded"
+        (click)="addFees()">
+        Add Fees
+      </button>
+      <button
+        class="border  border-blue hover:bg-gray-500 me-3 mb-2 hover:text-white text-black font-bold py-2 px-4 rounded"
+        (click)="applyFeesdetails()">
+        Close
+      </button>
+    </div>
+    <table class="min-w-full bg-white border border-gray-300 rounded-md">
+      <thead class="bg-gray-100 text-gray-700 text-sm">
+        <tr>
+          <th class="py-2 px-4 text-left">Course Name</th>
+          <th class="py-2 px-4 text-left">Batch Name</th>
+          <th class="py-2 px-4 text-left">Fee Type</th>
+          <th class="py-2 px-4 text-left">Duration (in Month)</th>
+          <th class="py-2 px-4 text-left">Amount</th>
+          <th class="py-2 px-4 text-left">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let fee of feeList" class="border-t text-sm">
+          <td class="py-2 px-4">{{ fee.Course_Name }}</td>
+          <td class="py-2 px-4">{{ fee.Batch_Name }}</td>
+          <td class="py-2 px-4">{{ fee.Fee_Type }}</td>
+          <!-- <td class="py-2 px-4">{{ fee.Duration }} days</td> -->
+           <td class="py-2 px-4">{{ (fee.Duration / 30) | number:'1.0-0' }}</td>
+          <td class="py-2 px-4">₹{{ fee.Amount | number }}</td>
+          <td class="py-2 px-4">
+            <button (click)="editFee(fee)"
+              class="inline-flex items-center px-3 py-1 text-xs font-medium rounded-md text-white bg-blue hover:bg-blueGray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                </path>
+              </svg>
+              Edit
+            </button>
+            <button (click)="deleteInstallmentInformation(fee)" style="margin-left: 5px;"
+              class="inline-flex items-center px-3 py-1 text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                </path>
+              </svg>
+              Delete
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+
+  } @else if(view=='fees') {
+  <div class="bg-white rounded-lg shadow p-6 mt-4">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">Course Fees Details</h2>
+    <div class="flex justify-end">
+
+      <button
+        class="border  border-blue hover:bg-gray-500 me-3 mb-2 hover:text-white text-black font-bold py-2 px-4 rounded"
+        (click)="applyFees()">
+        Close
+      </button>
+    </div>
+    <form [formGroup]="feesForm" (ngSubmit)="saveFees()">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Course Name -->
+        <div>
+          <label class="block text-gray-700 text-sm font-medium mb-1">Course Name:</label>
+          <input type="text" [value]="SelecetedCourse" readonly
+            class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 bg-gray-100 cursor-not-allowed" />
+        </div>
+
+        <!-- Batch Dropdown-->
+        <div >
+          <label class="block text-gray-700 text-sm font-medium mb-1">Select Batch<span
+            class="text-red-700">*</span>:</label>
+          <select formControlName="Batch_ID"
+            class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200" required>
+            <option *ngFor="let batch of batch_Data" [value]="batch.Batch_ID">
+              {{ batch.Batch_Name }} - <span [ngClass]="batch.statusClass">{{ batch.statusText }}</span>
+            </option>
+          </select>
+        </div>
+
+
+        <!-- Fee Type Dropdown -->
+        <div>
+          <label class="block text-gray-700 text-sm font-medium mb-1">Fee Type:</label>
+          <input type="text" formControlName="fee_type"
+            class="w-full border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-500 cursor-not-allowed focus:outline-none" 
+            readonly>
+        </div>
+
+        <!-- Duration -->
+        <div>
+          <label class="block text-gray-700 text-sm font-medium mb-1">Duration (in months):</label>
+          <input type="number" formControlName="duration"
+            class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200" required/>
+        </div>
+
+        <!-- Amount -->
+        <div>
+          <label class="block text-gray-700 text-sm font-medium mb-1">Amount (₹):</label>
+          <input type="number" formControlName="amount"
+            class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200" required />
+        </div>
+
+      </div>
+
+      <div class="mt-6 flex gap-4">
+        <button type="submit"   [disabled]="feesForm.invalid || isLoading"
+          class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded transition" [ngClass]="{
+    'bg-green-600 hover:bg-green-700': !(feesForm.invalid || isLoading),
+    'bg-gray-400 cursor-not-allowed': feesForm.invalid || isLoading
+  }" style="background-color: blue !important; color: white !important;">
+            
+          {{ isEditing ? 'Update Fees' : 'Save Fees' }}
+        </button>
+        <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition">
+          Download Invoice
+        </button>
+      </div>
+    </form>
+  </div>
+
+  }@else if(view=='exam_students') {
+
+  <div class="bg-white shadow-md rounded-lg overflow-hidden">
+    <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+      <h2 class="text-xl font-semibold text-gray-800">Students Who Attended the Exam</h2>
+    </div>
+
+    <div class="p-6">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Name</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Email</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Phone</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Score</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Attempted Date</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            @for (student of exam_students; track student) {
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">{{student.First_Name}} {{student.Last_Name}}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-500">{{student.Email}}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-500">{{student.Phone_Number}}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900">{{student.Score}}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-500">{{student.Attempted_Date | date:'medium'}}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <!-- <button (click)="viewAnswers(student)" 
+                              class="text-indigo-600 hover:text-indigo-900 bg-indigo-100 hover:bg-indigo-200 px-3 py-1 rounded-full transition duration-300">
+                        View Answers
+                      </button> -->
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+  } @else if(view=='course_content_details') {
+  <div class="bg-white rounded-lg shadow-md p-4" *ngIf="totalFiles>0">
+    <h2 class="text-2xl font-semibold mb-4">Upload Progress</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="bg-gray-100 rounded-lg p-4">
+        <h3 class="text-lg font-semibold">Total Files</h3>
+        <p class="text-3xl font-bold">{{ totalFiles }}</p>
+      </div>
+      <div class="bg-gray-100 rounded-lg p-4">
+        <h3 class="text-lg font-semibold">Files Uploaded</h3>
+        <p class="text-3xl font-bold">{{ filesUploaded }}</p>
+      </div>
+      <div class="bg-gray-100 rounded-lg p-4">
+        <h3 class="text-lg font-semibold">Status</h3>
+        <p class="text-xl font-semibold">{{ uploadStatus }}</p>
+      </div>
+    </div>
+    <div class="mt-6">
+      <div class="h-4 bg-gray-200 rounded-full overflow-hidden">
+        <div class="h-full bg-blue rounded-full" role="progressbar" [style.width.%]="uploadProgress"
+          [attr.aria-valuenow]="uploadProgress" aria-valuemin="0" aria-valuemax="100">
+          <span class="sr-only">{{ uploadProgress }}% Complete</span>
+        </div>
+      </div>
+      <p class="mt-2 text-center text-sm font-semibold">{{ uploadProgress }}%</p>
+    </div>
+  </div>
+
+  <div class="max-w-full mx-auto p-6">
+    <form [formGroup]="contentForm" class="bg-white shadow-lg rounded-lg overflow-hidden">
+      <div class="p-6 space-y-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Content Submission Form</h2>
+
+        <!-- Visibility, Day Selection, and Exam Test -->
+        <div class="bg-gray-50 p-4 rounded-lg">
+          <h3 class="text-lg font-semibold mb-4 text-gray-700">Visibility and Scheduling</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Visibility</label>
+              <ul class="space-y-2">
+                @for (visibility of VisibilityDatas(); track visibility) {
+                <li>
+                  <mat-checkbox [checked]="contentForm.get('visibilities')?.value.includes(visibility['Visibility_ID'])"
+                    (change)="onVisibilityChange($event, visibility['Visibility_ID'], contentForm)">
+                    <span>{{visibility['Visbility_Name']}}</span>
+                  </mat-checkbox>
+                </li>
+                }
+                <li>
+                  <mat-checkbox formControlName="Is_Exam_Test" (change)="onExamTestCheckChange($event)">
+                    <span [ngClass]="{'text-blue-600': contentForm.get('Is_Exam_Test')?.value}">
+                      Exam
+                    </span>
+                  </mat-checkbox>
+                </li>
+              </ul>
+              <div *ngIf="contentForm.get('visibilities')?.touched && contentForm.get('visibilities')?.invalid"
+                class="text-red-500 text-sm mt-1">
+                {{ getErrorMessage('visibilities') }}
+              </div>
+            </div>
+            @if(contentForm.get('visibilities')?.value.includes(1)){
+
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Select Day</label>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-select formControlName="Days_Id">
+                  @for (day of daysDatas(); track day ;let i =$index) {
+                  <mat-option [value]="day['Days_Id']">
+                    {{ day['alias_Name'] }}
+                  </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <div *ngIf="contentForm.get('Days_Id')?.touched && contentForm.get('Days_Id')?.invalid"
+                class="text-red-500 text-sm mt-1">
+                {{ getErrorMessage('Days_Id') }}
+              </div>
+            </div>
+            }
+
+
+          </div>
+        </div>
+
+
+
+        <!-- Module and Section Selection -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          @if(contentForm.get('visibilities')?.value.includes(1)){
+
+          <div>
+            <label for="Module" class="block text-sm font-medium text-gray-700 mb-1">
+              Level <span class="text-red-500">*</span>
+            </label>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-select formControlName="Module_ID">
+                @for (module of ModuleDatas(); track module) {
+                <mat-option [value]="module['Module_ID']">
+                  {{ module['Module_Name'] }}
+                </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <div *ngIf="contentForm.get('Module_ID')?.touched && contentForm.get('Module_ID')?.invalid"
+              class="text-red-500 text-sm mt-1">
+              {{ getErrorMessage('Module_ID') }}
+            </div>
+          </div>
+          }
+          <div>
+            <label for="Section" class="block text-sm font-medium text-gray-700 mb-1">
+              Module <span class="text-red-500">*</span>
+            </label>
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-select (selectionChange)="onSelectionChange($event.value)" formControlName="Section_ID">
+                @for (Section of SectionsDatas(); track Section) {
+                <mat-option [value]="Section['Section_ID']">
+                  {{ Section['Section_Name'] }}
+                </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <div *ngIf="contentForm.get('Section_ID')?.touched && contentForm.get('Section_ID')?.invalid"
+              class="text-red-500 text-sm mt-1">
+              {{ getErrorMessage('Section_ID') }}
+            </div>
+          </div>
+        </div>
+
+
+        <!-- Content Details -->
+        <div>
+          <h3 class="text-lg font-semibold mb-4 text-gray-700">Content Details</h3>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Content Name</label>
+              <input type="text" formControlName="contentName" class="w-full px-3 py-2 border rounded-md"
+                placeholder="Enter content name" />
+              <div *ngIf="contentForm.get('contentName')?.touched && contentForm.get('contentName')?.invalid"
+                class="text-red-500 text-sm mt-1">
+                {{ getErrorMessage('contentName') }}
+              </div>
+            </div>
+            @if(!contentForm.get('Is_Exam_Test')?.value){
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">External Link</label>
+              <input type="text" formControlName="externalLink" class="w-full px-3 py-2 border rounded-md"
+                placeholder="Enter external link (optional)" />
+            </div>
+            }
+            @if(contentForm.get('visibilities')?.value.includes(2)) {
+
+            <div class="col-span-full" (click)="fileInput5.click()">
+              <input #fileInput5
+                (change)="onFileSelected($event,contentForm,'file',contentForm.get('file')?.value,'file_name',true)"
+                id="file-upload" style="display: none;" name="file-upload" type="file" class="sr-only">
+
+              <label for="courseName" class="block text-sm font-semibold leading-6 text-gray-900">Content File</label>
+              <div class="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
+                <div class="text-center">
+                  <svg class="mx-auto h-12 w-12 text-gray-300" viewBox="0 0 24 24" fill="currentColor"
+                    aria-hidden="true" data-slot="icon">
+                    <path fill-rule="evenodd"
+                      d="M1.5 6a2.25 2.25 0 0 1 2.25-2.25h16.5A2.25 2.25 0 0 1 22.5 6v12a2.25 2.25 0 0 1-2.25 2.25H3.75A2.25 2.25 0 0 1 1.5 18V6ZM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0 0 21 18v-1.94l-2.69-2.689a1.5 1.5 0 0 0-2.12 0l-.88.879.97.97a.75.75 0 1 1-1.06 1.06l-5.16-5.159a1.5 1.5 0 0 0-2.12 0L3 16.061Zm10.125-7.81a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Z"
+                      clip-rule="evenodd" />
+                  </svg>
+                  <div class="mt-4 flex justify-center text-sm leading-6 text-gray-600">
+                    <label
+                      class="relative cursor-pointer rounded-md bg-white font-semibold text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 hover:text-indigo-500">
+                      @if(!contentForm.get('file_name')?.value)
+                      {
+
+                      <span>Upload a file</span>
+                      } @else{
+                      <span>{{contentForm.get('file_name')?.value}}</span>
+                      }
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+
+
+
+
+
+            @if(contentForm.get('file')?.value) {
+            @if(contentForm.get('file_type')?.value && contentForm.get('file_type')?.value.includes('video')) {
+            <div class="mt-4 rounded-lg overflow-hidden shadow-lg">
+              <video class="w-full max-w-2xl mx-auto" height="360" controls controlsList="nodownload"
+                (error)="handleMediaError($event)">
+                <source [src]="filepath + contentForm.get('file')?.value" type="video/mp4">
+              </video>
+            </div>
+            } @else if(contentForm.get('file_type')?.value && contentForm.get('file_type')?.value.includes('audio')) {
+            <div class="mt-4 bg-gray-50 p-4 rounded-lg shadow-sm max-w-2xl mx-auto">
+              <audio class="w-full" controls controlsList="nodownload" (error)="handleMediaError($event)">
+                <source [src]="filepath + contentForm.get('file')?.value" type="audio/mpeg">
+              </audio>
+            </div>
+            } @else if(contentForm.get('file_type')?.value && contentForm.get('file_type')?.value.includes('image')) {
+            <div class="mt-4 rounded-lg overflow-hidden shadow-lg max-w-2xl mx-auto">
+              <img [src]="filepath + contentForm.get('file')?.value"
+                [alt]="contentForm.get('title')?.value || 'Content Image'" class="w-full h-auto object-contain"
+                (error)="handleMediaError($event)">
+            </div>
+            }
+
+
+            } }
+          </div>
+        </div>
+
+        <!-- Content Thumbnail Upload -->
+        <div>
+          <h3 class="text-lg font-semibold mb-4 text-gray-700">Content Thumbnail</h3>
+          <div
+            class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition-colors duration-300"
+            (click)="fileInput.click()">
+            <input #fileInput
+              (change)="onFileSelected($event, contentForm, 'contentThumbnail_Path', contentForm.get('contentThumbnail_Path')?.value, 'contentThumbnail_name', false, 'image')"
+              style="display:none;" type="file">
+            <img class="mx-auto h-24 w-24 mb-4" [src]="getImagePath(contentForm.get('contentThumbnail_Path')?.value)"
+              onerror="this.src='/assets/images/icons/upload-image.svg';" alt="Thumbnail preview">
+            <p class="text-sm text-gray-600">
+              {{ contentForm.get('contentThumbnail_name')?.value || 'Click to upload thumbnail' }}
+            </p>
+            <p class="text-xs text-gray-500 mt-2">PNG, JPG, GIF </p>
+          </div>
+        </div>
+
+        <!-- Exam Details -->
+        <div formGroupName="exam" class="bg-gray-50 p-6 rounded-lg">
+          @if(section && section['Have_Main_Question']) { @if(section && section['Is_Main_Question_Text']) {
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Main Question</label>
+            <textarea formControlName="Main_Question" class="w-full px-3 py-2 border rounded-md"
+              placeholder="Enter the main question" rows="5"></textarea>
+          </div>
+          } @else {
+          <div class="grid grid-cols-3 gap-4 mb-4">
+            <div class="col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-1">Audio</label>
+
+              <div
+                class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition-colors duration-300"
+                (click)="fileInput3.click()">
+                <input #fileInput3
+                  (change)="onFileSelected($event, contentForm.get('exam'), 'Main_Question', contentForm.get('exam.Main_Question')?.value, 'file_name',true, 'audio')"
+                  style="display:none;" type="file">
+                <p class="text-sm text-gray-600">
+                  {{ contentForm.get('exam.file_name')?.value || 'Click to upload Audio File' }}
+                </p>
+                <p class="text-xs text-gray-500 mt-2">Audio format only</p>
+
+              </div>
+            </div>
+            <div class="col-span-1">
+              @if(contentForm.get('exam.Main_Question')?.value) {
+              @if(contentForm.get('exam.file_type')?.value.includes('video')) {
+              <video width="100%" controls>
+                <source [src]="filepath + contentForm.get('exam.Main_Question')?.value" type="video/mp4">
+              </video>
+              } @else if(contentForm.get('exam.file_type')?.value.includes('audio')) {
+              <audio controls class="w-full">
+                <source [src]="getAudioSource()" type="audio/mpeg">
+              </audio>
+              } @else {
+              <img [src]="filepath + contentForm.get('exam.Main_Question')?.value" class="w-full h-auto"
+                alt="Main Question">
+              }
+              }
+            </div>
+          </div>
+          } } @if(section && section['Have_Supporting_Document']) {
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Question File</label>
+            <div
+              class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition-colors duration-300"
+              (click)="fileInput4.click()">
+              <input #fileInput4
+                (change)="onFileSelected($event, contentForm.get('exam'), 'Supporting_Document_Path', contentForm.get('exam.Supporting_Document_Path')?.value, 'Supporting_Document_Name', false, 'pdf')"
+                style="display:none;" type="file">
+              <p class="text-sm text-gray-600">
+                {{ contentForm.get('exam.Supporting_Document_Name')?.value || 'Click to upload supporting document' }}
+              </p>
+              <p class="text-xs text-gray-500 mt-2">PDF format only</p>
+            </div>
+          </div>
+          } @if(section && section['Have_Answer_Key']) {
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Answer Key</label>
+            <div
+              class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition-colors duration-300"
+              (click)="fileInput5.click()">
+              <input #fileInput5
+                (change)="onFileSelected($event, contentForm.get('exam'), 'Answer_Key_Path', contentForm.get('exam.Answer_Key_Path')?.value, 'Answer_Key_Name', false, 'pdf')"
+                style="display:none;" type="file">
+              <p class="text-sm text-gray-600">
+                {{ contentForm.get('exam.Answer_Key_Name')?.value || 'Click to upload answer key' }}
+              </p>
+              <p class="text-xs text-gray-500 mt-2">PDF format only</p>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="bg-gray-50 px-6 py-4 flex justify-end space-x-4">
+        <button type="button" (click)="this.applyFilters()"
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          Close
+        </button>
+        <button type="button" (click)="save_content()"
+          class="px-4 py-2 text-sm font-medium text-white bg-sky-500 rounded-md hover:bg-blueGray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center" style="background-color: blue !important; color: white !important;">
+          <i class="material-icons mr-2">save</i>
+          <span>Save</span>
+        </button>
+      </div>
+    </form>
+  </div>
+  } @else if(view=='content_list') {
+  <div class="container mx-auto ">
+    <div class="flex justify-end">
+
+      <button
+        class="border  border-blue hover:bg-gray-500 me-3 mb-2 hover:text-white text-black font-bold py-2 px-4 rounded"
+        (click)="Close_Click()">
+        Close
+      </button>
+    </div>
+    <div class=" bg-gray-50 rounded-lg shadow-md">
+
+
+
+      <form [formGroup]="filterForm" (ngSubmit)="applyFilters()" class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="space-y-2">
+            <label for="moduleId" class="block text-sm font-medium text-gray-700"> Level</label>
+            <select formControlName="moduleId" id="moduleId"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+              <option [ngValue]="0">All</option>
+              <option *ngFor="let module of ModuleDatas()" [ngValue]="module['Module_ID']">{{module['Module_Name']}}
+              </option>
+            </select>
+          </div>
+
+          <div class="space-y-2">
+            <label for="sectionId" class="block text-sm font-medium text-gray-700">Module </label>
+            <select formControlName="sectionId" id="sectionId"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+              <option [ngValue]="0">All</option>
+              <option *ngFor="let section of SectionsDatas()" [ngValue]="section['Section_ID']">
+                {{section['Section_Name']}}</option>
+            </select>
+          </div>
+
+          <div class="space-y-2">
+            <label for="dayId" class="block text-sm font-medium text-gray-700">Day</label>
+            <select formControlName="dayId" id="dayId"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+              <option [ngValue]="0">All</option>
+              <option *ngFor="let day of daysDatas()" [ngValue]="day['Days_Id']">{{day['alias_Name']}}</option>
+            </select>
+          </div>
+
+          <div class="space-y-2">
+            <label for="visibilityType" class="block text-sm font-medium text-gray-700">Visibility</label>
+            <select formControlName="visibilityType" id="visibilityType"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+              <option *ngFor="let visibility of VisibilityDatas()" [value]="visibility['Visibility_ID']">
+                {{visibility['Visbility_Name']}}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-4 mb-6">
+          <div class="flex items-center">
+            <input type="checkbox" id="Is_Exam_Test"
+              class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+              [checked]="filterForm.get('Is_Exam_Test')?.value == 1" (change)="onExamTestChange($event)" />
+            <label for="Is_Exam_Test" class="ml-2 block text-sm text-gray-900">Show Exam</label>
+          </div>
+
+          <div class="flex-grow">
+            <input type="text" formControlName="filterName" id="contentName"
+              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              placeholder="Search by content name" />
+          </div>
+          <div>
+            <button type="submit"
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+              <i class="fas fa-filter mr-2"></i> Apply Filters
+            </button>
+          </div>
+        </div>
+
+        <div class="flex justify-between">
+
+          <button type="button" (click)="addContent()"
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+            <i class="fas fa-plus mr-2"></i> Add Content
+          </button>
+        </div>
+      </form>
+
+
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div *ngFor="let content of courseContents | contentFilter: filterForm.get('filterName')?.value"
+          class="bg-white shadow-lg rounded-lg overflow-hidden">
+          <div class="bg-white rounded-lg shadow-md overflow-hidden h-full flex justify-between flex-col relative">
+            <div *ngIf="content.Is_Exam_Test" class="absolute top-0 right-[-7px] w-24 h-24 overflow-hidden">
+              <div
+                class="absolute top-0 right-[-7px] -mt-4 -mr-4 w-32 h-8 bg-red-500 text-white text-xs font-semibold flex items-center justify-center transform rotate-45">
+                <span class="pl-11">
+
+                  Exam
+                </span>
+              </div>
+            </div>
+            <div class="p-4">
+              <div class="flex items-center mb-4" style="height: 100px;">
+                <div *ngIf="content.contentThumbnail_Path" class="mr-3">
+                  <div class="w-12 h-12 overflow-hidden rounded-lg shadow-sm">
+                    <img [src]="filepath + content.contentThumbnail_Path" [alt]="content.contentThumbnail_name"
+                      class="object-cover w-full h-full" />
+                  </div>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800">{{ content.contentName }}</h2>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
+                <div>
+                  <p class="text-gray-600">Material type</p>
+                  <p class="font-medium text-gray-800">
+                    <!-- Check if both 1 (Material) and other visibility values are present -->
+                    {{
+                    content['Visibilities'].includes(1) && content['Visibilities'].includes(2) ? 'Material, Library' :
+                    (content['Visibilities'].includes(1) ? 'Material' :
+                    (content['Visibilities'].includes(2) ? 'Library' : ''))
+                    }}
+                  </p>
+                </div>
+                <div>
+                  <p class="text-gray-600">Level</p>
+                  <p class="font-medium text-gray-800">{{ content['Module_Name'] || 'No Level Assigned' }}</p>
+                </div>
+
+                <div>
+                  <p class="text-gray-600">Module</p>
+                  <p class="font-medium text-gray-800">{{ content['Section_Name'] }}</p>
+                </div>
+                <div>
+                  <p class="text-gray-600">Day</p>
+                  <p class="font-medium text-gray-800">{{ content.Days_Id }}</p>
+                </div>
+                <div *ngIf="content.file && content.file_type.startsWith('video/')">
+                  <div class="aspect-w-16 aspect-h-9">
+                    <video [src]="filepath + content.file" controls
+                      class="object-cover w-full h-full rounded-lg"></video>
+                  </div>
+                </div>
+              </div>
+
+
+              <div *ngIf="content.exams && content.exams.length > 0" class="mb-4">
+                <ul class="space-y-2">
+                  <li *ngFor="let exam of content.exams" class="bg-gray-50 p-3 rounded-lg">
+                    <div class="flex flex-wrap gap-2">
+                      <a *ngIf="exam.Supporting_Document_Path" [href]="filepath + exam.Supporting_Document_Path"
+                        target="_blank" rel="noopener noreferrer"
+                        class="inline-flex items-center px-2 py-1 text-xs font-medium text-white bg-blue rounded-md hover:bg-blueGray-950 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                          </path>
+                        </svg> View Document
+                      </a>
+                      <a *ngIf="exam.Answer_Key_Path" [href]="filepath + exam.Answer_Key_Path" target="_blank"
+                        rel="noopener noreferrer"
+                        class="inline-flex items-center px-2 py-1 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg> View Answer Key
+                      </a>
+                      <div *ngIf="exam.file_type?.startsWith('audio/')" class="w-full mt-2 relative">
+                        <!-- Loading spinner -->
+                        <div *ngIf="audioLoadingStates[exam.Exam_ID]">
+                          <div class="inline-flex items-center">
+                            <svg class="animate-spin h-5 w-5 text-blue mr-2" xmlns="http://www.w3.org/2000/svg"
+                              fill="none" viewBox="0 0 24 24">
+                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                              </circle>
+                              <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                              </path>
+                            </svg>
+                            <span class="text-sm text-gray-600">Loading audio...</span>
+                          </div>
+                        </div>
+
+                        <!-- Audio element -->
+                        <audio [src]="filepath + exam.examName" controls class="w-full"
+                          (loadstart)="onAudioLoadStart(exam.Exam_ID)" (canplay)="onAudioCanPlay(exam.Exam_ID)">
+                        </audio>
+                      </div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 flex justify-end space-x-2">
+              <button (click)="editContent(content)"
+                class="inline-flex items-center px-3 py-1 text-xs font-medium rounded-md text-white bg-blue hover:bg-blueGray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                  </path>
+                </svg>
+                Edit
+              </button>
+
+              <button (click)="deleteContent(content.Content_ID)"
+                class="inline-flex items-center px-3 py-1 text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                  </path>
+                </svg>
+                Delete
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+  @else {
+
+
+
+  <section class="mt-6">
+
+        <form [formGroup]="course_Form" class="bg-white rounded-lg  shadow-md p-8">
+          <!-- <ng-template matStepLabel>Course Details</ng-template> -->
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="col-span-full">
+              <label for="courseName" class="block text-sm font-semibold text-gray-700 mb-2">
+                Course Name <span class="text-red-500">*</span>
+              </label>
+              <input type="text" id="courseName" name="courseName" formControlName="Course_Name" maxlength="50"
+                class="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" />
+              <div *ngIf="course_Form.get('Course_Name')?.invalid && (course_Form.get('Course_Name')?.touched || course_Form.get('Course_Name')?.dirty)" class="text-red-500 text-xs mt-1">
+                Course Name is required.
+              </div>
+            </div>
+
+            <div>
+              <label for="created_at" class="block text-sm font-semibold text-gray-700 mb-2">
+                Course Creation Date
+              </label>
+              <input type="date" id="created_at" formControlName="created_at"
+                class="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" />
+            </div>
+
+            <div>
+              <label for="Course_Status" class="block text-sm font-semibold text-gray-700 mb-2">
+                Course Status
+              </label>
+              <select id="Course_Status" formControlName="Disable_Status"
+                class="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                <option [ngValue]="0">Active</option>
+                <option [ngValue]="1">Deactivate</option>
+              </select>
+            </div>
+
+
+            <div class="col-span-full mb-5">
+              <label for="Things_To_Learn" class="block text-sm font-semibold text-gray-700 mb-2">
+                Things You will learn from this Course
+              </label>
+              <textarea
+                class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                formControlName="Things_To_Learn" name="Things_To_Learn" id="Things_To_Learn" cols="30" rows="10"></textarea>
+            </div>
+            
+            <ng-container *ngIf="false">
+            <!-- Add a remove button -->
+
+            <div class="col-span-full relative" (mouseleave)="playBackgroundVideo()"
+              (mouseenter)="stopBackgroundVideo()">
+              <div class="flex justify-between w-100 items-center col-span-full">
+
+                <label for="courseName" class="block text-sm font-semibold leading-6 text-gray-900">Thumbnail
+                  video</label>
+
+                <button *ngIf="course_Form.get('ThumbnailVideo_Name')?.value" (click)="removeCourseThumbnailVideo()"
+                  class="mt-4 text-red-500 hover:text-red-700 transition-colors duration-200">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+              <div (click)="videoInput.click()">
+
+                <input #videoInput (change)="onCourseThumbnailVideoSelected($event)" id="video-upload"
+                  style="display: none;" name="video-upload" type="file" class="sr-only" accept="video/*">
+
+                <div
+                  class="mt-2 flex h-56 justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10 relative overflow-hidden">
+                  <video #backgroundVideo
+                    class="absolute inset-0 w-full h-full object-cover transition-opacity duration-300"
+                    [src]="getImagePath(course_Form.get('ThumbnailVideo_Path')?.value)" muted autoplay loop
+                    [controls]="false"></video>
+                  <div class="text-center relative z-10">
+                    <ng-container *ngIf="!isVideoPlaying">
+                      <div class="mt-4 flex justify-center text-sm leading-6 text-gray-600">
+                        <label
+                          class="relative cursor-pointer rounded-md bg-white font-semibold text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 hover:text-indigo-500">
+                          <span>Upload a video</span>
+                        </label>
+                      </div>
+                      <p class="text-xs leading-5 text-gray-600">MP4, WebM, OGG up to 50MB</p>
+                    </ng-container>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            <div class="col-span-full" (click)="fileInput4.click()">
+              <input #fileInput4 (change)="onCourseThumbnailFileSelected($event)" id="file-upload"
+                style="display: none;" name="file-upload" type="file" class="sr-only">
+
+              <label for="courseName" class="block text-sm font-semibold leading-6 text-gray-900">Cover photo</label>
+              <div class="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
+                <div class="text-center">
+
+                  <img class="mx-auto h-12 w-12 text-gray-300"
+                    [src]="getImagePath(course_Form.get('Thumbnail_Path')?.value)"
+                    onerror="this.src='/assets/images/icons/error.svg';" alt="" srcset="">
+                  <div class="mt-4 flex justify-center text-sm leading-6 text-gray-600">
+                    <label
+                      class="relative cursor-pointer rounded-md bg-white font-semibold text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 hover:text-indigo-500">
+                      @if(!course_Form.get('Thumbnail_Name')?.value)
+                      {
+
+                      <span>Upload a file</span>
+                      } @else{
+                      <span>{{course_Form.get('Thumbnail_Name')?.value}}</span>
+                      }
+                    </label>
+                  </div>
+                  <p class="text-xs leading-5 text-gray-600">PNG, JPG, GIF up to 10MB</p>
+                </div>
+              </div>
+            </div>
+
+
+
+
+            <div class="col-span-2">
+              <label for="Description" class="block text-sm font-semibold text-gray-700 mb-2">
+                Description
+              </label>
+              <textarea name="" cols="38" rows="10" id="Description" formControlName="Description"
+                class="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50"></textarea>
+            </div>
+
+
+            <!-- <div>
+                <label for="category" class="block text-sm font-semibold text-gray-700 mb-2">
+                  Category <span class="text-red-500">*</span>
+                </label>
+                <select id="category" formControlName="Category_ID" class="mt-1 p-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                  @for (category of courseCategoryData(); track category; let i = $index) {
+                    <option [value]="category['Category_ID']">
+                      {{ category['Category_Name'] }}
+                    </option>
+                  }
+                </select>
+              </div> -->
+            <div>
+              <label for="Sections" class="block text-sm font-semibold text-gray-700 mb-2">
+                Modules <span class="text-red-500">*</span>
+              </label>
+              <mat-form-field class="w-full">
+                <mat-select formControlName="Sections" multiple>
+                  @for (section of SectionsDatas(); track section; let i = $index) {
+                  <mat-option [value]="section['Section_ID']" (click)="onSelectionChange(section['Section_ID'])">
+                    {{ section['Section_Name'] }}
+                  </mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div formArrayName="scheduledTeachers" class=" col-span-full p-6 space-y-8">
+              <div class="flex items-center justify-between mb-8">
+                <label for="Sections" class="text-lg font-semibold text-gray-800">
+                  1 to 1 Class Teachers
+                </label>
+                <button (click)="addTeacher()"
+                  class="inline-flex items-center px-4 py-2 bg-blue text-white font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                  <span class="mr-2">Add Faculty</span>
+                  <mat-icon>add</mat-icon>
+                </button>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                @for (teacherGroup of scheduledTeachers.controls; track teacherGroup; let i = $index) {
+                @if(!teacherGroup.get('Delete_Status')?.value) {
+                <div [formGroupName]="i" class="bg-white rounded-xl shadow-md p-6 space-y-6 border border-gray-200">
+                  <div class="flex items-center justify-between">
+                    <mat-form-field class="w-full max-w-md">
+                      <mat-label>Select Faculty</mat-label>
+                      <mat-select (selectionChange)="onTeacherSelect($event, i)" formControlName="Teacher_ID"
+                        class="w-full">
+                        @for (teacher of teacherDatas(); track teacher) {
+                        <mat-option [value]="teacher['User_ID']">
+                          {{ teacher['First_Name'] }}
+                        </mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+
+
+                    <button mat-icon-button (click)="removeTeacher(i, teacherGroup)"
+                      class="text-red-500 hover:text-red-700 transition-colors duration-200 ml-2">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+
+                  </div>
+
+                  @if (teacherGroup.get('Teacher_ID')?.value) {
+                  <div formArrayName="timeSlots" class="space-y-4">
+                    @for (timeSlot of getTimeSlots(teacherGroup); track timeSlot; let j = $index) {
+                    @if(!timeSlot.get('Delete_Status')?.value) {
+                    <div [formGroupName]="j" class="bg-gray-50 rounded-lg p-4">
+                      <div class="space-y-4">
+                        <!-- Start Time Input -->
+                        <div class="relative">
+                          <label for="start-time" class="block text-sm font-medium text-gray-700 mb-2">
+                            Start Time
+                          </label>
+                          <input id="start-time" placeholder="Select start time" formControlName="startTime"
+                            [ngxTimepicker]="editableDial" readonly
+                            class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out" />
+                          <ngx-material-timepicker #editableDial></ngx-material-timepicker>
+                        </div>
+
+                        <!-- End Time Input -->
+                        <div class="relative">
+                          <label for="end-time" class="block text-sm font-medium text-gray-700 mb-2">
+                            End Time
+                          </label>
+                          <input id="end-time" placeholder="Select end time" formControlName="endTime"
+                            [ngxTimepicker]="editableDial2" readonly
+                            class="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out" />
+                          <ngx-material-timepicker #editableDial2></ngx-material-timepicker>
+                        </div>
+                      </div>
+
+                      @if(countActiveTimeSlots(teacherGroup) > 1) {
+                      <button (click)="removeTimeSlot(i, j, timeSlot)"
+                        class="mt-4 text-red-500 hover:text-red-700 transition-colors duration-200">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                      }
+                    </div>
+                    }
+                    }
+
+                    <button (click)="addTimeSlot(i)"
+                      class="w-full py-2 px-4 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-300">
+                      Add Time Slot
+                    </button>
+                  </div>
+                  }
+
+                  @if (teacher_timmings[i]) {
+                  <div class="mt-4 space-y-2">
+                    <h4 class="text-sm font-medium text-gray-700">Scheduled Times</h4>
+                    @for (course of teacher_timmings[i]; track course.Course_ID) {
+                    <div class="bg-blue-50 p-3 rounded-lg">
+                      <div class="flex flex-col gap-2">
+                        <span class="font-medium text-blue-900 text-sm">
+                          {{ course.Course_Name }}
+                          @if(course.Batch_Name) {
+                          <span class="text-blue-700 text-sm">(Batch - {{course.Batch_Name}})</span>
+                          }
+                        </span>
+                        <div class="space-y-1">
+                          @for (slot of course.timeSlots; track slot) {
+                          @if (slot.startTime && slot.endTime) {
+                          <p class="text-blue-800 text-sm">{{ slot.startTime }} - {{ slot.endTime }}</p>
+                          }
+                          }
+                        </div>
+                      </div>
+                    </div>
+                    }
+                  </div>
+                  }
+                </div>
+                }
+                }
+              </div>
+
+              <div *ngIf="course_Form.get('scheduledTeachers')?.hasError('noTeachers')" class="mt-4">
+                <span class="text-red-500 text-sm font-medium">At least one teacher is required.</span>
+              </div>
+            </div>
+
+            </ng-container>
+
+          </div>
+
+          <!-- <div class="mt-6 flex items-center">
+              <label for="liveClassEnabled" class="flex items-center mr-6">
+                <input type="checkbox" id="liveClassEnabled" formControlName="Live_Class_Enabled" class="mr-2" />
+                <span class="block text-sm font-semibold text-gray-700">Live Class</span>
+              </label>
+
+              <label for="disableStatus" class="flex items-center">
+                <input type="checkbox" id="disableStatus" formControlName="Disable_Status" class="mr-2" />
+                <span class="block text-sm font-semibold text-gray-700">Disable</span>
+              </label>
+            </div> -->
+          <div class="flex justify-end">
+            <button type="submit" (click)="Close_Click()"
+              class="bg-blue ml-4 hover:bg-blue-hover text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring focus:ring-zinc-500 focus:ring-opacity-50">
+              Close
+            </button>
+            <button type="submit" (click)="Save_course()"
+              class="bg-sky-500 ml-4 hover:bg-blue-hover text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring focus:ring-zinc-500 focus:ring-opacity-50" style="background-color: blue !important; color: white !important;">
+              Save
+            </button>
+          </div>
+        </form>
+        <div>
+        </div>
+
+
+  </section>
+  }
+
+  <!-- Mail History Modal -->
+  <div *ngIf="showMailHistoryModal" 
+       class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col overflow-hidden border border-gray-100 max-h-[92vh] my-auto"
+         (click)="$event.stopPropagation()">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-purple-50/60 to-white">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shadow-xs">
+            <span class="material-symbols-outlined text-2xl">mark_email_read</span>
+          </div>
+          <div>
+            <h3 class="text-xl font-bold text-gray-900 leading-tight">Batch Mail History</h3>
+            <p class="text-xs text-gray-500 mt-0.5">
+              Course: <span class="font-semibold text-purple-700">{{ selectedCourseForMailHistory?.Course_Name }}</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <!-- Batch Filter Dropdown -->
+          <div class="flex items-center gap-1.5" *ngIf="courseBatchesForHistory.length > 0">
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Batch:</span>
+            <select [value]="selectedBatchIdForHistory" (change)="onBatchFilterChange($any($event.target).value)"
+              class="text-xs font-medium border border-gray-300 rounded-lg pl-3 pr-9 py-1.5 bg-white text-gray-800 shadow-xs focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer min-w-[140px]">
+              <option [value]="0">All Batches ({{ courseBatchesForHistory.length }})</option>
+              <option *ngFor="let b of courseBatchesForHistory" [value]="b.Batch_ID">
+                {{ b.Batch_Name }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Refresh Button -->
+          <button (click)="loadMailHistoryData()" 
+            title="Refresh History"
+            class="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors border border-transparent hover:border-purple-200 cursor-pointer">
+            <span class="material-symbols-outlined text-xl">refresh</span>
+          </button>
+
+          <!-- Close Button -->
+          <button (click)="closeMailHistoryModal()" 
+            title="Close"
+            class="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
+            <span class="material-symbols-outlined text-2xl">close</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Content Area -->
+      <div class="p-4 overflow-y-auto flex-1">
+        <!-- Loading State -->
+        <div *ngIf="loadingMailHistory" class="flex flex-col items-center justify-center py-16 text-gray-500">
+          <div class="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mb-3"></div>
+          <p class="text-sm font-medium">Loading mail sending records...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="!loadingMailHistory && mailHistoryList.length === 0" 
+             class="text-center py-16 bg-white rounded-xl border border-gray-200 text-gray-500">
+          <div class="w-16 h-16 rounded-full bg-purple-50 text-purple-400 flex items-center justify-center mx-auto mb-3">
+            <span class="material-symbols-outlined text-3xl">mark_email_unread</span>
+          </div>
+          <h4 class="text-base font-semibold text-gray-800">No Mail History Found</h4>
+          <p class="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
+            No batch emails have been sent for this course/batch yet. Sent batch mails will appear here automatically.
+          </p>
+        </div>
+
+        <!-- Table View -->
+        <div *ngIf="!loadingMailHistory && mailHistoryList.length > 0" class="overflow-x-auto rounded-xl border border-gray-200 shadow-xs">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr class="bg-gray-50/80 text-gray-600 font-semibold border-b border-gray-200 text-xs uppercase tracking-wider">
+                <th class="py-3.5 px-5 w-[24%] text-left">Sent Date & Time</th>
+                <th class="py-3.5 px-5 w-[18%] text-left">Batch</th>
+                <th class="py-3.5 px-5 w-[38%] text-left">Mail Template / Subject</th>
+                <th class="py-3.5 px-5 w-[20%] text-left">Mail Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 bg-white">
+              <tr *ngFor="let record of mailHistoryList" class="hover:bg-purple-50/30 transition-colors">
+                <!-- Date & Time -->
+                <td class="py-3.5 px-5 whitespace-nowrap text-left">
+                  <div class="font-semibold text-gray-800">
+                    {{ (record.Sent_At || record.Attendance_Date) | date:'mediumDate' }}
+                  </div>
+                  <div class="text-xs text-gray-500">
+                    {{ (record.Sent_At || record.Attendance_Date) | date:'shortTime' }}
+                  </div>
+                </td>
+
+                <!-- Batch -->
+                <td class="py-3.5 px-5 whitespace-nowrap text-left">
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">
+                    {{ record.Batch_Name || 'N/A' }}
+                  </span>
+                </td>
+
+                <!-- Template & Subject -->
+                <td class="py-3.5 px-5 text-left">
+                  <div class="flex flex-col gap-0.5">
+                    <span class="font-bold text-gray-800 text-sm">
+                      {{ record.Template_Name || record.Subject }}
+                    </span>
+                    <span class="text-xs text-gray-500 italic">
+                      Subject: {{ record.Subject }}
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Status -->
+                <td class="py-3.5 px-5 whitespace-nowrap text-left">
+                  <span *ngIf="record.Total_Sent > 0 && record.Failed_Count == 0" 
+                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-600 mr-1.5"></span> Delivered
+                  </span>
+                  <span *ngIf="record.Success_Count > 0 && record.Failed_Count > 0" 
+                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-600 mr-1.5"></span> Partial
+                  </span>
+                  <span *ngIf="record.Total_Sent > 0 && record.Success_Count == 0 && record.Failed_Count > 0" 
+                        class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-600 mr-1.5"></span> Failed
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex items-center justify-between px-6 py-3 border-t border-gray-200 bg-gray-50/50">
+        <span class="text-xs text-gray-500">
+          Showing <strong class="text-gray-800">{{ mailHistoryList.length }}</strong> sending {{ mailHistoryList.length === 1 ? 'event' : 'events' }}
+        </span>
+        <button (click)="closeMailHistoryModal()"
+          class="px-5 py-2 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-100 border border-gray-300 rounded-lg shadow-xs transition-all cursor-pointer">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+</section>

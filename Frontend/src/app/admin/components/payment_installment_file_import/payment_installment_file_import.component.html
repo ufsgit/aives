@@ -1,0 +1,272 @@
+<div class="upload-container">
+
+  <div style="justify-content: space-between;">
+    <div>
+      <h2>Installment Excel Import</h2>
+      <div class="text-end">
+        <button type="button" style="background-color: green;" (click)="exportExcel()"
+          class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold py-2 px-5 rounded-md shadow-md hover:from-blue-700 hover:to-indigo-700 transition-all duration-200">
+          <mat-icon>download</mat-icon>
+          Download Excel Format
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- Field Mapping Section -->
+  <div class="field-mapping-section">
+    <h3>Excel Column Mapping</h3>
+    <p>Map your Excel column names to the corresponding fields:</p>
+
+    <div class="mapping-grid">
+      <div class="mapping-row">
+        <div class="mapping-group">
+          <label for="rollNoMapping">Roll No Column:</label>
+          <input type="text" id="rollNoMapping" [(ngModel)]="rollNoField" class="mapping-input"
+            placeholder="e.g., Roll No" />
+        </div>
+
+        <div class="form-group">
+          <label for="installmentDate1Mapping">Installment 1 Date Column:</label>
+          <input type="text" id="installmentDate1Mapping" [(ngModel)]="installment1DateField" class="mapping-input"
+            placeholder="e.g., Instalment 1" />
+        </div>
+
+
+
+
+        <div class="mapping-row">
+          <div class="mapping-group">
+            <label for="isPaidMapping">Is Paid Column:</label>
+            <input type="text" id="isPaidMapping" [(ngModel)]="isPaidField" class="mapping-input"
+              placeholder="e.g., Is Paid" />
+          </div>
+
+          <div class="mapping-group">
+            <label for="amountMapping">Amount Column:</label>
+            <input type="text" id="amountMapping" [(ngModel)]="amountField" class="mapping-input"
+              placeholder="e.g., Amount" />
+          </div>
+        </div>
+
+        <div class="mapping-row">
+          <div class="mapping-group">
+            <label for="taxAppliedMapping">Tax Applied Column:</label>
+            <input type="text" id="taxAppliedMapping" [(ngModel)]="taxAppliedField" class="mapping-input"
+              placeholder="e.g., Tax Applied" />
+          </div>
+
+          <div class="mapping-group">
+            <label for="taxAmountMapping">Tax Amount Column:</label>
+            <input type="text" id="taxAmountMapping" [(ngModel)]="taxAmountField" class="mapping-input"
+              placeholder="e.g., Tax Amount" />
+          </div>
+        </div>
+
+        <div class="mapping-row">
+          <div class="mapping-group">
+            <label for="paymentModeMapping">Payment Mode Column:</label>
+            <input type="text" id="paymentModeMapping" [(ngModel)]="paymentModeField" class="mapping-input"
+              placeholder="e.g., Payment Mode" />
+          </div>
+
+          <div class="mapping-group">
+            <label for="chequeDateMapping">Cheque Date Column:</label>
+            <input type="text" id="chequeDateMapping" [(ngModel)]="chequeDateField" class="mapping-input"
+              placeholder="e.g., Cheque Date" />
+          </div>
+        </div>
+
+        <div class="mapping-row">
+          <div class="mapping-group">
+            <label for="paymentStatusMapping">Payment Status Column:</label>
+            <input type="text" id="paymentStatusMapping" [(ngModel)]="paymentStatusField" class="mapping-input"
+              placeholder="e.g., Payment Status" />
+          </div>
+
+          <div class="mapping-group">
+            <label for="detailsMapping">Details Column:</label>
+            <input type="text" id="detailsMapping" [(ngModel)]="detailsField" class="mapping-input"
+              placeholder="e.g., Details" />
+          </div>
+        </div>
+      </div>
+
+
+      <!-- File Upload Section -->
+      <div class="upload-section">
+        <div class="file-input-wrapper">
+          <input type="file" #fileInput (change)="onFileSelected($event)" accept=".xlsx,.xls" id="fileUpload"
+            class="file-input" />
+          <label for="fileUpload" class="file-label">
+            <i class="upload-icon">📁</i>
+            Choose Excel File
+          </label>
+        </div>
+
+        <button (click)="uploadFile()" [disabled]="!file || isUploading" class="upload-btn">
+          {{ isUploading ? 'Uploading...' : 'Upload & Import' }}
+        </button>
+      </div>
+
+      <!-- Selected File Info -->
+      <div *ngIf="file" class="file-info">
+        <p><strong>Selected File:</strong> {{ file.name }}</p>
+        <p><strong>Size:</strong> {{ (file.size / 1024).toFixed(2) }} KB</p>
+      </div>
+
+      <!-- Import Results -->
+      <div *ngIf="Installments_Import_Data.length > 0" class="results-section">
+        <h3>Imported Data ({{ Installments_Import_Data.length }} records)</h3>
+
+        <!-- Student Records -->
+        <div class="student-records">
+          <div *ngFor="let installment of Installments_Import_Data; let i = index" class="student-form">
+            <div class="student-header">
+              <h4>Row Count {{ i + 1 }}</h4>
+              <button (click)="removeStudent(i)" class="remove-btn" title="Remove this student">
+                ❌
+              </button>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="installmentDate1_{{i}}">Installment 1 Date:</label>
+                <input type="text" [(ngModel)]="installment.installment_date_1" class="form-control" />
+              </div>
+
+
+
+              <div class="form-group">
+                <label for="isPaid_{{i}}">Is Paid:</label>
+                <select id="isPaid_{{i}}" [(ngModel)]="installment.is_paid" class="form-control">
+                  <option [ngValue]="1">Yes</option>
+                  <option [ngValue]="0">No</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="amount_{{i}}">Amount:</label>
+                <input type="number" step="0.01" id="amount_{{i}}" [(ngModel)]="installment.amount" class="form-control"
+                  placeholder="Enter amount" />
+              </div>
+
+              <div class="form-group">
+                <label for="taxApplied_{{i}}">Tax Applied (%):</label>
+                <input type="number" step="0.01" id="taxApplied_{{i}}" [(ngModel)]="installment.tax_applied"
+                  class="form-control" placeholder="Enter tax applied" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="taxAmount_{{i}}">Tax Amount:</label>
+                <input type="number" step="0.01" id="taxAmount_{{i}}" [(ngModel)]="installment.tax_amount"
+                  class="form-control" placeholder="Enter tax amount" />
+              </div>
+
+              <div class="form-group">
+                <label for="paymentMode_{{i}}">Payment Mode:</label>
+                <input type="text" id="paymentMode_{{i}}" [(ngModel)]="installment.payment_mode" class="form-control"
+                  placeholder="Enter payment mode" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="chequeDate_{{i}}">Cheque Date:</label>
+                <input type="text" id="chequeDate_{{i}}" [(ngModel)]="installment.cheque_date" class="form-control" />
+              </div>
+
+              <div class="form-group">
+                <label for="paymentStatus_{{i}}">Payment Status:</label>
+                <input type="text" id="paymentStatus_{{i}}" [(ngModel)]="installment.payment_status"
+                  class="form-control" placeholder="Enter payment status" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="details_{{i}}">Details:</label>
+                <textarea id="details_{{i}}" [(ngModel)]="installment.details" class="form-control"
+                  placeholder="Enter details"></textarea>
+              </div>
+
+              <div class="form-group">
+                <label for="rollNo_{{i}}">Roll No:</label>
+                <input type="text" id="rollNo_{{i}}" [(ngModel)]="installment.roll_no" class="form-control"
+                  placeholder="Enter roll number" />
+              </div>
+            </div>
+
+            <!-- Course Dropdown -->
+            <div class="form-group">
+              <label for="course_{{i}}">Course:</label>
+              <select id="course_{{i}}" [(ngModel)]="installment.course_id" class="form-control">
+
+                <option [ngValue]="null">Select Course</option>
+                <option *ngFor="let course of Search_Course_Data" [value]="course.Course_ID">
+                  {{ course.Course_Name }}
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="batch_{{i}}">Batch:</label>
+              <select id="batch_{{i}}" [(ngModel)]="installment.batch_id" class="form-control">
+
+                <option [ngValue]="null">Select Batch</option>
+                <option *ngFor="let batch of batchDropdownData" [value]="batch.Batch_ID">
+                  {{ batch.Batch_Name }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+
+
+          <!-- <div class="form-group">
+            <label for="branchName_{{i}}">Branch Name:</label>
+            <input 
+              type="text" 
+              id="branchName_{{i}}"
+              [(ngModel)]="student.Branch_Name"
+              class="form-control"
+              placeholder="Enter branch name"
+            />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="branchId_{{i}}">Branch ID:</label>
+            <input 
+              type="number" 
+              id="branchId_{{i}}"
+              [(ngModel)]="student.Branch_Id"
+              class="form-control"
+              placeholder="Enter branch ID"
+            />
+          </div>
+        </div> -->
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button (click)="saveAllInstallments()" class="save-btn" style="background-color: blue !important; color: white !important;">
+          💾 Save All Installments
+        </button>
+        <button (click)="clearData()" class="clear-btn">
+          🗑️ Clear Data
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div *ngIf="isUploading" class="loading-spinner">
+      <div class="spinner"></div>
+      <p>Processing Excel file...</p>
+    </div>
+  </div>

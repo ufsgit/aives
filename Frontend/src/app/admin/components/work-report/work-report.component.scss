@@ -1,0 +1,345 @@
+/* ─── Page wrapper ─── */
+.work-report-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0 20px;
+  background: #f3f4f6;
+}
+
+/* ─── Cards ─── */
+.filter-card,
+.table-card {
+  background: #ffffff;
+  border: 1px solid #e1e5ea;
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.filter-card {
+ padding: 11px 12px;
+    margin-top: 11px;
+}
+
+/* ─── Filter row ─── */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ─── Checkbox label ─── */
+.checkbox-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+
+  input {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: #345a94;
+  }
+
+  span {
+    font-size: 16px;
+    font-weight: 700;
+    color: #303846;
+  }
+}
+
+/* ─── Date range wrapper ─── */
+.date-range {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  &.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .field {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    min-width: auto;
+  }
+}
+
+/* ─── Field ─── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  span {
+    color: #818892;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+  
+
+  input,
+  select {
+    width: 180px;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid #d6dbe2;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #2e3642;
+    font-size: 17px;
+    outline: none;
+
+    &:focus {
+      border-color: #6b7f9e;
+      box-shadow: 0 0 0 2px rgba(52, 90, 148, 0.12);
+    }
+  }
+}
+
+.search-field input {
+  width: 220px;
+}
+
+/* ─── Action buttons container ─── */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ─── Primary button (Search) ─── */
+.primary-btn {
+  height: 38px;
+  padding: 0 16px;
+  border: 1px solid #1d4ed8;
+  border-radius: 8px;
+  background: #1d4ed8;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ─── Ghost button (View Details / Back) ─── */
+.ghost-btn {
+  height: 38px;
+  padding: 0 16px;
+  border: 1px solid #cfd5dd;
+  border-radius: 8px;
+  background: #f8f9fb;
+  color: #3e4754;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &.small {
+    height: 24px;
+    padding: 0 10px;
+    font-size: 12px;
+    border-radius: 6px;
+    background: #ffffff;
+  }
+}
+
+/* ─── Table card header ─── */
+.table-header {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e1e5ea;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #2f3845;
+  }
+
+  p {
+    margin: 2px 0 0;
+    color: #6f7782;
+    font-size: 13px;
+  }
+}
+
+.header-main {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Table wrapper ─── */
+.table-wrap {
+  position: relative;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 75vh;
+
+  // Custom Scrollbar matching Enquiry Summary
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #F1F5F9;
+    border-radius: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #ffffff;
+    border-radius: 4px;
+    border: 2px solid #F1F5F9;
+    &:hover {
+      background: #94A3B8;
+    }
+  }
+}
+
+/* ─── Table ─── */
+table {
+  width: 100%;
+  border-spacing: 0;
+  border-collapse: collapse;
+  font-family: 'Inter', sans-serif;
+
+  th, td {
+    &:not(:last-child) {
+      border-right: 1px solid rgba(229, 231, 235, 0.5);
+    }
+  }
+
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 6;
+    padding: 0.875rem;
+    text-align: left;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.89rem;
+    font-weight: 700;
+    text-transform: capitalize;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    border-bottom: 2px solid #e2e8f0;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.15s ease;
+    &:hover {
+      background-color: #f8fafc;
+      cursor: pointer;
+    }
+    td {
+       padding: 8px 10px !important;
+      font-size: 0.875rem;
+      color: #64748b;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+  }
+}
+
+/* ─── Cell variants ─── */
+.source-cell,
+.name-cell {
+  font-weight: 400;
+  color: #2f3743;
+}
+
+.count-pill {
+  display: inline;
+  min-width: 0;
+  height: auto;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.tag {
+  display: inline;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #2f3743;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.action-col {
+  width: 150px;
+  text-align: center;
+}
+
+.empty-state {
+  padding: 20px;
+  text-align: center;
+  color: #6f7782;
+  font-style: normal;
+}
+
+.status-cell {
+  font-weight: 700;
+  color: #2f3743;
+}
+
+.remark-cell {
+  max-width: 260px;
+  color: #475569;
+  font-style: italic;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .filters {
+    align-items: stretch;
+  }
+
+  .date-range {
+    flex-direction: column;
+    align-items: stretch;
+
+    .field {
+      width: 100%;
+    }
+  }
+
+  .field {
+    width: 100%;
+
+    input,
+    select {
+      width: 100%;
+    }
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .actions .primary-btn,
+  .actions .ghost-btn {
+    flex: 1;
+  }
+
+  .table-wrap {
+    max-height: 68vh;
+  }
+}
+\n
+/* Match Enquiry Summary Table Design */
+:host {
+  font-family: 'Inter', sans-serif !important;
+}

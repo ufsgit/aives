@@ -1,0 +1,82 @@
+<div class="container mx-auto p-4">
+  <h1 class="text-2xl font-bold mb-4">Student App Info</h1>
+
+  <div class="mb-4 p-4 bg-gray-100 rounded-lg shadow">
+    <h2 class="text-lg font-semibold mb-2">Filters</h2>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <input type="text" 
+             [(ngModel)]="filters.nameSearch" 
+             placeholder="Search by Name" 
+             class="border border-gray-300 p-2 rounded" />
+  
+      <input type="text" 
+             [(ngModel)]="filters.appVersion" 
+             placeholder="App Version" 
+             class="border border-gray-300 p-2 rounded" />
+  
+      <input type="date" 
+             [(ngModel)]="filters.fromDate" 
+             placeholder="From Date" 
+             class="border border-gray-300 p-2 rounded" />
+  
+      <input type="date" 
+             [(ngModel)]="filters.toDate" 
+             placeholder="To Date" 
+             class="border border-gray-300 p-2 rounded" />
+  
+             <div class="flex items-center">
+              <input type="checkbox" 
+                     [(ngModel)]="filters.isStudent" 
+                     [ngModelOptions]="{standalone: true}"
+                     (change)="onStudentChange($event)"
+                     class="mr-2">
+              <label>Is Student</label>
+            </div>
+      <button (click)="getAppInfoList()" 
+              class="bg-blueGray-900 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+        Apply Filters
+      </button>
+    </div>
+  </div>
+  <table class="min-w-full bg-white border border-gray-200">
+    <thead>
+      <tr class="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+        <th class="py-3 px-6 text-left">First Name</th>
+        <th class="py-3 px-6 text-left">Last Name</th>
+        <th class="py-3 px-6 text-left">Email</th>
+        <th class="py-3 px-6 text-left">Phone Number</th>
+        <th class="py-3 px-6 text-left">App Version</th>
+        <th class="py-3 px-6 text-left">Created At</th>
+        <th class="py-3 px-6 text-left">Battery Optimized</th>
+      </tr>
+    </thead>
+    <tbody class="text-gray-600 text-sm font-light">
+      <tr *ngFor="let info of appInfoList" class="border-b border-gray-200 hover:bg-gray-100">
+        <td class="py-3 px-6">{{ info.First_Name }}</td>
+        <td class="py-3 px-6">{{ info.Last_Name }}</td>
+        <td class="py-3 px-6">{{ info.Email }}</td>
+        <td class="py-3 px-6">{{ info.Phone_Number }}</td>
+        <td class="py-3 px-6">{{ info.app_version }}</td>
+        <td class="py-3 px-6">{{ info.created_at | date:'short' }}</td>
+        <td class="py-3 px-6">{{ info.is_battery_optimized  }}</td>
+      </tr>
+    </tbody>
+  </table> 
+
+  <!-- Pagination Controls -->
+  <div class="flex justify-between items-center mt-4">
+    <button (click)="previousPage()" 
+            class="bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors" 
+            [disabled]="filters.page === 1">
+      Previous
+    </button>
+    
+      <span>Page {{ filters.page }} of {{ totalPages }}</span>
+    
+    <button (click)="nextPage()" 
+            class="bg-slate-900 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors" 
+            [disabled]="filters.page === totalPages">
+      Next
+    </button> 
+  </div>
+</div>

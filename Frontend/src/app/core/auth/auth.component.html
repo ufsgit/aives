@@ -1,0 +1,126 @@
+<div class="h-screen flex">
+
+    <div class="w-full relative flex">
+  
+      <svg viewBox="0 0 500 150" preserveAspectRatio="none" style="height: 100%; width: 100%;">
+        <defs>
+          <linearGradient id="myGradient" gradientTransform="rotate(90)">
+            <stop offset="5%" stop-color="#8ec5fc" />
+            <stop offset="95%" stop-color="#e0c3fc" />
+          </linearGradient>
+        </defs>
+        <path d="M208.09,0.00 C152.70,67.10 262.02,75.98 200.80,150.00 L0.00,150.00 L0.00,0.00 Z" style="stroke: none; fill: url('#myGradient');"></path>
+      </svg>
+  
+      <div class="absolute top-0 p-8 flex justify-between  w-full items-center">
+        <!-- <h1 class="text-3xl text-indigo-900 uppercase font-bold">Chemmannur</h1> -->
+      </div>
+      <form [formGroup]="loginForm" (ngSubmit)="login()" class="absolute mezzo flex flex-col">
+      
+        <div class=" flex items-center justify-center bg-cover bg-center">
+            <div class="bg-white bg-opacity-90 rounded-lg shadow-lg p-6 sm:p-10  w-[34rem]">
+            <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+                <div class="flex gap-4 mb-5 justify-center items-center">
+                    <!-- <img src="assets/images/Chemmanur_Full_logo_276x95.png" class="w-40 h-16 " alt=" Logo" />  -->
+
+                    <img class=" h-10 w-auto border-l-2" src="assets/images/logo.png" alt="Your Company">
+                </div>
+                <h2 class="text-center text-2xl font-bold leading-9 tracking-tight  text-gray-900">Login to Your Account</h2>
+            </div>
+        
+            <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+                <div class="w-full mb-4">
+                    
+                      <mat-label class="block text-sm font-medium leading-6 text-gray-900">Username</mat-label>
+                      <input  formControlName="username" type="text"     class="block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Enter your username">
+                      @if (username?.invalid && (username?.touched || username?.dirty)) {
+                        <mat-error>
+                          @if (username?.errors?.['required']) {
+                            <span class="text-red-500">Username is required.</span>
+                          }
+                        </mat-error>
+                      }
+                  </div>    
+                    @if(!forget_password_view)
+                    {
+
+                 
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <label for="password" class="block text-sm font-medium leading-6 text-gray-900">Password</label>
+                            <div class="text-sm">
+                                <!-- <a (click)="forget_password_view=true" class="font-semibold text-indigo-600 hover:text-indigo-500">Forgot password?</a> -->
+                            </div>
+                        </div>
+                        <div class="mt-2 relative">
+                          <input 
+                            id="password" 
+                            maxlength="20" 
+                            formControlName="password" 
+                            name="password" 
+                            [type]="hidePassword ? 'password' : 'text'"
+                            placeholder="Enter your password" 
+                            autocomplete="current-password" 
+                            required 
+                            class="block w-full pr-10 rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                          >
+                          <button 
+                            type="button"
+                            (click)="togglePasswordVisibility()"
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5"
+                          >
+                            <svg 
+                              class="h-5 w-5 text-gray-400" 
+                              [attr.aria-label]="hidePassword ? 'Show password' : 'Hide password'"
+                              fill="none" 
+                              viewBox="0 0 24 24" 
+                              stroke="currentColor"
+                            >
+                              @if (hidePassword) {
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              } @else {
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                              }
+                            </svg>
+                          </button>
+                          @if (password?.invalid && (password?.touched || password?.dirty)) {
+                            <mat-error>
+                              @if (password?.errors?.['required']) {
+                                <span class="text-red-500">Password is required.</span>
+                              } @else if (password?.errors?.['minlength']) {
+                                <span class="text-red-500">Password must be at least 6 characters long.</span>
+                              }
+                            </mat-error>
+                          }
+                        </div>
+                        <div class="mt-2">
+                            <button [disabled]="loginForm.invalid" (click)="login()" class="flex w-full justify-center rounded-md disabled:bg-blue-200 bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Login</button>
+                        </div>
+                    </div> 
+                    }
+                   @else{
+
+               
+
+                    <div>
+                        <a (click)="forget_password_view=false">Back To Login</a>
+                        <div class="mt-2">
+                            <button (click)="Generate_forget_Password()" class="flex w-full justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Send Link</button>
+                        </div>
+                    </div>
+        
+                }
+        
+                <p class="mt-10 text-center text-sm text-gray-500">
+                    <!-- Additional content or links can be placed here -->
+                </p>
+            </div>
+        </div>
+        </div>
+    
+    </form>
+      
+    </div>
+  
+  </div>

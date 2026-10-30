@@ -1,0 +1,134 @@
+.container {
+  padding: 1.5rem;
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: #333;
+  }
+
+  .team-name {
+    margin-bottom: 1rem;
+    color: #555;
+    font-weight: 500;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+    table-layout: fixed;
+
+    th,
+    td {
+      border: 1px solid #e0e0e0;
+      padding: 12px 15px;
+      font-size: 0.9em;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    thead th {
+      background-color: #f9f9f9;
+      color: #555;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
+    tbody tr:hover {
+      background-color: #f6faff;
+    }
+
+    td:first-child,
+    th:first-child {
+      text-align: left;
+    }
+
+    .empty-row {
+      color: #777;
+      text-align: center !important;
+    }
+  }
+
+  .action-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding-top: 1.5rem;
+
+    button {
+      padding: 10px 25px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+
+      &.cancel-btn {
+        border: 2px solid #007bff;
+        background-color: transparent;
+        color: #007bff;
+
+        &:hover {
+          background-color: #007bff11;
+        }
+      }
+
+      &.save-btn {
+        border: none;
+        background-color: #007bff;
+        color: white;
+        box-shadow: 0 2px 5px rgba(0, 123, 255, 0.2);
+
+        &:hover {
+          background-color: #0069d9;
+        }
+      }
+    }
+  }
+}
+
+input[type='checkbox'] {
+  cursor: pointer;
+  transform: scale(1.2);
+  margin: 0;
+}
+
+\n
+/* Standardized Table Styling from My Students Page */
+:host {
+  font-family: 'Inter', sans-serif !important;
+}
+
+:host table {
+  border-collapse: collapse !important;
+  width: 100% !important;
+}
+
+:host th {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+  text-transform: uppercase !important;
+  font-size: 18px !important;
+  font-weight: normal !important;
+  padding: 0.375rem 0.5rem !important;
+  letter-spacing: 0.05em !important;
+  text-align: left !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+}
+
+:host td {
+  color: #64748b !important;
+  font-size: 17px !important;
+  padding: 0.375rem 0.5rem !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+
+:host tr:hover {
+  background-color: #f8fafc !important;
+  cursor: pointer !important;
+}

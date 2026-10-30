@@ -1,0 +1,110 @@
+@if(!Entry_View) {
+<section class="border border-gray-300 shadow p-6 rounded-xl bg-white mt-4">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-gray-800"></h2>
+    <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow-md transition duration-300" 
+            (click)="create()" style="background-color: blue !important; color: white !important;">
+      Add Campaign
+    </button>
+  </div>
+
+  <div class="table-wrap mt-6">
+    <table>
+      <thead>
+        <tr>
+          <th>Campaign Name</th>
+          <th>Campaign Number</th>
+          <th>User</th>
+          <th>Created At</th>
+          <th style="text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for(item of campaignData; track item.Campaign_ID) {
+        <tr>
+          <td>{{ item.Campaign_Name }}</td>
+          <td>{{ item.Campaign_Number }}</td>
+          <td class="max-w-xs truncate" [title]="item.User_Names">
+            {{ item.User_Names || 'None' }}
+          </td>
+          <td>{{ item.Created_At | date:'mediumDate' }}</td>
+          <td>
+            <div class="flex justify-end gap-2">
+              <button (click)="edit(item)" class="text-blue-600 hover:text-blue-900 flex items-center">
+                <span class="material-symbols-outlined text-xl">edit</span>
+              </button>
+              <button (click)="delete(item.Campaign_ID)" class="text-red-600 hover:text-red-900 flex items-center">
+                <span class="material-symbols-outlined text-xl">delete</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+        } @empty {
+        <tr>
+          <td colspan="5" style="text-align: center; padding: 20px;">No campaigns found.</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+} @else {
+<section class="max-w-2xl mx-auto border border-gray-300 shadow-lg p-8 rounded-xl bg-white">
+  <div class="mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">{{ campaignForm.get('Campaign_ID')?.value ? 'Edit' : 'Add' }} Campaign</h2>
+  </div>
+  
+  <form [formGroup]="campaignForm" (ngSubmit)="save()">
+    <div class="grid grid-cols-1 gap-6">
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Campaign Name <span class="text-red-500">*</span></label>
+        <input type="text" formControlName="Campaign_Name" 
+               class="block w-full rounded-lg border-gray-300 border p-2.5 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+               placeholder="Enter campaign name">
+        @if(campaignForm.get('Campaign_Name')?.invalid && campaignForm.get('Campaign_Name')?.touched) {
+          <p class="text-red-500 text-xs mt-1">Campaign Name is required.</p>
+        }
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-1">Campaign Number</label>
+        <input type="text" formControlName="Campaign_Number" 
+               class="block w-full rounded-lg border-gray-300 border p-2.5 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+               placeholder="Enter campaign number">
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 mb-2">Select Users <span class="text-red-500">*</span></label>
+        <div class="border border-gray-300 rounded-lg p-4 max-h-60 overflow-y-auto bg-gray-50">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            @for(user of users; track user.User_ID) {
+              <label class="flex items-center space-x-3 cursor-pointer hover:bg-white p-2 rounded transition">
+                <input type="checkbox" 
+                       [checked]="isUserSelected(user.User_ID)"
+                       (change)="onUserCheckboxChange(user.User_ID, $event)"
+                       class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                <span class="text-sm text-gray-700">{{ user.First_Name }} {{ user.Last_Name }}</span>
+              </label>
+            }
+          </div>
+        </div>
+        @if(selectedUserIDs.length === 0 && campaignForm.touched) {
+          <p class="text-red-500 text-xs mt-1">Please select at least one user.</p>
+        }
+      </div>
+    </div>
+
+    <div class="mt-8 flex justify-end gap-4">
+      <button type="button" (click)="close()" 
+              class="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition duration-200">
+        Cancel
+      </button>
+      <button type="submit" [disabled]="isLoading"
+              class="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 disabled:opacity-50 shadow-md transition duration-200"
+              style="background-color: blue !important; color: white !important;">
+        {{ isLoading ? 'Saving...' : 'Save Campaign' }}
+      </button>
+    </div>
+  </form>
+</section>
+}

@@ -1,0 +1,227 @@
+<div class="upload-container">
+  <!-- <h2>Student Data Import</h2> -->
+
+  <!-- Field Mapping Section -->
+  <div class="field-mapping-section">
+
+    <div style="justify-content: space-between;">
+      <!-- <div>
+        <h3>Excel Column Mapping</h3>
+        <p>Map your Excel column names to the corresponding fields:</p>
+        <div class="text-end">
+          <button type="button" style="background-color: green;" (click)="exportExcel()"
+            class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold py-2 px-5 rounded-md shadow-md hover:from-blue-700 hover:to-indigo-700 transition-all duration-200">
+            <mat-icon>download</mat-icon>
+            Download Excel Format
+          </button>
+        </div>
+      </div> -->
+    </div>
+    <div class="mapping-grid">
+      <!-- <div class="mapping-row">
+        <div class="mapping-group">
+          <label for="firstNameMapping">First Name Column:</label>
+          <input type="text" id="firstNameMapping" [(ngModel)]="firstNameField" class="mapping-input"
+            placeholder="e.g., First Name" />
+        </div>
+
+        <div class="mapping-group">
+          <label for="lastNameMapping">Last Name Column:</label>
+          <input type="text" id="lastNameMapping" [(ngModel)]="lastNameField" class="mapping-input"
+            placeholder="e.g., Last Name" />
+        </div>
+      </div>
+
+      <div class="mapping-row">
+        <div class="mapping-group">
+          <label for="emailMapping">Email Column:</label>
+          <input type="text" id="emailMapping" [(ngModel)]="emailField" class="mapping-input"
+            placeholder="e.g., Email" />
+        </div>
+
+        <div class="mapping-group">
+          <label for="phoneMapping">Phone Number Column:</label>
+          <input type="text" id="phoneMapping" [(ngModel)]="phoneNumberField" class="mapping-input"
+            placeholder="e.g., Phone Number" />
+        </div>
+      </div>
+
+      <div class="mapping-row">
+        <div class="mapping-group">
+          <label for="rollNoMapping">Roll No Column:</label>
+          <input type="text" id="rollNoMapping" [(ngModel)]="rollNoField" class="mapping-input"
+            placeholder="e.g., Roll No" />
+        </div>
+
+        <div class="mapping-group">
+          <label for="countryNameMapping">Country Name Column:</label>
+          <input type="text" id="countryNameMapping" [(ngModel)]="countryNameField" class="mapping-input"
+            placeholder="e.g., Country Name" />
+        </div>
+      </div> -->
+
+      <div class="mapping-row">
+        <!-- <div class="mapping-group">
+          <label for="countryCodeMapping">Country Code Column:</label>
+          <input type="text" id="countryCodeMapping" [(ngModel)]="countryCodeField" class="mapping-input"
+            placeholder="e.g., Country Code" />
+        </div> -->
+
+        <div class="mapping-row">
+          <!-- <div class="mapping-group">
+            <label for="branchSelect">Branch:</label>
+            <select [(ngModel)]="Search_Branch" name="Search_Branch" required class="form-control p-0 pl-1">
+              <option *ngFor="let branch of Search_Branch_Data" [ngValue]="branch">
+                {{ branch.Branch_Name }}
+              </option>
+            </select>
+
+          </div> -->
+        </div>
+      </div>
+    </div>
+<div class="mapping-row" style="padding: 20px;">
+          <div class="mapping-group">
+            <label for="branchSelect">Branch:</label>
+            <select [(ngModel)]="Search_Branch" name="Search_Branch" required class="form-control p-0 pl-1">
+              <option *ngFor="let branch of Search_Branch_Data" [ngValue]="branch">
+                {{ branch.Branch_Name }}
+              </option>
+            </select>
+
+          </div>
+        </div>
+    <!-- File Upload Section -->
+    <div class="upload-section p-6">
+      <div class="file-input-wrapper">
+        <input type="file" #fileInput (change)="onFileSelected($event)" accept=".xlsx,.xls" id="fileUpload"
+          class="file-input" />
+        <label for="fileUpload" class="file-label">
+          Choose Excel File
+        </label>
+      </div>
+
+      <button (click)="uploadFile()" [disabled]="!file || isUploading" class="upload-btn">
+        {{ isUploading ? 'Uploading...' : 'Upload & Import' }}
+      </button>
+    </div>
+
+    <!-- Selected File Info -->
+    <div *ngIf="file" class="file-info">
+      <p><strong>Selected File:</strong> {{ file.name }}</p>
+      <p><strong>Size:</strong> {{ (file.size / 1024).toFixed(2) }} KB</p>
+    </div>
+
+    <!-- Import Results -->
+    <div *ngIf="Student_Import_Details_Data.length > 0" class="results-section">
+      <h3>Imported Data ({{ Student_Import_Details_Data.length }} records)</h3>
+
+
+      <!-- Student Records -->
+      <div class="student-records" style="overflow: auto;">
+        <div *ngFor="let student of Student_Import_Details_Data; let i = index" class="student-form">
+          <div class="student-header">
+            <h4>Student {{ i + 1 }}</h4>
+            <button (click)="removeStudent(i)" class="remove-btn" title="Remove this student">Remove</button>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>First Name:</label>
+              <input type="text" [(ngModel)]="student.First_Name" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label>Last Name:</label>
+              <input type="text" [(ngModel)]="student.Last_Name" class="form-control" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Email ID:</label>
+              <input type="email" [(ngModel)]="student.Email" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label>Mobile Number:</label>
+              <input type="text" [(ngModel)]="student.Phone_Number" class="form-control" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Course Name:</label>
+              <input type="text" [(ngModel)]="student.Course_Name" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label>Batch Name:</label>
+              <input type="text" [(ngModel)]="student.Batch_Name" class="form-control" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Status:</label>
+              <input type="text" [(ngModel)]="student.Status" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label>Admission Date:</label>
+              <input type="text" [(ngModel)]="student.Admission_Date" class="form-control" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Assigned To:</label>
+              <input type="text" [(ngModel)]="student.Assigned_To" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label>Source:</label>
+              <input type="text" [(ngModel)]="student.Source" class="form-control" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Follow Up Date:</label>
+              <input type="text" [(ngModel)]="student.Follow_Up_Date" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label>Follow Up Status:</label>
+              <input type="text" [(ngModel)]="student.Follow_Up_Status" class="form-control" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Remarks:</label>
+              <input type="text" [(ngModel)]="student.Remarks" class="form-control" />
+            </div>
+            <div class="form-group">
+              <label>Branch:</label>
+              <input type="text" [(ngModel)]="student.Branch_Name" class="form-control" readonly />
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button (click)="saveAllStudents()" class="save-btn" style="background-color: blue !important; color: white !important;">
+        Save All Students
+      </button>
+      <button (click)="clearData()" class="clear-btn">
+        Clear Data
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isUploading" class="loading-spinner">
+    <div class="spinner"></div>
+    <p>Processing Excel file...</p>
+  </div>
+
+  <app-loading [isLoading]="isLoading"></app-loading>
+</div>

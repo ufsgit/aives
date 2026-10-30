@@ -1,0 +1,119 @@
+<div class="bg-white p-6">
+  <!--  for {{ student.First_Name }} -->
+  <!-- <h2 class="font-bold p-6">Documents</h2> -->
+  <!-- Top Back Button -->
+  <h2 class="font-bold text-lg">Documents</h2>
+  <div class="flex justify-between items-center px-6">
+
+    <!-- <div style="justify-content: space-between;">
+      <div>
+        <button (click)="goBack()"
+          class="flex items-center gap-2 text-sm bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 transition">
+          <span class="material-symbols-outlined">arrow_back</span>
+          Back
+        </button>
+      </div>
+    </div> -->
+
+    <div (click)="add_document()" style="text-align: end; margin-right:25px">
+      <button class="toggle-btn">
+        {{ add_status ? 'Cancel' : 'Add Document' }}
+      </button>
+    </div>
+  </div>
+
+  @if (!add_status) {
+  <div class="p-6">
+    <!-- Uploaded document list -->
+    @if(documentList.length > 0){
+    <div class="mb-4 space-y-3">
+      @for (doc of documentList; track $index) {
+      <div class="flex justify-between items-center border rounded-md p-4 shadow-sm bg-white">
+        <!-- Left: Document Name -->
+        <div class="flex-1 text-sm font-medium text-gray-800">
+          {{ doc.Document_Type_Name }}
+        </div>
+
+        <!-- Right: Action Buttons -->
+        <div class="flex items-center gap-3">
+
+          <!-- ✅ Download -->
+          <button (click)="download(doc)"
+            class="flex items-center h-10 px-4 py-2 bg-gray-50 text-gray-700 rounded-md hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 whitespace-nowrap">
+            <span class="material-symbols-outlined mr-2">download</span>
+            Download
+          </button>
+
+          <!-- ✏️ Edit -->
+          <button (click)="editDocument(doc)"
+            class="flex items-center h-10 px-4 py-2 bg-yellow-50 text-yellow-700 rounded-md hover:bg-yellow-100 transition-all duration-300 transform hover:scale-105 whitespace-nowrap">
+            <span class="material-symbols-outlined mr-2">edit</span>
+            Edit
+          </button>
+
+          <!-- 🗑️ Delete -->
+          <button (click)="deleteDocument(doc)"
+            class="flex items-center h-10 px-4 py-2 bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-all duration-300 transform hover:scale-105 whitespace-nowrap">
+            <span class="material-symbols-outlined mr-2">delete</span>
+            Delete
+          </button>
+        </div>
+      </div>
+
+      }
+
+    </div>
+    }
+
+    @else {
+    <div class="text-center text-gray-500 text-sm mt-4 italic">
+      No documents uploaded.
+    </div>
+    }
+  </div>
+  }
+
+
+
+  @if(add_status){
+  <!-- Upload Section -->
+  <div class="space-y-4 p-6">
+
+    <!-- Document Type Dropdown -->
+    <div>
+      <label class="block font-medium mb-1">Document Type</label>
+      <select [(ngModel)]="selectedDocType" class="w-full border p-2 rounded">
+        @for (type of documentTypes; track $index) {
+        <option [value]="type.Document_Type_Name">
+          {{ type.Document_Type_Name }}
+        </option>
+        }
+      </select>
+    </div>
+
+    <!-- File Upload -->
+    <div>
+      <label class="block font-medium mb-1">Choose File</label>
+
+      <!-- Hidden file input -->
+      <input type="file" #fileInput hidden (change)="onFileSelected($event)" />
+
+      <!-- Custom file upload button -->
+      <div (click)="fileInput.click()"
+        class="cursor-pointer border border-gray-300 bg-white text-gray-800 px-4 py-2 rounded hover:bg-gray-50 flex items-center gap-2 w-fit">
+        <span>
+          {{ selectedFile?.name || editingDocument?.fileName || 'Select a file' }}
+        </span>
+        <span class="material-symbols-outlined text-blue-600">upload_file</span>
+      </div>
+    </div>
+
+    <!-- Upload or Update Button -->
+    <button (click)="uploadDocument()" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
+      {{ editingDocument ? 'Update Document' : 'Upload Document' }}
+    </button>
+  </div>
+
+  }
+  <app-loading [isLoading]="isLoading"></app-loading>
+</div>

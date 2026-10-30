@@ -1,0 +1,216 @@
+<!-- Add Income Button -->
+<div class="income-container">
+  <div class="w-full flex justify-end mb-4" *ngIf="showForm">
+    <button (click)="toggleForm()" style="background-color: blue !important; color: white !important; padding: 0.5rem 1.5rem; border-radius: 6px; font-weight: 700;">
+      Back
+    </button>
+  </div>
+
+
+  <div>
+    <!-- Income Form (shown only if showForm is true) -->
+    @if (showForm) {
+    <div class="w-full max-w-4xl mx-auto">
+      <h2 class="font-semibold mb-6 text-center" style="font-size: 29px !important;">{{ isEditMode ? 'Edit Income' : 'Add Income' }}</h2>
+
+      <form (ngSubmit)="saveSelectedIncome()" #incomeForm="ngForm" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Expense Type -->
+          <div>
+            <label for="expenseType" class="block font-medium mb-1">Expense Type:</label>
+            <select id="expenseType" [(ngModel)]="selectedExpenseType" name="expenseType" required
+              class="w-full border border-gray-300 p-2 rounded h-10 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              <option value="" disabled selected>Select Type</option>
+              <option *ngFor="let type of Expense_Type" [value]="type.Expense_Type_Id">
+                {{ type.Expense_Type_Name }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Amount -->
+          <div>
+            <label for="amount" class="block font-medium mb-1">Amount:</label>
+            <input type="number" id="amount" [(ngModel)]="amount" name="amount" required
+              class="w-full border border-gray-300 p-2 rounded h-10 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Enter amount" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Description -->
+          <div>
+            <label for="description" class="block font-medium mb-1">Description:</label>
+            <input type="text" id="description" [(ngModel)]="description" name="description" maxlength="200"
+              class="w-full border border-gray-300 p-2 rounded h-10 focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Optional description" />
+          </div>
+
+          <!-- Account -->
+          <div>
+            <label for="Account" class="block font-medium mb-1">Account:</label>
+            <select id="Account" [(ngModel)]="selectedAccount" name="accountId" required
+              class="w-full border border-gray-300 p-2 rounded h-10 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              <option [ngValue]="undefined" disabled selected>Select Account</option>
+              <option *ngFor="let branch of allAccounts" [ngValue]="branch">
+                {{ branch.Account_Name }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Email Template -->
+          <!-- <div>
+            <label for="emailTemplateIncome" class="block font-medium mb-1">Email Template:</label>
+            <select id="emailTemplateIncome" [(ngModel)]="selectedTemplateId" name="selectedTemplateId"
+              class="w-full border border-gray-300 p-2 rounded h-10 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+              <option [ngValue]="null">-- Select Template To Send --</option>
+              <option *ngFor="let template of emailTemplates" [value]="template.Template_ID">
+                {{ template.Template_Name }}
+              </option>
+            </select>
+          </div> -->
+
+          <!-- Recipient Email (Required if template selected) -->
+          <div *ngIf="selectedTemplateId">
+            <label for="recipientEmail" class="block font-medium mb-1 text-blue-600">Recipient Email:</label>
+            <input type="email" id="recipientEmail" [(ngModel)]="recipientEmail" name="recipientEmail" required
+              placeholder="Enter email to send template" 
+              class="w-full border border-blue-300 p-2 rounded h-10 focus:ring-2 focus:ring-blue-500 focus:outline-none bg-blue-50" />
+          </div>
+        </div>
+
+        <div class="pt-4 flex justify-center">
+          <button type="submit" class="bg-blue-600 text-white py-1.5 px-6 rounded-md hover:bg-blue-300 transition-all shadow-lg active:scale-[0.98]">
+            Save Income
+          </button>
+        </div>
+      </form>
+    </div>
+    }
+
+
+    <!-- Filter Bar -->
+    @if (!showForm) {
+    <div class="filter-section">
+      <!-- From Date -->
+      <div class="filter-item">
+        <input type="date" [(ngModel)]="filterFromDate" class="native-date-input" (change)="applyFilters()">
+      </div>
+
+      <!-- To Date -->
+      <div class="filter-item">
+        <input type="date" [(ngModel)]="filterToDate" class="native-date-input" (change)="applyFilters()">
+      </div>
+
+      <!-- Account -->
+      <div class="filter-item">
+        <select [(ngModel)]="filterAccountId" class="native-select-input" (change)="applyFilters()">
+          <option value="">All Account</option>
+          <option *ngFor="let acc of allAccounts" [value]="acc.Account_id">{{ acc.Account_Name }}</option>
+        </select>
+      </div>
+
+      <!-- Expense Type -->
+      <div class="filter-item">
+        <select [(ngModel)]="filterExpenseTypeId" class="native-select-input" (change)="applyFilters()">
+          <option value="">All Income Type</option>
+          <option *ngFor="let type of Expense_Type" [value]="type.Expense_Type_Id">{{ type.Expense_Type_Name }}</option>
+        </select>
+      </div>
+
+      <!-- Add Income Button -->
+      <div style="margin-left: auto;">
+        <button *ngIf="isSave" (click)="toggleForm()" style="background-color: blue !important; color: white !important; padding: 0 1.5rem; border-radius: 6px; font-weight: 700; height: 42px; display: flex; align-items: center; justify-content: center;">
+          Add Income
+        </button>
+      </div>
+    </div>
+    }
+
+
+    <hr />
+
+    <!-- Income List Table -->
+    @if (!showForm) {
+    @if (IncomeList && IncomeList.length > 0) {
+    <div class="overflow-x-auto w-full overflow-y-auto max-h-[500px] border border-gray-200 rounded-md">
+      <table class="min-w-[1024px] w-full text-sm text-gray-800 table-auto border-collapse">
+        <thead class="bg-gray-100 text-left sticky top-0 z-10">
+          <tr>
+            <th class="px-4 py-1 whitespace-nowrap">ID</th>
+            <th class="px-4 py-1 whitespace-nowrap">Date</th>
+            <th class="px-4 py-1 whitespace-nowrap">Amount</th>
+            <th class="px-4 py-1 whitespace-nowrap">Description</th>
+            <th class="px-4 py-1 whitespace-nowrap">Account</th>
+            <th class="px-4 py-1 whitespace-nowrap">User</th>
+            <th class="px-4 py-1 whitespace-nowrap">Expense Type</th>
+            <th class="px-4 py-1 whitespace-nowrap" style="text-align: left !important; padding-left: 10px !important;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let income of paginatedIncomes; let i = index"
+            class="border-b hover:bg-gray-50 transition">
+            <td class="px-4 py-2 whitespace-nowrap">{{ (currentPage - 1) * pageSize + i + 1 }}</td>
+            <td class="px-4 py-2 whitespace-nowrap">{{ income.Entry_Date | date: 'dd-MM-yyyy ' }}</td>
+            <td class="px-4 py-2 whitespace-nowrap">{{ income.Amount }}</td>
+            <td class="px-4 py-2 whitespace-nowrap">{{ income.Description }}</td>
+            <td class="px-4 py-2 whitespace-nowrap">
+              {{ income.Account_Name }}
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap">{{ income.First_Name }}</td>
+            <td class="px-4 py-2 whitespace-nowrap">
+              {{ income.Expense_Type_Name ? income.Expense_Type_Name : 'N/A' }}
+            </td>
+            <td class="px-4 py-2 whitespace-nowrap" style="text-align: left !important; padding-left: 10px !important;">
+              <div class="flex gap-2" style="justify-content: flex-start !important;">
+                <button  *ngIf="isEdit" (click)="editIncome(income)"
+                  class="flex items-center px-4 py-2 bg-yellow-50 text-yellow-700 rounded-md hover:bg-yellow-100 transition-all duration-300 transform hover:scale-105 whitespace-nowrap">
+                  <span class="material-symbols-outlined mr-2">edit</span>
+                </button>
+
+                <button *ngIf="isDelete" (click)="deleteIncome(income.Income_Id)"
+                  class="flex items-center px-4 py-2 bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-all duration-300 transform hover:scale-105 whitespace-nowrap">
+                  <span class="material-symbols-outlined mr-2">delete</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    }
+
+    <!-- Pagination Controls -->
+    <div class="flex justify-end items-center gap-4 mt-4 px-4" style="justify-content: space-between;">
+      <div class="flex items-center gap-2 text-sm text-gray-700">
+        <label for="pageSizeSelect">Rows per page:</label>
+        <select id="pageSizeSelect" [(ngModel)]="pageSize" (change)='onPageSizeChange()'
+          class="border rounded px-2 py-1 focus:outline-none" style="width: 80px;">
+          <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+        </select>
+      </div>
+
+      <div class="pagination-buttons">
+        <button class="px-3 py-1 border rounded hover:bg-gray-100" [disabled]="currentPage === 1" (click)="prevPage()">
+          Prev
+        </button>
+        <span>{{ currentPage }} / {{ totalPages }}</span>
+
+        <button class="px-3 py-1 border rounded hover:bg-gray-100" [disabled]="currentPage === totalPages"
+          (click)="nextPage()">
+          Next
+        </button>
+      </div>
+    </div>
+
+
+    <!-- No data fallback -->
+    @if (IncomeList && IncomeList.length === 0) {
+    <div class="flex flex-col items-center justify-center py-16 text-gray-500 w-full">
+      <span class="material-symbols-outlined text-5xl mb-3 text-gray-400">info</span>
+      <p class="text-base font-semibold">No income found.</p>
+    </div>
+    }
+
+    }
+  </div>
+</div>

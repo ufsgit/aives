@@ -1,0 +1,323 @@
+<div class="upload-container">
+  <h2>Student Enrollment Excel Import</h2>
+  
+  <!-- Field Mapping Section -->
+  <div class="field-mapping-section">
+    <h3>Excel Column Mapping</h3>
+    <p>Map your Excel column names to the corresponding fields:</p>
+    
+    <div class="mapping-grid">
+      <div class="mapping-row">
+        <div class="mapping-group">
+          <label for="rollNoMapping">Roll No Column:</label>
+          <input 
+            type="text" 
+            id="rollNoMapping"
+            [(ngModel)]="rollNoField"
+            class="mapping-input"
+            placeholder="e.g., Roll No"
+          />
+        </div>
+        
+       
+      </div>
+<!-- 
+      <div class="mapping-row">
+        
+        
+        <div class="mapping-group">
+          <label for="slotNameMapping">Slot Name Column:</label>
+          <input 
+            type="text" 
+            id="slotNameMapping"
+            [(ngModel)]="slotNameField"
+            class="mapping-input"
+            placeholder="e.g., Slot Name"
+          />
+        </div>
+      </div> -->
+
+      <div class="mapping-row">
+        <div class="mapping-group">
+          <label for="enrollmentDateMapping">Enrollment Date Column:</label>
+          <input 
+            type="text" 
+            id="enrollmentDateMapping"
+            [(ngModel)]="enrollmentDateField"
+            class="mapping-input"
+            placeholder="e.g., Enrollment Date"
+          />
+        </div>
+
+        <div class="mapping-group">
+          <label for="expiryDateMapping">Expiry Date Column:</label>
+          <input 
+            type="text" 
+            id="expiryDateMapping"
+            [(ngModel)]="expiryDateField"
+            class="mapping-input"
+            placeholder="e.g., Expiry Date"
+          />
+        </div>
+      </div>
+
+      <div class="mapping-row">
+        <div class="mapping-group">
+          <label for="priceMapping">Price Column:</label>
+          <input 
+            type="text" 
+            id="priceMapping"
+            [(ngModel)]="priceField"
+            class="mapping-input"
+            placeholder="e.g., Price"
+          />
+        </div>
+
+        <div class="mapping-group">
+          <label for="totalAmountMapping">Total Amount Column:</label>
+          <input 
+            type="text" 
+            id="totalAmountMapping"
+            [(ngModel)]="totalAmountField"
+            class="mapping-input"
+            placeholder="e.g., Total Amount"
+          />
+        </div>
+      </div>
+
+
+    </div>
+  </div>
+
+  <!-- File Upload Section -->
+  <div class="upload-section">
+    <div class="file-input-wrapper">
+      <input 
+        type="file" 
+        #fileInput
+        (change)="onFileSelected($event)"
+        accept=".xlsx,.xls"
+        id="fileUpload"
+        class="file-input"
+      />
+      <label for="fileUpload" class="file-label">
+        <i class="upload-icon">📁</i>
+        Choose Excel File
+      </label>
+    </div>
+    
+    <button 
+      (click)="uploadFile()" 
+      [disabled]="!file || isUploading"
+      class="upload-btn"
+    >
+      {{ isUploading ? 'Uploading...' : 'Upload & Import' }}
+    </button>
+  </div>
+
+  <!-- Selected File Info -->
+  <div *ngIf="file" class="file-info">
+    <p><strong>Selected File:</strong> {{ file.name }}</p>
+    <p><strong>Size:</strong> {{ (file.size / 1024).toFixed(2) }} KB</p>
+  </div>
+
+  <!-- Import Results -->
+  <div *ngIf="Enrollment_Import_Data.length > 0" class="results-section">
+    <h3>Imported Enrollment Data ({{ Enrollment_Import_Data.length }} records)</h3>
+    
+    <!-- Enrollment Records -->
+    <div class="enrollment-records">
+      <div 
+        *ngFor="let enrollment of Enrollment_Import_Data; let i = index"
+        class="enrollment-form"
+      >
+        <div class="enrollment-header">
+          <h4>Enrollment {{ i + 1 }}</h4>
+          <button 
+            (click)="removeEnrollment(i)" 
+            class="remove-btn"
+            title="Remove this enrollment"
+          >
+            ❌
+          </button>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="rollNo_{{i}}">Roll No:</label>
+            <input 
+              type="text" 
+              id="rollNo_{{i}}"
+              [(ngModel)]="enrollment.roll_no"
+              class="form-control"
+              placeholder="Enter roll number"
+            />
+          </div>
+
+        
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="course_{{i}}">Course:</label>
+            <select 
+              id="course_{{i}}"
+              [(ngModel)]="enrollment.course_id"
+              class="form-control"
+            
+            >
+              <option [ngValue]="null">Select Course</option>
+              <option *ngFor="let course of Search_Course_Data" [value]="course.Course_ID">
+                {{ course.Course_Name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="batch_{{i}}">Batch:</label>
+            <select 
+              id="batch_{{i}}"
+              [(ngModel)]="enrollment.batch_id"
+              class="form-control"
+              
+            >
+              <option [ngValue]="null">Select Batch</option>
+              <option *ngFor="let batch of batchDropdownData" [value]="batch.Batch_ID">
+                {{ batch.Batch_Name }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <!-- <div class="form-group">
+            <label for="slot_{{i}}">Slot:</label>
+            <select 
+              id="slot_{{i}}"
+              [(ngModel)]="enrollment.Slot_Id"
+              class="form-control"
+             "
+            >
+              <option [ngValue]="null">Select Slot</option>
+              <option *ngFor="let slot of Search_Slot_Data" [value]="slot.Slot_Id">
+                {{ slot.Slot_Name }}
+              </option>
+            </select>
+          </div> -->
+
+          <div class="form-group">
+            <label for="enrollmentDate_{{i}}">Enrollment Date:</label>
+            <input 
+              type="text" 
+              id="enrollmentDate_{{i}}"
+              [(ngModel)]="enrollment.enrollmentDateField_1"
+              class="form-control"
+            />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="expiryDate_{{i}}">Expiry Date:</label>
+            <input 
+              type="text" 
+              id="expiryDate_{{i}}"
+              [(ngModel)]="enrollment.expiryDateField_1"
+              class="form-control"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="price_{{i}}">Price:</label>
+            <input 
+              type="number" 
+              step="0.01"
+              id="price_{{i}}"
+              [(ngModel)]="enrollment.Price"
+              class="form-control"
+              placeholder="Enter price"
+            />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="totalAmount_{{i}}">Total Amount:</label>
+            <input 
+              type="number" 
+              step="0.01"
+              id="totalAmount_{{i}}"
+              [(ngModel)]="enrollment.Total_Amount"
+              class="form-control"
+              placeholder="Enter total amount"
+            />
+          </div>
+
+        
+        </div>
+
+    
+<!-- 
+        <div class="form-row">
+          <div class="form-group">
+            <label for="paymentDate_{{i}}">Payment Date:</label>
+            <input 
+              type="datetime-local" 
+              id="paymentDate_{{i}}"
+              [(ngModel)]="enrollment.Payment_Date"
+              class="form-control"
+            />
+          </div>
+        </div> -->
+
+        <!-- Status Indicators -->
+        <div class="status-indicators">
+          <!-- <span class="status-badge" [class.status-success]="enrollment.Student_ID > 0" [class.status-error]="!enrollment.Student_ID">
+            {{ enrollment.Student_ID > 0 ? '✓ Student Found' : '✗ Student Not Found' }}
+          </span> -->
+          <span class="status-badge" [class.status-success]="enrollment.course_id > 0" [class.status-error]="!enrollment.course_id">
+            {{ enrollment.course_id > 0 ? '✓ Course Selected' : '✗ Course Required' }}
+          </span>
+          <span class="status-badge" [class.status-success]="enrollment.batch_id > 0" [class.status-error]="!enrollment.batch_id">
+            {{ enrollment.batch_id > 0 ? '✓ Batch Selected' : '✗ Batch Required' }}
+          </span>
+          <!-- <span class="status-badge" [class.status-success]="enrollment.Slot_Id > 0" [class.status-error]="!enrollment.Slot_Id">
+            {{ enrollment.Slot_Id > 0 ? '✓ Slot Selected' : '✗ Slot Required' }}
+          </span> -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <!-- <button (click)="saveAllEnrollments()" class="save-btn"  style="background-color: blue !important; color: white !important;">
+        💾 Save All Enrollments
+      </button> -->
+      <button (click)="clearData()" class="clear-btn">
+        🗑️ Clear Data
+      </button>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="summary-stats">
+      <div class="stat-item">
+        <span class="stat-label">Total Records:</span>
+        <span class="stat-value">{{ Enrollment_Import_Data.length }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Valid Records:</span>
+        <span class="stat-value">{{ getValidRecordsCount() }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Invalid Records:</span>
+        <span class="stat-value">{{ getInvalidRecordsCount() }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isUploading" class="loading-spinner">
+    <div class="spinner"></div>
+    <p>Processing Excel file...</p>
+  </div>
+</div>

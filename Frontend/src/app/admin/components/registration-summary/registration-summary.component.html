@@ -1,0 +1,57 @@
+<div class="px-6 py-4 bg-white rounded-lg shadow-sm border border-gray-100 min-h-screen">
+  
+    <!-- Filters Row -->
+    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6 items-end">
+        <div class="flex items-center h-full pb-2">
+          <label class="flex items-center cursor-pointer">
+            <input type="checkbox" [(ngModel)]="useCreatedDate" (change)="loadSummary()"
+                   class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500">
+            <span class="ml-2 text-sm font-medium text-gray-700">Created On</span>
+          </label>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1" [class.opacity-50]="!useCreatedDate">Date From</label>
+          <input type="date" [(ngModel)]="fromDate" (change)="onDateRangeChanged()" [disabled]="!useCreatedDate"
+                 class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-600 mb-1" [class.opacity-50]="!useCreatedDate">Date To</label>
+          <input type="date" [(ngModel)]="toDate" (change)="onDateRangeChanged()" [disabled]="!useCreatedDate" [min]="fromDate"
+                 class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500">
+        </div>
+    </div>
+  
+    <!-- Table -->
+    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+      <table class="w-full text-sm text-left text-gray-500">
+        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 font-semibold tracking-wider w-16">S.No.</th>
+            <th class="px-6 py-3 font-semibold tracking-wider">Enrolled By</th>
+            <th class="px-6 py-3 font-semibold tracking-wider">Total Registrations</th>
+            <th class="px-6 py-3 font-semibold tracking-wider text-center w-32">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="isLoading">
+            <td colspan="4" class="px-6 py-4 text-center text-gray-500">Loading data...</td>
+          </tr>
+          <tr *ngIf="!isLoading && summaryRows.length === 0">
+            <td colspan="4" class="px-6 py-4 text-center text-gray-500">No data available</td>
+          </tr>
+          <tr *ngFor="let row of summaryRows" class="bg-white border-b hover:bg-gray-50">
+            <td class="px-6 py-4">{{ row.rowNo }}</td>
+            <td class="px-6 py-4 font-medium text-gray-900">{{ row.Staff_Name }}</td>
+            <td class="px-6 py-4">{{ row.Total_Registrations }}</td>
+            <td class="px-6 py-4 text-center">
+              <button (click)="viewDetails(row)" 
+                      class="text-blue-600 hover:text-blue-800 font-medium text-sm border border-blue-600 hover:bg-blue-50 rounded px-3 py-1 transition-colors">
+                View Details
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  
+  </div>

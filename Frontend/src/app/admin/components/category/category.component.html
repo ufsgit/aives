@@ -1,0 +1,63 @@
+@if(!Entry_View)
+{
+<section class="border border-gray-300 shadow p-6 rounded-lg bg-white">
+  <button class="bg-sky-500 hover:bg-blue-hover text-white font-bold py-2 px-4 rounded" (click)="Create_New()" style="background-color: blue !important; color: white !important;">
+    Add Course Category
+  </button>
+  @for( item of course_category_Data;track $index){
+  <div class="mt-5 border border-gray-300 p-8 rounded-lg">
+    <div class="flex justify-between">
+      <div class="w-full">
+        <div class="grid grid-cols-12">
+          <span class="col-span-2 xl:col-span-2 lg:col-span-4 textName">Category Name</span>
+          <span class="col-span-12 xl:col-span-3 text-base font-medium leading-7">{{ item.Category_Name }}</span>
+        </div>
+      </div>
+      <div class="flex gap-3 cursor-pointer">
+        <mat-slide-toggle labelPosition="before" class="pt-3 items-center" color="primary"
+          [checked]="item.Enabled_Status == 1" (change)="onToggleChange($event, item.Category_ID)">
+          @if (item.Enabled_Status == 1) {
+          <span>Enabled</span>
+          }
+          @if (item.Enabled_Status == 0) {
+          <span>Disabled</span>
+          }
+        </mat-slide-toggle>
+        <span (click)="Edit_course_category(item)"
+          class="material-symbols-outlined flex justify-center items-center h-12 w-12 p-2 border border-[#B8D0DE] rounded-full bg-[#D9EFF4]">
+          edit
+        </span>
+        <span (click)="Delete_course_category(item.Category_ID, $index)"
+          class="material-symbols-outlined flex justify-center items-center h-12 w-12 p-2 border border-[#E8A0A7] rounded-full bg-[#F4EDF0] text-[#D11A2A]">
+          delete
+        </span>
+      </div>
+    </div>
+  </div>
+  }
+</section>
+}
+@else {
+<section class="border border-gray-300 shadow p-6 rounded-lg bg-white">
+  <form [formGroup]="course_category_Form" (ngSubmit)="Save_course_category();submitted = true">
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700">Course Category <span class="text-red-700">*</span></label>
+      <input type="text" formControlName="Category_Name" maxlength="50" required (blur)="course_category_Form.get('Category_Name')?.markAsTouched()"
+        class="mt-1 px-2 py-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+      <div *ngIf="course_category_Form.get('Category_Name')?.invalid && (course_category_Form.get('Category_Name')?.touched || submitted)" class="text-red-500 text-xs mt-1">
+        Category Name is required.
+      </div>
+    </div>
+    <div class="w-full flex justify-end gap-4">
+      <button class="border border-blue hover:bg-gray-500 hover:text-white text-black font-bold py-2 px-4 rounded"
+        (click)="closeClick();submitted = false">
+        Cancel
+      </button>
+      <button type="submit"
+        class="bg-sky-500 hover:bg-blue-hover text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring focus:ring-zinc-500 focus:ring-opacity-50" style="background-color: blue !important; color: white !important;">
+        Save
+      </button>
+    </div>
+  </form>
+</section>
+}

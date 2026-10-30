@@ -1,0 +1,48 @@
+<div class="font-sans antialiased mb-2">
+  <div *ngIf="isLoading" class="flex flex-col items-center justify-center py-10 gap-4">
+    <div class="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent"></div>
+    <p class="text-sm font-medium text-slate-500">Loading your summary metrics...</p>
+  </div>
+
+  <div *ngIf="!isLoading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    
+    <!-- Dynamic Status Cards -->
+    <ng-container *ngFor="let status of statusSummary; let i = index">
+      <article 
+        (click)="onCardClick(status.Status_Name)"
+        class="group rounded-xl p-6 shadow-[0_2px_15px_#00000006] hover:shadow-[0_4px_25px_#0000000a] transition-all duration-300 cursor-pointer flex gap-5 border"
+        [style.background]="getCardBackground(i)"
+        [style.border-color]="getCardBorderColor(i)"
+      >
+        <!-- Icon -->
+        <div class="flex flex-col h-full justify-start pt-1">
+          <div 
+            class="lead-status-icon w-[56px] h-[56px] rounded-2xl flex items-center justify-center flex-shrink-0 border"
+            [style.background-color]="getIconBackgroundColor(status.Status_Color, i)"
+            [style.color]="getStatusColor(status.Status_Color, i)"
+            [style.border-color]="getIconBorderColor(status.Status_Color, i)"
+            [style.box-shadow]="getIconShadow(status.Status_Color, i)"
+          >
+            <span class="material-symbols-outlined text-[26px]">
+               {{ getIconForStatus(status.Status_Name) || 'description' }}
+            </span>
+          </div>
+        </div>
+        
+        <!-- Content -->
+        <div class="flex flex-col flex-1">
+          <h2 class="text-[14px] font-bold text-slate-600 mb-1.5 whitespace-nowrap">
+            {{ status.Status_Name }}
+          </h2>
+          <div class="flex items-end mb-1">
+            <p class="text-[34px] leading-none font-black text-slate-800 tracking-tight">{{ status.LeadCount }}</p>
+          </div>
+        </div>
+      </article>
+    </ng-container>
+
+  </div>
+</div>
+
+
+

@@ -1,0 +1,165 @@
+<div class="enquiry-conversion-page">
+  <div class="bg-white rounded shadow-sm border border-gray-100 p-2 mt-3 transition-all duration-300 hover:shadow-md">
+    <div class="flex flex-wrap items-center gap-3" [class.filters-summary]="!isDetailView" [class.filters-detail]="isDetailView">
+      <!-- Checkbox -->
+      <div class="flex items-center gap-2 group cursor-pointer">
+        <input type="checkbox" id="createdOn" [(ngModel)]="useCreatedDate" (change)="applyFilters()"
+               class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 transition-colors cursor-pointer">
+        <label for="createdOn" class="text-sm font-semibold text-gray-700 cursor-pointer group-hover:text-blue-600 transition-colors">
+          Created On
+        </label>
+      </div>
+
+      <!-- From Date -->
+      <div class="flex items-center gap-3">
+        <label for="fromDate" class="text-xs font-medium text-gray-500 uppercase tracking-wider">From Date</label>
+        <input type="date" id="fromDate" [(ngModel)]="fromDate" (change)="onDateRangeChanged()" [disabled]="!useCreatedDate"
+               class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all disabled:bg-gray-50 disabled:text-gray-400">
+      </div>
+
+      <!-- To Date -->
+      <div class="flex items-center gap-3">
+        <label for="toDate" class="text-xs font-medium text-gray-500 uppercase tracking-wider">To Date</label>
+        <input type="date" id="toDate" [(ngModel)]="toDate" (change)="onDateRangeChanged()" [disabled]="!useCreatedDate"
+               class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all disabled:bg-gray-50 disabled:text-gray-400">
+      </div>
+
+      <!-- Search Button -->
+      <button (click)="applyFilters()" 
+              class="flex items-center gap-1 px-3 py-1 bg-blue hover:bg-blue-hover text-white rounded-lg text-sm font-semibold shadow-sm shadow-blue-200 transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none" style="background-color: blue !important; color: white !important;">
+        <span class="material-symbols-outlined text-lg">search</span>
+        Search
+      </button>
+
+      <button *ngIf="isDetailView" class="ghost-btn ml-auto" (click)="backToSummary()">
+        Back to Summary
+      </button>
+
+      <div class="view-toggle ml-auto" *ngIf="!isDetailView">
+        <button class="ghost-btn toggle-btn table-btn" [class.active]="selectedView === 'table'" (click)="selectedView = 'table'">
+          Table
+        </button>
+        <button class="ghost-btn toggle-btn graph-btn" [class.active]="selectedView === 'graph'" (click)="selectedView = 'graph'">
+          Graph
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-card" *ngIf="!isDetailView && selectedView === 'table'">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Enquiry Source</th>
+            <th>Total Lead</th>
+            <th>Conversion Count</th>
+            <th>Conversion Percentage</th>
+            <th class="action-col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of summaryRows">
+            <td>{{ row.rowNo }}</td>
+            <td class="source-cell">{{ row.Enquiry_Source_Name }}</td>
+            <td>
+              <span class="count-pill total">{{ row.Total_Leads_Count }}</span>
+            </td>
+            <td>
+              <span class="count-pill">{{ row.Conversion_Count }}</span>
+            </td>
+            <td>
+              <span class="count-pill percent">{{ row.Conversion_Percentage }}%</span>
+            </td>
+            <td class="action-col">
+              <button class="ghost-btn small btn-xs" (click)="openDetails(row)">
+                View Details
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="!isLoadingSummary && summaryRows.length === 0">
+            <td colspan="6" class="empty-state">No conversion data found for the selected range.</td>
+          </tr>
+          <tr *ngIf="isLoadingSummary">
+            <td colspan="6" class="empty-state">Loading data...</td>
+          </tr>
+        </tbody>
+        <tfoot *ngIf="!isLoadingSummary && summaryRows.length > 0">
+          <tr class="total-row">
+            <td colspan="2" class="source-cell total-label">Grand Total</td>
+            <td>
+              <span class="count-pill total">{{ totalLeadCount }}</span>
+            </td>
+            <td>
+              <span class="count-pill">{{ totalConversionCount }}</span>
+            </td>
+            <td>
+              <span class="count-pill percent">{{ totalConversionPercentage }}%</span>
+            </td>
+            <td class="action-col"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="table-card graph-card" *ngIf="!isDetailView && selectedView === 'graph'">
+    <div class="table-header">
+      <h2>Total Leads vs Converted Count</h2>
+      <p>Comparison of leads and conversions by enquiry sources.</p>
+    </div>
+    <div class="graph-wrap" *ngIf="!isLoadingSummary && summaryRows.length > 0">
+      <canvas
+        baseChart
+        [data]="conversionChartData"
+        [options]="conversionChartOptions"
+        [type]="conversionChartType">
+      </canvas>
+    </div>
+    <div class="empty-state" *ngIf="isLoadingSummary">Loading graph...</div>
+    <div class="empty-state" *ngIf="!isLoadingSummary && summaryRows.length === 0">
+      No conversion data available to display the graph.
+    </div>
+  </div>
+
+  <div class="table-card" *ngIf="isDetailView">
+    <div class="table-header">
+      <div class="header-main">
+        <h2>{{ selectedSource?.Enquiry_Source_Name }} Details</h2>
+        <!-- <p>List of students converted via this source</p> -->
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Student Name</th>
+            <th>Roll No</th>
+            <th>Mobile</th>
+            <th>Registration Date</th>
+            <th>Admission Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of detailRows">
+            <td>{{ row.rowNo }}</td>
+            <td class="name-cell">{{ row.Student_Name }}</td>
+            <td><span class="tag">{{ row.Roll_No_Character || row.Roll_No || '-' }}</span></td>
+            <td>{{ row.Mobile }}</td>
+            <td>{{ formatDate(row.Registered_On) }}</td>
+            <td>{{ formatDate(row.Admission_Date) }}</td>
+          </tr>
+          <tr *ngIf="!isLoadingDetails && detailRows.length === 0">
+            <td colspan="6" class="empty-state">No students found for this source in the selected range.</td>
+          </tr>
+          <tr *ngIf="isLoadingDetails">
+            <td colspan="6" class="empty-state">Loading details...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

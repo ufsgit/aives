@@ -1,0 +1,257 @@
+<div class="attendance-history-page">
+  <!-- Header -->
+  <div class="history-header">
+    <div class="header-left">
+      <button mat-icon-button (click)="goBack()" class="back-btn" title="Back">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-title">
+        <h2> ATTENDANCE HISTORY PAGE</h2>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-card !p-3 !border-none !shadow-sm !mb-2">
+    <div class="flex flex-wrap gap-4 items-end bg-white">
+      <!-- Course Dropdown -->
+      <div class="flex-1 min-w-[200px]">
+        <!-- <label class="block text-xs font-medium text-gray-600 mb-0.5">Course</label> -->
+        <div class="relative">
+          <select [formControl]="selectedCourse" (change)="onCourseChange()"
+            class="w-full appearance-none bg-white border-2 border-gray-300 rounded-md py-1.5 pl-4 pr-10 focus:outline-none focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-300">
+            <option value="">All Courses</option>
+            <option *ngFor="let course of courseList" [value]="course.Course_Name">
+              {{ course.Course_Name }}
+            </option>
+          </select>
+          <!-- <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none"
+            xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+              clip-rule="evenodd" />
+          </svg> -->
+        </div>
+      </div>
+
+      <!-- Batch Dropdown -->
+      <div class="flex-1 min-w-[200px]">
+        <!-- <label class="block text-xs font-medium text-gray-600 mb-0.5">Batch</label> -->
+        <div class="relative">
+          <select [formControl]="selectedBatch" (change)="onFilterChange()"
+            class="w-full appearance-none bg-white border-2 border-gray-300 rounded-md py-1.5 pl-4 pr-10 focus:outline-none focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-300">
+            <option value="">All Batches</option>
+            <option *ngFor="let batch of batchList" [value]="batch.Batch_Name">
+              {{ batch.Batch_Name }}
+            </option>
+          </select>
+          <!-- <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none"
+            xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+              clip-rule="evenodd" />
+          </svg> -->
+        </div>
+      </div>
+
+      <!-- From Date Picker -->
+      <div class="flex-1 min-w-[180px]">
+        <!-- <label class="block text-xs font-medium text-gray-600 mb-0.5">From Date</label> -->
+        <div class="relative">
+          <input type="date" [formControl]="fromDate" (change)="onFilterChange()"
+            class="w-full px-4 py-1.5 border-2 border-gray-300 rounded-md focus:outline-none focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-300">
+        </div>
+      </div>
+
+      <!-- To Date Picker -->
+      <div class="flex-1 min-w-[180px]">
+        <!-- <label class="block text-xs font-medium text-gray-600 mb-0.5">To Date</label> -->
+        <div class="relative">
+          <input type="date" [formControl]="toDate" (change)="onFilterChange()"
+            class="w-full px-4 py-1.5 border-2 border-gray-300 rounded-md focus:outline-none focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-300">
+        </div>
+      </div>
+
+      <button (click)="openAttendanceGraphModal()"
+        style="background-color: #8b5cf6 !important; color: white !important;"
+        class="px-6 py-1.5 font-semibold rounded-md shadow-sm transition-all hover:scale-105 flex items-center justify-center gap-1.5 whitespace-nowrap">
+        <mat-icon style="font-size: 20px; width: 20px; height: 20px;">bar_chart</mat-icon>
+        Graph
+      </button>
+
+      <button (click)="fetchHistory()"
+        style="background-color: #1a65c2 !important;"
+        class="px-8 py-1.5 text-white font-semibold rounded-md shadow-sm transition-all hover:scale-105 flex items-center justify-center whitespace-nowrap">
+        Search
+      </button>
+    </div>
+  </div>
+
+
+  <!-- History Table -->
+  <div class="table-card">
+    <!-- Loading State -->
+    <div *ngIf="isLoadingHistory" class="loading-state">
+      <mat-icon class="spin-icon">refresh</mat-icon>
+      <p>Loading history...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoadingHistory && historyList.length === 0" class="empty-state">
+      <mat-icon class="empty-icon">history_toggle_off</mat-icon>
+      <p>No attendance history found</p>
+    </div>
+
+    <!-- Table -->
+    <div *ngIf="!isLoadingHistory && historyList.length > 0" class="table-wrapper">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Course</th>
+            <th>Batch</th>
+            <!-- <th>Session</th> -->
+            <th>Marked By</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let record of historyList">
+            <td>{{ record.Attendance_Date | date:'dd-MM-yyyy' }}</td>
+            <td>{{ record.Course_Name || 'N/A' }}</td>
+            <td>{{ record.Batch_Name || 'N/A' }}</td>
+            <!-- <td>{{ record.Session || '1' }}</td> -->
+            <td>{{ record.Marked_By_Name || 'John Doe' }}</td>
+            <td><span class="status-completed">Completed</span></td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-action view" (click)="viewAttendanceDetails(record)" title="View Details">
+                  <span class="material-symbols-outlined">visibility</span>
+                </button>
+                <!-- <button class="btn-action delete" (click)="deleteAttendanceRecord(record)" title="Delete Record">
+                  <span class="material-symbols-outlined">delete</span>
+                </button> -->
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div *ngIf="!isLoadingHistory && historyList.length > 0" 
+         class="flex items-center justify-between px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-xl">
+      <div class="flex items-center gap-4">
+        <span class="text-sm text-gray-600">
+          Showing <span class="font-semibold text-gray-900">{{ (currentPage - 1) * pageSize + 1 }}</span>
+          to <span class="font-semibold text-gray-900">{{ (currentPage * pageSize) | minValue: totalRecords }}</span>
+          of <span class="font-semibold text-gray-900">{{ totalRecords }}</span> records
+        </span>
+        <div class="flex items-center gap-2">
+          <label class="text-sm text-gray-600">Show:</label>
+          <select [(ngModel)]="pageSize" (change)="onPageSizeChange()"
+                  class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-sky-500 focus:border-sky-500 p-1 px-4">
+            <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button (click)="prevPage()" [disabled]="currentPage === 1"
+                class="flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+          <span class="material-symbols-outlined text-xl">chevron_left</span>
+        </button>
+        <div class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700">
+          Page <span class="text-sky-600">{{ currentPage }}</span> of {{ totalPages }}
+        </div>
+        <button (click)="nextPage()" [disabled]="currentPage === totalPages"
+                class="flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+          <span class="material-symbols-outlined text-xl">chevron_right</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Attendance Graph Modal -->
+<div *ngIf="showAttendanceGraphModal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto" (click)="closeAttendanceGraphModal()">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-width-[900px] max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200" style="max-width: 900px;" (click)="$event.stopPropagation()">
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-slate-50">
+      <div class="flex items-center gap-2">
+        <mat-icon class="text-purple-600">bar_chart</mat-icon>
+        <h3 class="text-xl font-bold text-gray-800 m-0">Attendance History Graph</h3>
+      </div>
+      <button (click)="closeAttendanceGraphModal()" class="text-gray-400 hover:text-gray-700 text-2xl font-bold border-none bg-transparent cursor-pointer">&times;</button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6 overflow-y-auto space-y-6">
+      <div *ngIf="isLoadingGraphData" class="flex flex-col items-center justify-center py-12 text-gray-500">
+        <mat-icon class="animate-spin text-4xl text-purple-600 mb-2">refresh</mat-icon>
+        <p class="text-base font-medium">Loading Attendance Graph Statistics...</p>
+      </div>
+
+      <div *ngIf="!isLoadingGraphData">
+        <!-- Metric Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-center">
+            <span class="block text-xs font-semibold uppercase tracking-wider text-emerald-700">Present</span>
+            <span class="text-2xl font-extrabold text-emerald-800">{{ graphSummary.presentCount }}</span>
+          </div>
+
+          <div class="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
+            <span class="block text-xs font-semibold uppercase tracking-wider text-red-700">Absent</span>
+            <span class="text-2xl font-extrabold text-red-800">{{ graphSummary.absentCount }}</span>
+          </div>
+
+          <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg text-center">
+            <span class="block text-xs font-semibold uppercase tracking-wider text-amber-700">Late</span>
+            <span class="text-2xl font-extrabold text-amber-800">{{ graphSummary.lateCount }}</span>
+          </div>
+
+          <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
+            <span class="block text-xs font-semibold uppercase tracking-wider text-blue-700">Overall Present Rate</span>
+            <span class="text-2xl font-extrabold text-blue-800">{{ graphSummary.presentRate }}%</span>
+          </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Bar Chart -->
+          <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+            <h4 class="text-sm font-bold text-gray-700 mb-3 text-center">Attendance Count Breakdown</h4>
+            <div style="height: 260px; position: relative;">
+              <canvas baseChart
+                [data]="attendanceBarChartData"
+                [options]="attendanceBarChartOptions"
+                [type]="attendanceBarChartType">
+              </canvas>
+            </div>
+          </div>
+
+          <!-- Pie / Doughnut Chart -->
+          <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+            <h4 class="text-sm font-bold text-gray-700 mb-3 text-center">Attendance Status Distribution</h4>
+            <div style="height: 260px; position: relative;">
+              <canvas baseChart
+                [data]="attendancePieChartData"
+                [options]="attendancePieChartOptions"
+                [type]="attendancePieChartType">
+              </canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="px-6 py-3 border-t border-gray-200 bg-slate-50 flex justify-end">
+      <button (click)="closeAttendanceGraphModal()" class="px-5 py-2 bg-slate-600 hover:bg-slate-700 text-white font-semibold rounded-lg shadow-sm transition-all cursor-pointer">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,225 @@
+<div class="attendance-page">
+  <!-- Header -->
+  <div class="attendance-header">
+    <div class="header-left">
+      <button mat-icon-button (click)="goBack()" class="back-btn" title="Back">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-title">
+        <!-- <mat-icon class="title-icon">how_to_reg</mat-icon> -->
+        <h2>Attendance Marking Page</h2>
+      </div>
+    </div>
+
+    <!-- Header Actions -->
+    <div class="header-right">
+      <button (click)="openAttendanceGraphModal()" class="btn-graph" title="View Attendance Graph">
+        <mat-icon style="font-size: 20px; width: 20px; height: 20px;">bar_chart</mat-icon>
+        Graph
+      </button>
+      <button (click)="navigateToAttendanceHistory()" class="btn-history" title="View Attendance History">
+        Attendance History
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <section class="container-section">
+    <div class="filter-row">
+      <!-- Course Dropdown -->
+      <div class="flex-1">
+        <div class="relative">
+          <select [formControl]="selectedCourse" (change)="onCourseChange()" class="w-full">
+            <option value=""> Select Course</option>
+            <option *ngFor="let course of courseList" [value]="course.Course_Name">
+              {{ course.Course_Name }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Batch Dropdown -->
+      <div class="flex-1">
+        <div class="relative">
+          <select [formControl]="selectedBatch" (change)="onBatchChange()" class="w-full">
+            <option value="">Select Batch </option>
+            <option *ngFor="let batch of batchList" [value]="batch.Batch_Name">
+              {{ batch.Batch_Name }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Date Picker -->
+      <div class="flex-1">
+        <div class="relative">
+          <input type="date" [formControl]="attendanceDate" class="w-full">
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Student Attendance Table -->
+  <div class="table-card">
+    <!-- Loading State -->
+    <div *ngIf="isLoadingStudents" class="loading-state">
+      <mat-icon class="spin-icon">refresh</mat-icon>
+      <p>Loading students...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoadingStudents && studentList.length === 0" class="empty-state">
+      <mat-icon class="empty-icon">group_off</mat-icon>
+      <p>Select a Course and Batch to view students</p>
+    </div>
+
+    <!-- Table -->
+    <div *ngIf="!isLoadingStudents && studentList.length > 0" class="table-wrapper">
+      <table class="attendance-table">
+        <thead>
+          <tr>
+            <th class="col-num">Sl No</th>
+            <th class="col-name">Student Name</th>
+            <th class="col-status">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let student of studentList; let i = index"
+              [class.status-present]="attendanceStatuses.get(student.Student_ID) === 1"
+              [class.status-absent]="attendanceStatuses.get(student.Student_ID) === 0"
+              [class.status-leave]="attendanceStatuses.get(student.Student_ID) === 2"
+              [class.status-late]="attendanceStatuses.get(student.Student_ID) === 3">
+            <td class="col-num">{{ i + 1 }}</td>
+            <td class="col-name">
+              <div class="student-info">
+
+                <span class="student-name">{{ student.First_Name ? (student.First_Name + ' ' + (student.Last_Name || '')) : student.Name }}</span>
+              </div>
+            </td>
+            <td class="col-status">
+              <div class="status-radio-group">
+                <label class="radio-option present"
+                       [class.active]="attendanceStatuses.get(student.Student_ID) === 1">
+                  <input type="radio" [name]="'status_' + student.Student_ID" [value]="1"
+                         [checked]="attendanceStatuses.get(student.Student_ID) === 1"
+                         (change)="setAttendanceStatus(student.Student_ID, 1)">
+                  <span class="radio-label">Present</span>
+                </label>
+
+                <label class="radio-option absent"
+                       [class.active]="attendanceStatuses.get(student.Student_ID) === 0">
+                  <input type="radio" [name]="'status_' + student.Student_ID" [value]="0"
+                         [checked]="attendanceStatuses.get(student.Student_ID) === 0"
+                         (change)="setAttendanceStatus(student.Student_ID, 0)">
+                  <span class="radio-label">Absent</span>
+                </label>
+
+                <label class="radio-option late"
+                       [class.active]="attendanceStatuses.get(student.Student_ID) === 3">
+                  <input type="radio" [name]="'status_' + student.Student_ID" [value]="3"
+                         [checked]="attendanceStatuses.get(student.Student_ID) === 3"
+                         (change)="setAttendanceStatus(student.Student_ID, 3)">
+                  <span class="radio-label">Late</span>
+                </label>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Action Buttons -->
+    <div *ngIf="studentList.length > 0" class="action-bar">
+
+      <button class="btn btn-save" (click)="saveAttendance()" [disabled]="isSavingAttendance">
+        <mat-icon *ngIf="isSavingAttendance" class="spin-icon">refresh</mat-icon>
+        {{ isSavingAttendance ? 'Saving...' : 'Save' }}
+      </button>
+      <button class="btn btn-cancel" (click)="goBack()">
+        Cancel
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Attendance Graph Modal -->
+<div *ngIf="showAttendanceGraphModal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto" (click)="closeAttendanceGraphModal()">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-[900px] max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200" style="max-width: 900px;" (click)="$event.stopPropagation()">
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-slate-50">
+      <div class="flex items-center gap-2">
+        <mat-icon class="text-purple-600">bar_chart</mat-icon>
+        <h3 class="text-xl font-bold text-gray-800 m-0">Attendance History Graph</h3>
+      </div>
+      <button (click)="closeAttendanceGraphModal()" class="text-gray-400 hover:text-gray-700 text-2xl font-bold border-none bg-transparent cursor-pointer">&times;</button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6 overflow-y-auto space-y-6">
+      <div *ngIf="isLoadingGraphData" class="flex flex-col items-center justify-center py-12 text-gray-500">
+        <mat-icon class="animate-spin text-4xl text-purple-600 mb-2">refresh</mat-icon>
+        <p class="text-base font-medium">Loading Attendance Graph Statistics...</p>
+      </div>
+
+      <div *ngIf="!isLoadingGraphData">
+        <!-- Metric Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-center">
+            <span class="block text-xs font-semibold uppercase tracking-wider text-emerald-700">Present</span>
+            <span class="text-2xl font-extrabold text-emerald-800">{{ graphSummary.presentCount }}</span>
+          </div>
+
+          <div class="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
+            <span class="block text-xs font-semibold uppercase tracking-wider text-red-700">Absent</span>
+            <span class="text-2xl font-extrabold text-red-800">{{ graphSummary.absentCount }}</span>
+          </div>
+
+          <div class="p-4 bg-amber-50 border border-amber-200 rounded-lg text-center">
+            <span class="block text-xs font-semibold uppercase tracking-wider text-amber-700">Late</span>
+            <span class="text-2xl font-extrabold text-amber-800">{{ graphSummary.lateCount }}</span>
+          </div>
+
+          <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
+            <span class="block text-xs font-semibold uppercase tracking-wider text-blue-700">Overall Present Rate</span>
+            <span class="text-2xl font-extrabold text-blue-800">{{ graphSummary.presentRate }}%</span>
+          </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Bar Chart -->
+          <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+            <h4 class="text-sm font-bold text-gray-700 mb-3 text-center">Attendance Count Breakdown</h4>
+            <div style="height: 260px; position: relative;">
+              <canvas baseChart
+                [data]="attendanceBarChartData"
+                [options]="attendanceBarChartOptions"
+                [type]="attendanceBarChartType">
+              </canvas>
+            </div>
+          </div>
+
+          <!-- Pie / Doughnut Chart -->
+          <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+            <h4 class="text-sm font-bold text-gray-700 mb-3 text-center">Attendance Status Distribution</h4>
+            <div style="height: 260px; position: relative;">
+              <canvas baseChart
+                [data]="attendancePieChartData"
+                [options]="attendancePieChartOptions"
+                [type]="attendancePieChartType">
+              </canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="px-6 py-3 border-t border-gray-200 bg-slate-50 flex justify-end">
+      <button (click)="closeAttendanceGraphModal()" class="px-5 py-2 bg-slate-600 hover:bg-slate-700 text-white font-semibold rounded-lg shadow-sm transition-all cursor-pointer border-none">
+        Close
+      </button>
+    </div>
+  </div>
+</div>

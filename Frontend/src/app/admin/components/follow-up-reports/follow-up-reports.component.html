@@ -1,0 +1,131 @@
+<div class="p-6 space-y-6 bg-white shadow rounded-md ">
+
+    <!-- 🔎 Search Button -->
+    <div  class="flex flex-wrap md:justify-end justify-center mt-4 gap-4">
+        <!-- class="flex justify-end mt-4" style="gap: 1rem;"
+        class="flex flex-wrap md:justify-end justify-center mt-4 gap-4" -->
+        <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" style="background-color: blue !important; color: white !important;">
+            Search
+        </button>
+        <!-- 📤 Export to Excel -->
+
+        <button class="bg-blue-600  text-white px-4 py-2 rounded hover:bg-blue-700" style="background-color: gray;">
+            Export to Excel
+        </button>
+
+        <button class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+            Download PDF
+        </button>
+    </div>
+
+    <!-- 🔍 Filters -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+
+        <!-- User Filter -->
+        <!-- <div>
+      <label class="block text-sm font-medium text-gray-700">User</label>
+      <select [(ngModel)]="selectedUser" (ngModelChange)="onUserChange($event)"
+        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+        <option [ngValue]="null">Select Staff</option>
+        <option *ngFor="let user of userList" [ngValue]="user">
+          {{ user.First_Name }}
+        </option>
+      </select>
+     </div> -->
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Staff</label>
+            <select class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                <option>Select Staff</option>
+                <option>
+
+                </option>
+            </select>
+        </div>
+
+        <!-- From Date -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700">From Date</label>
+      <input type="date"  
+        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
+    </div>
+
+    <!-- <div>
+      <label class="block text-sm font-medium text-gray-700">From Date</label>
+      <input type="date" [(ngModel)]="fromDate" (change)="onFromDateChange()"
+        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
+    </div> -->
+
+    <!-- To Date -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700">To Date</label>
+      <input type="date"  
+        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
+    </div>
+
+    <!-- <div>
+      <label class="block text-sm font-medium text-gray-700">To Date</label>
+      <input type="date" [(ngModel)]="toDate" [min]="fromDate"
+        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm" />
+    </div> -->
+
+
+    </div>
+
+     <!-- Table Section -->
+    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+        <table class="w-full text-sm text-left text-gray-500">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                <tr>
+                    <th *ngFor="let column of displayedColumns" class="px-6 py-3 font-semibold tracking-wider">
+                        {{ column.replace('_', ' ') }}
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr   class="bg-white border-b hover:bg-gray-50 transition duration-150"
+                     >
+                    <td   class="px-6 py-4 whitespace-nowrap">
+                        
+                    </td>
+                </tr>
+                <tr  >
+                    <td [attr.colspan]="displayedColumns.length" class="px-6 py-4 text-center text-gray-500">
+                        No data available
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+    </div>
+
+     <!-- Table Section -->
+    <!-- <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+        <table class="w-full text-sm text-left text-gray-500">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                <tr>
+                    <th *ngFor="let column of displayedColumns" class="px-6 py-3 font-semibold tracking-wider">
+                        {{ column.replace('_', ' ') }}
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let row of tableData" class="bg-white border-b hover:bg-gray-50 transition duration-150"
+                    (click)="student_List_Update(row)">
+                    <td *ngFor="let column of displayedColumns" class="px-6 py-4 whitespace-nowrap">
+                        {{ column === 'Entry_Date' ? (row[column] | date:'dd-MM-yyyy') : row[column] }}
+                    </td>
+                </tr>
+                <tr *ngIf="!tableData?.length">
+                    <td [attr.colspan]="displayedColumns.length" class="px-6 py-4 text-center text-gray-500">
+                        No data available
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+    </div> -->
+
+
+
+</div>

@@ -1,0 +1,96 @@
+<div class="status-report-page">
+  <div class="filter-card">
+    <div class="filters">
+      <label class="checkbox-line">
+        <input type="checkbox" [(ngModel)]="useCreatedDate" (change)="applyFilters()" />
+        <span>Created On</span>
+      </label>
+
+      <div class="date-range" [class.disabled]="!useCreatedDate">
+        <div class="field">
+          <span>From Date</span>
+          <input type="date" [(ngModel)]="fromDate" (change)="onDateRangeChanged()" [disabled]="!useCreatedDate" />
+        </div>
+        <div class="field">
+          <span>To Date</span>
+          <input type="date" [(ngModel)]="toDate" (change)="onDateRangeChanged()" [disabled]="!useCreatedDate" />
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary-btn" (click)="applyFilters()" style="background-color: blue !important; color: white !important;">
+          Search
+        </button>
+      </div>
+
+      <div class="view-toggle">
+        <button class="ghost-btn toggle-btn table-btn" [class.active]="selectedView === 'table'" (click)="selectedView = 'table'">
+          Table
+        </button>
+        <button class="ghost-btn toggle-btn graph-btn" [class.active]="selectedView === 'graph'" (click)="selectedView = 'graph'">
+          Graph
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-card" *ngIf="selectedView === 'table'">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Status Name</th>
+            <th>Record Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of statusData; track item.Status_Id; let i = $index) {
+            <tr>
+              <td>{{ i + 1 }}</td>
+              <td class="name-cell">
+                {{ item.Status_Name }}
+              </td>
+              <td>
+                <span class="count-pill">{{ item.RecordCount }}</span>
+              </td>
+            </tr>
+          }
+          <tr *ngIf="!isLoading && statusData.length === 0">
+            <td colspan="3" class="empty-state">No status data found for the selected range.</td>
+          </tr>
+          <tr *ngIf="isLoading">
+            <td colspan="3" class="empty-state">Loading data...</td>
+          </tr>
+        </tbody>
+        <tfoot *ngIf="!isLoading && statusData.length > 0">
+          <tr class="total-row">
+            <td colspan="2" class="total-label">Grand Total</td>
+            <td>
+              <span class="count-pill total">{{ totalRecords }}</span>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="table-card graph-card" *ngIf="selectedView === 'graph'">
+    <div class="table-header">
+      <h2>Status Distribution Graph</h2>
+      <!-- <p>Graphical representation of records by status</p> -->
+    </div>
+    <div class="graph-wrap" *ngIf="!isLoading && statusData.length > 0">
+      <canvas
+        baseChart
+        [data]="chartData"
+        [options]="chartOptions"
+        [type]="chartType">
+      </canvas>
+    </div>
+    <div class="empty-state" *ngIf="isLoading">Loading graph...</div>
+    <div class="empty-state" *ngIf="!isLoading && statusData.length === 0">
+      No status data available to display the graph.
+    </div>
+  </div>
+</div>

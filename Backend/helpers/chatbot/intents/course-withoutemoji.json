@@ -1,0 +1,1430 @@
+[
+    {
+        "intent": "request_Writing_material",
+        "category": "course_material",
+        "questions": [
+            "I need writing material",
+            "Can I get writing practice materials",
+            "Show me writing exercises",
+            "Where can I find writing samples",
+            "I want writing practice tests",
+            "Writing materials please",
+            "Need help with writing practice",
+            "Give me some writing tests",
+            "Writing practice material",
+            "Writing exercises needed"
+        ],
+        "answers": [
+            "📚 Here are your writing practice materials ✍️ and samples! 🎯"
+        ]
+    },
+    {
+        "intent": "request_Reading_material",
+        "category": "course_material",
+        "questions": [
+            "I need reading material",
+            "Can I get reading practice materials",
+            "Show me reading exercises",
+            "Where can I find reading samples",
+            "I want reading practice tests",
+            "Reading materials please",
+            "Need help with reading practice",
+            "Give me some reading tests",
+            "Reading practice material",
+            "Reading exercises needed"
+        ],
+        "answers": [
+            "📖 Here are your reading practice materials 👀 and samples! 🎯"
+        ]
+    },
+    {
+        "intent": "request_Listening_material",
+        "category": "course_material",
+        "questions": [
+            "I need listening material",
+            "Can I get listening practice materials",
+            "Show me listening exercises",
+            "Where can I find listening samples",
+            "I want listening practice tests",
+            "Listening materials please",
+            "Need help with listening practice",
+            "Give me some listening tests",
+            "Listening practice material",
+            "Listening exercises needed"
+        ],
+        "answers": [
+            "🎧 Here are your listening practice materials 👂 and samples! 🎯"
+        ]
+    },
+    {
+        "intent": "request_Speaking_material",
+        "category": "course_material",
+        "questions": [
+            "I need speaking material",
+            "Can I get speaking practice materials",
+            "Show me speaking exercises",
+            "Where can I find speaking samples",
+            "I want speaking practice tests",
+            "Speaking materials please",
+            "Need help with speaking practice",
+            "Give me some speaking tests",
+            "Speaking practice material",
+            "Speaking exercises needed"
+        ],
+        "answers": [
+            "🎤 Here are your speaking practice materials 🗣️ and samples! 🎯"
+        ]
+    },
+ 
+    {
+        "intent": "greeting_hello",
+        "category": "pre_purchase",
+        "questions": [
+            "Hi",
+            "Hello",
+            "Hey",
+            "Hey there"
+        ],
+        "answers": [
+            "👋 Hello! How can I assist you today? ✨",
+            "Hi there! 🌟 What can I do for you? 😊",
+            "Hey! 👋 How can I help you? ✨",
+            "Hi! 🌟 How can I assist you today? 😊"
+        ]
+    },
+    {
+        "intent": "greeting_how_are_you",
+        "category": "pre_purchase",
+        "questions": [
+            "How are you?",
+            "How's it going?",
+            "How do you feel?"
+        ],
+        "answers": [
+            "🤖 I'm just a bot, but I'm here to help! How about you? 😊",
+            "I'm here to assist you! 🌟 How are you doing today? ✨",
+            "I don't have feelings, but I'm happy to help! 🤖 How are you? 😊"
+        ]
+    },
+    {
+        "intent": "greeting_good_morning",
+        "category": "pre_purchase",
+        "questions": [
+            "Good morning",
+            "Morning"
+        ],
+        "answers": [
+            "🌅 Good morning! How can I assist you today? ✨",
+            "Morning! 🌞 What can I do for you? 😊"
+        ]
+    },
+    {
+        "intent": "greeting_good_afternoon",
+        "category": "pre_purchase",
+        "questions": [
+            "Good afternoon",
+            "Afternoon"
+        ],
+        "answers": [
+            "🌤️ Good afternoon! How can I help? ✨",
+            "Afternoon! ☀️ What can I do for you? 😊"
+        ]
+    },
+    {
+        "intent": "greeting_good_evening",
+        "category": "pre_purchase",
+        "questions": [
+            "Good evening",
+            "Evening"
+        ],
+        "answers": [
+            "🌙 Good evening! How can I assist you? ✨",
+            "Evening! 🌜 What can I do for you? 😊"
+        ]
+    },
+    {
+        "intent": "acknowledgement_ok",
+        "category": "pre_purchase",
+        "questions": [
+            "Ok",
+            "Okay",
+            "Alright",
+            "Sounds good"
+        ],
+        "answers": [
+            "Great! ✨ Let me know if you need further assistance! 👍",
+            "Okay! 🌟 Feel free to ask if you need help! 😊",
+            "Alright! ✨ How can I help you next? 🤝",
+            "Sounds good! 🌟 What else can I do for you? 😊"
+        ]
+    },
+    {
+        "intent": "gratitude_thanks",
+        "category": "pre_purchase",
+        "questions": [
+            "Thanks",
+            "Thank you",
+            "Thanks a lot",
+            "I appreciate it"
+        ],
+        "answers": [
+            "You're welcome! 🌟 I'm happy to help! 😊",
+            "Glad I could assist! ✨ Let me know if you need anything else! 👍",
+            "You're welcome! 🤝 Feel free to reach out if you have more questions! ✨",
+            "No problem! 😊 Let me know if you need further assistance! 🌟"
+        ]
+    },
+    {
+        "intent": "help_request",
+        "category": "pre_purchase",
+        "questions": [
+            "I need help",
+            "Can you help me?",
+            "I need assistance",
+            "Help me"
+        ],
+        "answers": [
+            "Of course! 🤝 What do you need help with? ✨",
+            "I'm here to help! 🌟 How can I assist you? 😊",
+            "Sure! 👍 Let me know what you're looking for! ✨",
+            "Happy to assist! 🌟 Please tell me how I can help! 😊"
+        ]
+    },
+    {
+        "intent": "clarification_request",
+        "category": "pre_purchase",
+        "questions": [
+            "Can you clarify?",
+            "What do you mean?",
+            "I don't understand",
+            "Can you explain more?"
+        ],
+        "answers": [
+            "Sure! 🤔 Let me clarify that for you! ✨",
+            "I'd be happy to explain further! 📝 What would you like more details on? 🌟",
+            "No problem, I can explain! 💡 What do you need more clarity on? ✨",
+            "Let me break that down for you! 🔍 Can you specify what you need clarification on? 🤝"
+        ]
+    },
+    {
+        "intent": "goodbye",
+        "category": "pre_purchase",
+        "questions": [
+            "Goodbye",
+            "Bye",
+            "See you",
+            "Talk to you later"
+        ],
+        "answers": [
+            "Goodbye! 👋 Have a great day! ✨",
+            "Bye! 🌟 Feel free to reach out again if you need help! 😊",
+            "See you! 👋 Take care! 🌟",
+            "Talk to you soon! ✨ Let me know if you need any further assistance! 👍"
+        ]
+    },
+    {
+        "intent": "polite_close",
+        "category": "pre_purchase",
+        "questions": [
+            "That's all for now",
+            "No more questions",
+            "That's it, thanks",
+            "I'm good, thanks"
+        ],
+        "answers": [
+            "Great! 🌟 Let me know if you need help in the future! 👋",
+            "Okay! ✨ Feel free to reach out again anytime! 😊",
+            "You're welcome! 🤝 Have a great day ahead! 🌟",
+            "Happy to help! 😊 Let me know if anything else comes up! ✨"
+        ]
+    },
+    {
+        "intent": "agreement_yes",
+        "category": "pre_purchase",
+        "questions": [
+            "Yes",
+            "Yeah",
+            "Yup",
+            "Sure"
+        ],
+        "answers": [
+            "Great! 👍 How can I assist further? ✨",
+            "Awesome! 🌟 What would you like to do next? 😊",
+            "Perfect! ✨ Let's move forward! 🚀",
+            "Alright! 🤝 Let's continue! 🌟"
+        ]
+    },
+    {
+        "intent": "disagreement_no",
+        "category": "pre_purchase",
+        "questions": [
+            "No",
+            "Nope",
+            "Nah",
+            "Not really"
+        ],
+        "answers": [
+            "Okay! 👌 Let me know if you change your mind! ✨",
+            "Got it! 🌟 Feel free to ask if you need anything else! 😊",
+            "No problem! 👍 I'm here if you need further assistance! ✨",
+            "Alright! 🤝 Just let me know if you need anything else! 🌟"
+        ]
+    },
+    {
+        "intent": "availability_check",
+        "category": "pre_purchase",
+        "questions": [
+            "Are you available?",
+            "Can you help me now?",
+            "Are you here?",
+            "Is this a good time?"
+        ],
+        "answers": [
+            "Yes, I'm here to assist you! 🌟 What can I help with? ✨",
+            "I'm always available! 🤖 How can I help? 😊",
+            "I'm ready to assist you at any time! 👍 What do you need? 🌟",
+            "Yes! ✨ I'm here to help! 🤝 What can I do for you? 😊"
+        ]
+    },
+    {
+        "intent": "apology_sorry",
+        "category": "pre_purchase",
+        "questions": [
+            "Sorry",
+            "I apologize",
+            "My bad",
+            "I didn't mean to"
+        ],
+        "answers": [
+            "No problem! 🤝 I'm here to help! ✨",
+            "That's okay! 🌟 Let me know if I can assist you! 😊",
+            "No worries! 👍 How can I assist you today? ✨",
+            "It's alright! 😊 Feel free to ask anything! 🌟"
+        ]
+    },
+    {
+        "intent": "compliment_bot",
+        "category": "pre_purchase",
+        "questions": [
+            "You're awesome",
+            "I like you",
+            "You're great",
+            "Good job"
+        ],
+        "answers": [
+            "Thank you! 🙏 I'm here to assist you! ✨",
+            "I appreciate that! 🌟 How can I help further? 😊",
+            "Thanks! ✨ I'm glad to help! 🤝",
+            "Glad to hear that! 😊 Let me know if you need anything else! 🌟"
+        ]
+    },
+    {
+        "intent": "complaint_bot",
+        "category": "pre_purchase",
+        "questions": [
+            "You're not helpful",
+            "You didn't help me",
+            "This is not working",
+            "I'm not happy with this"
+        ],
+        "answers": [
+            "I'm sorry to hear that! 😔 How can I improve? 🔍",
+            "I apologize if I wasn't helpful! 🙏 How can I assist you now? ✨",
+            "Sorry to hear that! 😟 Let me try to help you better! 🌟",
+            "I understand! 🤝 Let me see how I can assist you further! 💪"
+        ]
+    },
+    {
+        "intent": "bot_identity",
+        "category": "pre_purchase",
+        "questions": [
+            "Who are you?",
+            "What are you?",
+            "Are you a bot?",
+            "Are you real?"
+        ],
+        "answers": [
+            "I'm Trackbox chatbot 🤖 here to assist you! ✨",
+            "I'm just a Trackbox bot 🤖, but I can help with your questions! 🌟",
+            "Yes, I'm a Trackbox chatbot 🤖 designed to help with your inquiries! 💡",
+            "I'm not a human, but I'm here to assist you! 🤖 How can I help? ✨"
+        ]
+    },
+    {
+        "intent": "what_are_you_doing",
+        "category": "pre_purchase",
+        "questions": [
+            "What are you doing?",
+            "What's up?",
+            "What are you up to?"
+        ],
+        "answers": [
+            "I'm here, ready to help you! 🌟 How can I assist? 😊",
+            "Just waiting to help you out! ✨ What do you need? 🤝",
+            "I'm here, ready for your questions! 💪 What's up? 🌟"
+        ]
+    },
+    {
+        "intent": "how_old_are_you",
+        "category": "pre_purchase",
+        "questions": [
+            "How old are you?",
+            "When were you created?",
+            "What's your age?"
+        ],
+        "answers": [
+            "I'm ageless! 🌟 But I've been trained to assist you anytime! ✨",
+            "I'm a virtual being 🤖, so I don't really have an age! 💫",
+            "Age is just a number 📊, and I'm here to help regardless! 🌟"
+        ]
+    },
+    {
+        "intent": "where_are_you_from",
+        "category": "pre_purchase",
+        "questions": [
+            "Where are you from?",
+            "Where do you live?",
+            "Are you from a certain place?"
+        ],
+        "answers": [
+            "I exist in the digital world 🌐, always ready to assist you! ✨",
+            "I don't have a physical location 🌍, but I'm always around to help! 🌟",
+            "I'm from the cloud ☁️, here to help whenever you need! 💫"
+        ]
+    },
+    {
+        "intent": "favorite_color",
+        "category": "pre_purchase",
+        "questions": [
+            "What's your favorite color?",
+            "Do you have a favorite color?",
+            "What color do you like?"
+        ],
+        "answers": [
+            "I don't have preferences 🎨, but I think all colors are cool! ✨",
+            "I'm not sure about colors 🌈, but I like to see you happy! 😊",
+            "As a bot 🤖, I don't have favorites, but all colors are great! 🎨"
+        ]
+    },
+    {
+        "intent": "course_types",
+        "category": "pre_purchase",
+        "questions": [
+            "What types of courses do you offer?",
+            "Which courses are available at Trackbox?",
+            "Can you tell me about the courses you provide?"
+        ],
+        "answers": [
+            "We offer a variety of courses 📚: IELTS training 🎯, OET training 🏥, Duolingo English coaching 🌟, English fluency courses 🗣️, German fluency courses 🌍, PTE preparation 📝, and Prometric coaching 📊!"
+        ]
+    },
+    {
+        "intent": "academy_info",
+        "category": "pre_purchase",
+        "questions": [
+            "Tell me about Trackbox.",
+            "Can you provide details about Trackbox?",
+            "What makes Trackbox unique?"
+        ],
+        "answers": [
+            "Trackbox is committed to enhancing learners' English skills 📚 and preparing them for standardized exams 🎯. We offer innovative, AI-integrated online learning ✨ with features like 24/7 virtual classrooms 💻, real-time doubt clearing ❓, missed class replacements 🔄, and access to an extensive online library 📚!"
+        ]
+    },
+    {
+        "intent": "course_duration",
+        "category": "pre_purchase",
+        "questions": [
+            "How long are your courses?",
+            "What's the duration of your courses?",
+            "How many weeks does each course last?"
+        ],
+        "answers": [
+            "The duration of our courses varies ⏰ depending on the type and intensity. Generally, they range from 4 to 12 weeks 📅, based on your starting level and schedule preferences! ✨"
+        ]
+    },
+    {
+        "intent": "course_fees",
+        "category": "pre_purchase",
+        "questions": [
+            "What are the fees for your courses?",
+            "How much do your courses cost?",
+            "Can you give me information on the course prices?"
+        ],
+        "answers": [
+            "The fees depend on the specific course and its duration 💰. You can find detailed pricing in the 'Courses' section of our app 📱 or by contacting our support team 💬!"
+        ]
+    },
+    {
+        "intent": "discounts_offers",
+        "category": "pre_purchase",
+        "questions": [
+            "Do you have any discounts or promotions?",
+            "Are there any current offers on your courses?",
+            "Do you offer any special deals?"
+        ],
+        "answers": [
+            "Yes, we frequently offer seasonal discounts 🏷️ and referral bonuses 🎁! Please check the 'Offers' section in the app 📱 or contact our support team for the latest promotions! ✨"
+        ]
+    },
+    {
+        "intent": "course_enrollment",
+        "category": "pre_purchase",
+        "questions": [
+            "How can I enrol in a course?",
+            "What's the process for enrolling in a course?",
+            "How do I sign up for one of your courses?"
+        ],
+        "answers": [
+            "You can enrol directly through our app 📱 by selecting your preferred course 📚 and completing the payment process 💳. If you need assistance, our support team is available to guide you! 🤝"
+        ]
+    },
+    {
+        "intent": "demo_class",
+        "category": "pre_purchase",
+        "questions": [
+            "Can I try a demo class before enrolling?",
+            "Is it possible to attend a sample class?",
+            "Do you offer demo classes for potential students?"
+        ],
+        "answers": [
+            "Yes, we offer demo classes for select courses! 🎯 You can contact our support team 💬 to schedule a session! ✨"
+        ]
+    },
+    {
+        "intent": "study_materials_included",
+        "category": "pre_purchase",
+        "questions": [
+            "Is study material provided in your courses?",
+            "Are course materials included in the fees?",
+            "Do I need to purchase additional study materials?"
+        ],
+        "answers": [
+            "Yes, all necessary study materials 📚 are included in the course fee 💰, including access to our comprehensive online library! 📖✨"
+        ]
+    },
+    {
+        "intent": "refund_policy",
+        "category": "pre_purchase",
+        "questions": [
+            "What is your refund policy?",
+            "Can I get a refund if I decide to withdraw from a course?",
+            "What are the terms for requesting a refund?"
+        ],
+        "answers": [
+            "We offer a flexible refund policy 💰. You can request a full refund within the first 2 days of enrollment ⏰. After that period, refunds may not be applicable! ℹ️"
+        ]
+    },
+    {
+        "intent": "placement_assistance",
+        "category": "pre_purchase",
+        "questions": [
+            "Do you offer placement assistance?",
+            "Can you help me find a job after course completion?",
+            "Is placement support available after I finish the course?"
+        ],
+        "answers": [
+            "While we do not offer formal placement services 🏢, we provide guidance 🎯 and resources 📚 to help you leverage your new skills in professional or academic settings! ✨"
+        ]
+    },
+    {
+        "intent": "ielts_info",
+        "category": "pre_purchase",
+        "questions": [
+            "What is the IELTS test and why is it important?",
+            "Can you explain what IELTS is?",
+            "Why should I take the IELTS exam?"
+        ],
+        "answers": [
+            "The IELTS 🎯 (International English Language Testing System) is a globally recognized test 🌍 used for studying 📚, working 💼, or migrating to English-speaking countries. It measures your proficiency in English across listening 👂, reading 📖, writing ✍️, and speaking 🗣️!"
+        ]
+    },
+    {
+        "intent": "ielts_structure",
+        "category": "pre_purchase",
+        "questions": [
+            "What does your IELTS course cover?",
+            "Can you explain how your IELTS course is structured?",
+            "What modules are included in the IELTS training?"
+        ],
+        "answers": [
+            "Our IELTS course covers all four sections 📚: Listening 👂, Reading 📖, Writing ✍️, and Speaking 🗣️. You'll have access to comprehensive lessons, practice tests 📝, and personalized feedback 🎯 to help you succeed! ✨"
+        ]
+    },
+    {
+        "intent": "ielts_academic_general",
+        "category": "pre_purchase",
+        "questions": [
+            "Do you provide training for both IELTS Academic and General Training?",
+            "Can I choose between IELTS Academic and General modules?",
+            "Do you offer preparation for both types of IELTS?"
+        ],
+        "answers": [
+            "Yes, we provide training for both IELTS Academic 🎓 and General Training 📝! You can select the module that fits your study or migration goals! 🎯✨"
+        ]
+    },
+    {
+        "intent": "ielts_scores",
+        "category": "pre_purchase",
+        "questions": [
+            "What IELTS score can I expect after your training?",
+            "Can you help me get a band score of 6.5 or higher?",
+            "What scores do your students usually achieve in IELTS?"
+        ],
+        "answers": [
+            "Our courses are designed to help you aim for a band score of 6.5 and above 🎯, though your final score depends on your initial level and commitment! 💪✨"
+        ]
+    },
+    {
+        "intent": "ielts_mock_tests",
+        "category": "pre_purchase",
+        "questions": [
+            "Do you offer IELTS mock tests?",
+            "Can I take a practice IELTS test with you?",
+            "Are there mock tests in your IELTS course?"
+        ],
+        "answers": [
+            "Yes, we provide full-length IELTS mock tests 📝 at regular intervals to simulate the actual exam ⏰. These help you assess your progress and improve performance! 📈✨"
+        ]
+    },
+    {
+        "intent": "ielts_feedback",
+        "category": "pre_purchase",
+        "questions": [
+            "Will I get personalized feedback on my IELTS practice tests?",
+            "Do you offer feedback on IELTS essays and speaking practice?",
+            "Can I receive individualized feedback for my IELTS preparation?"
+        ],
+        "answers": [
+            "Yes, we provide personalized feedback 📊 on all sections, including writing ✍️ and speaking 🗣️, so you can identify areas of improvement and boost your scores! 📈✨"
+        ]
+    },
+    {
+        "intent": "ielts_preparation_duration",
+        "category": "pre_purchase",
+        "questions": [
+            "How long does it take to prepare for the IELTS exam?",
+            "What's the typical preparation time for IELTS?",
+            "How many weeks should I prepare before taking the IELTS test?"
+        ],
+        "answers": [
+            "Preparation time varies ⏰, but most students are ready for the IELTS test within 8 to 12 weeks 📅 of starting our course, depending on their starting level! 📚✨"
+        ]
+    },
+    {
+        "intent": "ielts_accepted_countries",
+        "category": "pre_purchase",
+        "questions": [
+            "Which countries accept IELTS?",
+            "Where is the IELTS test recognized?",
+            "What countries require an IELTS score for immigration or study?"
+        ],
+        "answers": [
+            "IELTS is accepted in Australia 🦘, USA 🗽, Canada 🍁, UK 🇬🇧, New Zealand 🥝, and Ireland 🍀, among others! 🌍✨"
+        ]
+    },
+    {
+        "intent": "oet_info",
+        "category": "pre_purchase",
+        "questions": [
+            "What is the OET exam and who is it for?",
+            "Can you explain what OET stands for?",
+            "Who should take the OET exam?"
+        ],
+        "answers": [
+            "The Occupational English Test (OET) 🏥 is designed specifically for healthcare professionals 👨‍⚕️👩‍⚕️, particularly nurses, who want to work in English-speaking countries! 🌍✨"
+        ]
+    },
+    {
+        "intent": "oet_vs_ielts",
+        "category": "pre_purchase",
+        "questions": [
+            "How is the OET different from IELTS?",
+            "What's the difference between OET and IELTS?",
+            "Should I take OET or IELTS?"
+        ],
+        "answers": [
+            "While both OET and IELTS assess English language skills 📚, OET is tailored for healthcare professionals 🏥 with test content based on healthcare scenarios 👨‍⚕️, while IELTS is more general 🎯. Choose OET if you work in healthcare and IELTS for broader academic or migration purposes! ✨"
+        ]
+    },
+    {
+        "intent": "oet_info",
+        "category": "pre_purchase",
+        "questions": [
+        "What is the OET exam and who is it for?",
+        "Can you explain what OET stands for?",
+        "Who should take the OET exam?"
+        ],
+        "answers": [
+        "The Occupational English Test (OET) 🏥 is designed specifically for healthcare professionals 👨‍⚕️👩‍⚕️, particularly nurses, who want to work in English-speaking countries! 🌍✨"
+        ]
+        },
+        {
+        "intent": "oet_vs_ielts",
+        "category": "pre_purchase",
+        "questions": [
+        "What is the OET, and how is it different from IELTS?",
+        "How is the OET different from IELTS?",
+        "What's the difference between OET and IELTS?",
+        "Should I take OET or IELTS?"
+        ],
+        "answers": [
+        "OET is an English language test specifically designed for healthcare professionals. It assesses communication skills in a healthcare context. IELTS is a general English proficiency test and is used for a wider range of purposes, including academic, migration, and professional purposes.",
+        "While both OET and IELTS assess English language skills 📚, OET is tailored for healthcare professionals 🏥 with test content based on healthcare scenarios 👨‍⚕️, while IELTS is more general 🎯. Choose OET if you work in healthcare and IELTS for broader academic or migration purposes! ✨"
+        ]
+        },
+        {
+        "intent": "oet_passing_score",
+        "category": "pre_purchase",
+        "questions": [
+        "What is the passing score required for OET in my profession (e.g., nursing, medicine)?"
+        ],
+        "answers": [
+        "The required score varies by profession. Generally, healthcare institutions or licensing bodies require a score of B in all sub-tests (Listening, Reading, Writing, and Speaking). Check with the relevant professional authority in your country for exact requirements."
+        ]
+        },
+        {
+        "intent": "oet_preparation_duration",
+        "category": "pre_purchase",
+        "questions": [
+        "How long do I need to prepare for the OET exam?"
+        ],
+        "answers": [
+        "Preparation time varies depending on your current English proficiency. On average, candidates take 6-12 weeks of preparation, with more time required for those who are less confident in their language skills."
+        ]
+        },
+        {
+        "intent": "oet_components",
+        "category": "pre_purchase",
+        "questions": [
+        "What are the components of the OET exam?"
+        ],
+        "answers": [
+        "OET consists of four sub-tests: Listening, Reading, Writing, and Speaking. The test is specific to the candidate's healthcare profession."
+        ]
+        },
+        {
+        "intent": "oet_eligibility",
+        "category": "pre_purchase",
+        "questions": [
+        "Do I need to have a healthcare background to take the OET?",
+        "What are the eligibility criteria to take the OET?"
+        ],
+        "answers": [
+        "No, but OET is designed for professionals who work or wish to work in the healthcare sector. The content and scenarios used in the test are related to healthcare contexts.",
+        "There are no strict eligibility criteria, but you should have sufficient English proficiency and work experience in a healthcare profession to understand the test content."
+        ]
+        },
+        {
+        "intent": "oet_preparation_materials",
+        "category": "pre_purchase",
+        "questions": [
+        "What materials are included in the OET preparation course?"
+        ],
+        "answers": [
+        "OET preparation courses typically include study materials like practice tests, sample writing tasks, listening exercises, and speaking mock exams tailored to your healthcare profession."
+        ]
+        },
+        {
+        "intent": "oet_testing_format",
+        "category": "pre_purchase",
+        "questions": [
+        "Can I take the OET online or is it only available in person?"
+        ],
+        "answers": [
+        "OET is generally conducted in person, but there are some online options for preparation courses and practice tests."
+        ]
+        },
+        {
+        "intent": "oet_course_cost",
+        "category": "pre_purchase",
+        "questions": [
+        "What is the cost of OET preparation courses?"
+        ],
+        "answers": [
+        "The cost varies depending on the provider and location. On average, OET preparation courses can range from $200 to $800 USD."
+        ]
+        },
+        {
+        "intent": "oet_skill_improvement",
+        "category": "pre_purchase",
+        "questions": [
+        "How can I improve my Speaking and Writing skills for OET?"
+        ],
+        "answers": [
+        "For Speaking, focus on practicing healthcare-related dialogues and communication tasks. For Writing, practice writing letters or case notes related to your profession, ensuring they are clear, concise, and meet the exam's criteria."
+        ]
+        },
+        {
+        "intent": "oet_pass_guarantee",
+        "category": "pre_purchase",
+        "questions": [
+        "Is there a guarantee that I will pass the OET after taking this course?"
+        ],
+        "answers": [
+        "No reputable course can guarantee a pass, as your performance will depend on your effort, language proficiency, and preparation. However, a structured course can improve your chances."
+        ]
+        },
+        {
+        "intent": "oet_practice_tests",
+        "category": "pre_purchase",
+        "questions": [
+        "Do you offer any practice tests or mock exams for OET?"
+        ],
+        "answers": [
+        "Most preparation courses offer mock exams and practice tests to help you become familiar with the test format and time constraints."
+        ]
+        },
+        {
+        "intent": "oet_exam_frequency",
+        "category": "pre_purchase",
+        "questions": [
+        "How frequently are OET exams held?"
+        ],
+        "answers": [
+        "OET exams are typically held up to 14 times a year. Check the official OET website for specific dates and locations."
+        ]
+        },
+        {
+        "intent": "oet_other_professions",
+        "category": "pre_purchase",
+        "questions": [
+        "Can I take OET for other healthcare professions apart from nursing and medicine?"
+        ],
+        "answers": [
+        "Yes, OET is available for a variety of healthcare professions, including pharmacy, physiotherapy, dentistry, veterinary science, and more."
+        ]
+        },
+      
+        {
+        "intent": "ielts_exam_basics",
+        "category": "pre_purchase",
+        "questions": [
+        "What is IELTS?",
+        "Tell me about IELTS",
+        "What does IELTS stand for?",
+        "Give me basic information about IELTS"
+        ],
+        "answers": [
+        "IELTS (International English Language Testing System) is a standardized English language proficiency test."
+        ]
+        },
+        {
+        "intent": "ielts_purpose",
+        "category": "pre_purchase",
+        "questions": [
+        "Why take IELTS?",
+        "What are the benefits of taking IELTS?",
+        "Why should I choose IELTS?",
+        "What is the purpose of IELTS?"
+        ],
+        "answers": [
+        "IELTS is required for immigration, education, and professional purposes in many English-speaking countries."
+        ]
+        },
+        {
+        "intent": "ielts_test_types",
+        "category": "pre_purchase",
+        "questions": [
+        "What are the types of IELTS tests?",
+        "What is the difference between Academic IELTS and General Training IELTS?"
+        ],
+        "answers": [
+        "There are two types of IELTS tests: Academic IELTS (for education and professional purposes) and General Training IELTS (for immigration and work purposes)."
+        ]
+        },
+        {
+        "intent": "ielts_test_structure",
+        "category": "pre_purchase",
+        "questions": [
+        "What are the four sections of the IELTS test?",
+        "How is the IELTS test structured?",
+        "What parts are in the IELTS exam?",
+        "What does IELTS test include?"
+        ],
+        "answers": [
+        "IELTS consists of 4 sections: Listening, Reading, Writing, and Speaking."
+        ]
+        },
+        {
+        "intent": "ielts_test_duration",
+        "category": "pre_purchase",
+        "questions": [
+        "How long does the IELTS test take?",
+        "What is the duration of IELTS exam?",
+        "How many hours is the IELTS test?"
+        ],
+        "answers": [
+        "The complete IELTS test takes 2 hours and 45 minutes."
+        ]
+        },
+        {
+        "intent": "ielts_question_types",
+        "category": "pre_purchase",
+        "questions": [
+        "What type of questions are asked in the IELTS test?",
+        "What questions can I expect in IELTS?",
+        "IELTS question formats"
+        ],
+        "answers": [
+        "IELTS includes multiple-choice, short-answer, and essay-style questions."
+        ]
+        },
+        {
+        "intent": "ielts_registration",
+        "category": "pre_purchase",
+        "questions": [
+        "How do I register for the IELTS test?",
+        "What's the process to register for IELTS?",
+        "How can I apply for IELTS exam?"
+        ],
+        "answers": [
+        "You can register for IELTS online or through a local test center."
+        ]
+        },
+        {
+        "intent": "ielts_results_timeline",
+        "category": "pre_purchase",
+        "questions": [
+        "How long does it take to get IELTS results?",
+        "When will I get my IELTS score?",
+        "IELTS results waiting time"
+        ],
+        "answers": [
+        "IELTS results are typically available 13 days after your test date."
+        ]
+        },
+        {
+        "intent": "ielts_validity",
+        "category": "pre_purchase",
+        "questions": [
+        "What is the validity of IELTS results?",
+        "How long are IELTS scores valid?",
+        "When do IELTS results expire?"
+        ],
+        "answers": [
+        "IELTS results are valid for 2 years."
+        ]
+        },
+        {
+        "intent": "ielts_preparation_guidance",
+        "category": "pre_purchase",
+        "questions": [
+        "How can I prepare for the IELTS test?",
+        "What's the best way to prepare for IELTS?",
+        "IELTS preparation tips"
+        ],
+        "answers": [
+        "You can prepare for IELTS using official study materials, online resources, and practice tests."
+        ]
+        },
+        {
+        "intent": "ielts_scoring_system",
+        "category": "pre_purchase",
+        "questions": [
+        "What is the IELTS scoring system?",
+        "How does IELTS scoring work?",
+        "How are IELTS scores calculated?"
+        ],
+        "answers": [
+        "IELTS uses a band score system, ranging from 0 to 9."
+        ]
+        },
+        {
+        "intent": "ielts_university_requirements",
+        "category": "pre_purchase",
+        "questions": [
+        "What is the minimum IELTS score for universities?",
+        "What IELTS score do I need for university?",
+        "University IELTS requirements"
+        ],
+        "answers": [
+        "The minimum IELTS score required for admission to universities typically ranges from 6.0 to 7.5, depending on the institution and program."
+        ]
+        },
+        {
+        "intent": "ielts_online_testing",
+        "category": "pre_purchase",
+        "questions": [
+        "Can I take the IELTS test online?",
+        "Is IELTS available for online testing?"
+        ],
+        "answers": [
+        "No, the IELTS test is typically taken in person at a test center."
+        ]
+        },
+        {
+        "intent": "ielts_retake_policy",
+        "category": "pre_purchase",
+        "questions": [
+        "Can I retake the IELTS test?",
+        "How many times can I take IELTS?",
+        "Can we retake/reattend any one module of IELTS?",
+        "IELTS retake rules"
+        ],
+        "answers": [
+        "Yes, you can retake the IELTS test as many times as needed to achieve your desired score. You can retake all four modules or just one or two modules, but you need to do so within three years of your original test date."
+        ]
+        },
+        {
+        "intent": "ielts_eligibility",
+        "category": "pre_purchase",
+        "questions": [
+        "Who all are eligible for general and Academic IELTS?",
+        "Who can take Academic IELTS?",
+        "Who should take General IELTS?"
+        ],
+        "answers": [
+        "Academic IELTS is for international students, professionals, researchers, and individuals seeking professional registration. General Training IELTS is for immigration, work, vocational training, and secondary education."
+        ]
+        },
+        {
+        "intent": "ielts_enrollment_process",
+        "category": "pre_purchase",
+        "questions": [
+        "How to join IELTS?",
+        "How to join oet?",
+        "What's the process to join IELTS course?",
+        "How can I enroll in IELTS training?"
+        ],
+        "answers": [
+        "To join in a Course, you can login to our application, choose your preferred course, and complete the payment process."
+        ]
+        },
+        {
+        "intent": "course_fees_inquiry",
+        "category": "pre_purchase",
+        "questions": [
+        "What are the fees of IELTS/OET/DUOLINGO/PROMETRICS?",
+        "How much do your IELTS courses cost?",
+        "What's the price for IELTS training?"
+        ],
+        "answers": [
+        "For detailed fee information, please contact our team at 8891504777. We offer competitive rates and various package options to suit your needs."
+        ]
+        },
+
+
+
+
+
+
+
+
+
+        
+        
+   
+    {
+      "intent": "course_types",
+      "category": "pre_purchase",
+      "questions": [
+        "What courses do you offer?"
+      ],
+      "answers": [
+        "We offer IELTS training, OET training, Duolingo coaching, English fluency course, German fluency course, PTE and Prometric."
+      ]
+    },
+    {
+      "intent": "academy_info",
+      "category": "pre_purchase",
+      "questions": [
+        "Can you tell me more about Trackbox?"
+      ],
+      "answers": [
+        "Trackbox is dedicated to helping learners improve their English skills and excel in standardized exams. We offer AI-integrated online learning with 24/7 virtual classrooms, doubt clearance, missed class replacements, and a vast online library."
+      ]
+    },
+    {
+      "intent": "course_duration",
+      "category": "pre_purchase",
+      "questions": [
+        "What is the duration of each course?"
+      ],
+      "answers": [
+        "The duration varies depending on the course. Generally, our courses range from 4 to 12 weeks, depending on your level and the course intensity."
+      ]
+    },
+    {
+      "intent": "course_fees",
+      "category": "pre_purchase",
+      "questions": [
+        "How much do the courses cost?"
+      ],
+      "answers": [
+        "The course fees vary depending on the course and its duration. Please check the \"Courses\" section in the app or contact our team for detailed pricing information."
+      ]
+    },
+    {
+      "intent": "discounts_offers",
+      "category": "pre_purchase",
+      "questions": [
+        "Are there any discounts or special offers?"
+      ],
+      "answers": [
+        "Yes, we offer seasonal discounts and referral bonuses. Please contact our support team or check the \"Offers\" section in the app for the latest promotions."
+      ]
+    },
+    {
+      "intent": "course_enrollment",
+      "category": "pre_purchase",
+      "questions": [
+        "How do I enrol in a course?"
+      ],
+      "answers": [
+        "You can enrol directly through our app by selecting the course you are interested in and following the payment process. Our team is also available for assistance."
+      ]
+    },
+    {
+      "intent": "demo_class",
+      "category": "pre_purchase",
+      "questions": [
+        "Can I attend a demo class before enrolling?"
+      ],
+      "answers": [
+        "Yes, we offer demo classes for certain courses. Please contact our support team to schedule a demo session."
+      ]
+    },
+    {
+      "intent": "study_materials_included",
+      "category": "pre_purchase",
+      "questions": [
+        "Is the study material included in the course fee?"
+      ],
+      "answers": [
+        "Yes, all the necessary study material is provided as part of the course fee, including access to our vast online library."
+      ]
+    },
+    {
+      "intent": "refund_policy",
+      "category": "pre_purchase",
+      "questions": [
+        "What is your refund policy?"
+      ],
+      "answers": [
+        "We have a flexible refund policy. If you choose to withdraw from a course within the first 2days of enrolment, you may be eligible for full refund. After 2 days, the refund policy may not be applicable."
+      ]
+    },
+    {
+      "intent": "placement_assistance",
+      "category": "pre_purchase",
+      "questions": [
+        "Do you offer any placement assistance after course completion?"
+      ],
+      "answers": [
+        "While we don't offer formal placement services, we provide guidance and resources to help you use your new skills in academic or professional settings."
+      ]
+    },
+    {
+      "intent": "ielts_exam_basics",
+      "category": "pre_purchase",
+      "questions": [
+        "What is IELTS and why do I need it?",
+        "ielts"
+      ],
+      "answers": [
+        "The IELTS (International English Language Testing System) is a standardized test required for studying, working, or migrating to English-speaking countries."
+      ]
+    },
+    {
+      "intent": "ielts_structure",
+      "category": "pre_purchase",
+      "questions": [
+        "How is your IELTS course structured?"
+      ],
+      "answers": [
+        "Our IELTS course covers all four sections: Listening, Reading, Writing, and Speaking. You'll receive video & audio lessons, practice tests, and personalized feedback."
+      ]
+    },
+    {
+      "intent": "ielts_academic_general",
+      "category": "pre_purchase",
+      "questions": [
+        "Do you cover both IELTS Academic and General Training?"
+      ],
+      "answers": [
+        "Yes, we offer training for both IELTS Academic and General Training. You can choose the appropriate module based on your requirements."
+      ]
+    },
+    {
+      "intent": "ielts_scores",
+      "category": "pre_purchase",
+      "questions": [
+        "What score can I aim for with your training?"
+      ],
+      "answers": [
+        "Our courses are designed to help students achieve a band score of 6.5 and above. Your score depends on your starting level and the effort you put in."
+      ]
+    },
+    {
+      "intent": "ielts_mock_tests",
+      "category": "pre_purchase",
+      "questions": [
+        "Do you provide mock tests for IELTS?"
+      ],
+      "answers": [
+        "Yes, we provide full-length mock tests to simulate the actual IELTS exam. These are available at regular intervals during the course."
+      ]
+    },
+    {
+      "intent": "ielts_feedback",
+      "category": "pre_purchase",
+      "questions": [
+        "Can I get personalized feedback on my IELTS essays and speaking tests?"
+      ],
+      "answers": [
+        "Yes, we offer personalized feedback for all modules, which will help you improve your scores."
+      ]
+    },
+    {
+      "intent": "ielts_preparation_duration",
+      "category": "pre_purchase",
+      "questions": [
+        "How long does it take to prepare for the IELTS exam?"
+      ],
+      "answers": [
+        "Preparation time depends on your current level of English, but most students are ready for the test within 8 to 12 weeks of starting our course."
+      ]
+    },
+    {
+      "intent": "ielts_accepted_countries",
+      "category": "pre_purchase",
+      "questions": [
+        "Which all countries accept IELTS?"
+      ],
+      "answers": [
+        "Australia, USA, Canada, UK, New Zealand and Ireland."
+      ]
+    },
+    {
+      "intent": "oet_info",
+      "category": "pre_purchase",
+      "questions": [
+        "What is OET and which professions does it cater to?",
+        "Oet"
+      ],
+      "answers": [
+        "The Occupational English Test (OET) is exclusively designed for Nurses who wish to work in English-speaking environments."
+      ]
+    },
+    {
+      "intent": "oet_vs_ielts",
+      "category": "pre_purchase",
+      "questions": [
+        "How is your OET training different from IELTS training?"
+      ],
+      "answers": [
+        "While IELTS is for general or academic purposes, OET is specifically for healthcare professionals and focuses on language skills in medical contexts."
+      ]
+    },
+    {
+      "intent": "oet_components",
+      "category": "pre_purchase",
+      "questions": [
+        "Do you cover all the OET modules: listening, reading, writing, and speaking?"
+      ],
+      "answers": [
+        "Yes, our OET course covers all four modules, with an emphasis on healthcare-specific scenarios."
+      ]
+    },
+    {
+      "intent": "oet_profession_specific",
+      "category": "pre_purchase",
+      "questions": [
+        "Can I get profession-specific practice for OET (nursing, medicine, etc.)?"
+      ],
+      "answers": [
+        "Yes, we offer profession-specific training for OET, with materials tailored to different healthcare professions."
+      ]
+    },
+    {
+      "intent": "oet_registration",
+      "category": "pre_purchase",
+      "questions": [
+        "What are the exam dates for OET and how can I register for the exam?"
+      ],
+      "answers": [
+        "OET exam dates are usually available every month. You can register through the official OET website, and we can assist you with preparation."
+      ]
+    },
+    {
+      "intent": "oet_accepted_countries",
+      "category": "pre_purchase",
+      "questions": [
+        "Which all countries accept OET?"
+      ],
+      "answers": [
+        "Australia, Canada, Ireland, Maldives, Malta, Namibia, New Zealand, Philippines, Qatar, Singapore, Spain, Ukraine, UAE, UK, USA. Refer the score sheet required for your dream country."
+      ]
+    },
+    {
+      "intent": "duolingo_info",
+      "category": "pre_purchase",
+      "questions": [
+        "What is the Duolingo English Test and how does it work?"
+      ],
+      "answers": [
+        "The Duolingo English Test is an online test used to evaluate English language proficiency. It's accepted by many universities worldwide and can be taken from home."
+      ]
+    },
+    {
+      "intent": "duolingo_coaching",
+      "category": "pre_purchase",
+      "questions": [
+        "How is your Duolingo coaching structured?"
+      ],
+      "answers": [
+        "Our Duolingo coaching provides video and audio lessons, test-taking strategies, and practice questions to help you achieve a high score."
+      ]
+    },
+    {
+      "intent": "duolingo_scores",
+      "category": "pre_purchase",
+      "questions": [
+        "What score can I expect to achieve with your Duolingo coaching?"
+      ],
+      "answers": [
+        "Most students aim for a score of 105 or higher with our coaching, depending on their current skill level and effort."
+      ]
+    },
+    {
+      "intent": "duolingo_practice_tests",
+      "category": "pre_purchase",
+      "questions": [
+        "Do you provide practice tests for the Duolingo English Test?"
+      ],
+      "answers": [
+        "Yes, we offer practice tests that simulate the real Duolingo English Test experience."
+      ]
+    },
+    {
+      "intent": "duolingo_accepted_countries",
+      "category": "pre_purchase",
+      "questions": [
+        "Which all countries accept Duolingo?"
+      ],
+      "answers": [
+        "Canada, Australia, UK, USA and New Zealand."
+      ]
+    },
+    {
+      "intent": "english_fluency_focus",
+      "category": "pre_purchase",
+      "questions": [
+        "What is the focus of your English Fluency course?"
+      ],
+      "answers": [
+        "Our English Fluency course is designed to improve your speaking, listening, reading, and writing skills for everyday communication and professional success."
+      ]
+    },
+    {
+      "intent": "english_fluency_levels",
+      "category": "pre_purchase",
+      "questions": [
+        "Is this course suitable for beginners or advanced learners?"
+      ],
+      "answers": [
+        "The course is suitable for learners at all levels, and it can be customized according to your current proficiency."
+      ]
+    },
+    {
+      "intent": "english_fluency_practice",
+      "category": "pre_purchase",
+      "questions": [
+        "Will I receive speaking and listening practice in the course?"
+      ],
+      "answers": [
+        "Yes, we have a strong focus on interactive speaking and listening practice to help you become confident in real-life situations."
+      ]
+    },
+    {
+      "intent": "english_fluency_coaching",
+      "category": "pre_purchase",
+      "questions": [
+        "Do you provide one-on-one coaching for English fluency?"
+      ],
+      "answers": [
+        "Yes, we offer one-on-one coaching sessions to provide personalized feedback and guidance."
+      ]
+    },
+    {
+      "intent": "english_fluency_timeline",
+      "category": "pre_purchase",
+      "questions": [
+        "How long will it take to become fluent in English through this course?"
+      ],
+      "answers": [
+        "Fluency depends on your starting level and practice. Most students show significant improvement in 04 to 06 weeks."
+      ]
+    },
+    {
+      "intent": "app_download",
+      "category": "pre_purchase",
+      "questions": [
+        "How do I download your app?"
+      ],
+      "answers": [
+        "Our app is available for download on both iOS and Android platforms and window. Simply search for \"Trackbox\" in the App Store or Google Play."
+      ]
+    },
+    {
+      "intent": "app_login_issues",
+      "category": "pre_purchase",
+      "questions": [
+        "I'm facing issues with login—how can I resolve this?"
+      ],
+      "answers": [
+        "Please try resetting your password or contact our support team for assistance with login issues."
+      ]
+    },
+    {
+      "intent": "app_virtual_classroom",
+      "category": "pre_purchase",
+      "questions": [
+        "How do I access the virtual classroom?"
+      ],
+      "answers": [
+        "You can access the virtual classroom through the \"Classroom\" tab in our app. Make sure you're logged in and have a stable internet connection."
+      ]
+    },
+    {
+      "intent": "app_multiple_devices",
+      "category": "pre_purchase",
+      "questions": [
+        "Can I use the app on multiple devices?"
+      ],
+      "answers": [
+        "Yes, the app can be used on multiple devices, but you can only be logged in on one device at a time for security reasons."
+      ]
+    },
+    {
+      "intent": "app_ask_questions",
+      "category": "pre_purchase",
+      "questions": [
+        "How do I ask questions to the study partner avatar?"
+      ],
+      "answers": [
+        "You can ask questions by selecting the \"Ask Breff/Trackbox\" option in the app's main menu. The AI avatar is available 24/7 for doubt clearance."
+      ]
+    },
+    {
+      "intent": "app_missed_classes",
+      "category": "pre_purchase",
+      "questions": [
+        "Can I attend missed classes later?"
+      ],
+      "answers": [
+        "Yes, For OET and IELTS, all group classes are recorded and will be retained for 5 days which can be accessed from the \"Recorded Classes\" section in our library in the app with date and time. If you are unable to attend a class, it should be informed priorly to organise for the replacement class. Missed class replacement is limited to 3 classes per month and rescheduling is bounded to one time only. For Duolingo and Fluency, there will be two sessions per day. Your missed session can be replaced by the next session of the day."
+      ]
+    },
+    {
+      "intent": "app_online_library",
+      "category": "pre_purchase",
+      "questions": [
+        "How do I access the online library in the app?"
+      ],
+      "answers": [
+        "Just click on the library section in the app."
+      ]
+    }
+ 
+]

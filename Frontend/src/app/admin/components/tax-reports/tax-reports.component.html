@@ -1,0 +1,144 @@
+<div style="overflow: hidden;">
+    <!-- Action Buttons -->
+    <div class="flex justify-end gap-3">
+        <button (click)="fetchReportData()" mat-raised-button
+            class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors" style="background-color: blue !important; color: white !important;">
+            <mat-icon class="mr-2">search</mat-icon>
+            Search
+        </button>
+
+        <button (click)="clearFilters()" mat-raised-button
+            class="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors">
+            <mat-icon class="mr-2">clear</mat-icon>
+            Clear
+        </button>
+        <button class=" text-white px-4 py-2 rounded " style="background-color: gray;" (click)="exportToExcel()">
+  Export to Excel
+</button>
+
+        <button (click)="downloadPDF()" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+  Download PDF
+</button>
+    </div>
+    <!-- Filters Section -->
+    <section class="container-section">
+        <div class="flex flex-wrap gap-4 items-start">
+
+            <!-- Course Filter -->
+            <mat-form-field appearance="fill" class="min-w-[10px] flex-1">
+                <mat-label>Course</mat-label>
+                <input #Course type="text" placeholder="Pick one" matInput [formControl]="selectedCourse"
+                    [matAutocomplete]="auto" (input)="filter('course')" (focus)="filter('course')">
+                <mat-autocomplete [displayWith]="displayFn" #auto="matAutocomplete">
+                    <mat-option *ngFor="let option of coursefilteredOptions" [value]="option">
+                        {{option['Course_Name']}}
+                    </mat-option>
+                </mat-autocomplete>
+            </mat-form-field>
+
+            <!-- Student Filter -->
+            <mat-form-field appearance="fill" class="min-w-[200px] flex-1">
+                <mat-label>Student</mat-label>
+                <input #Student type="text" placeholder="Pick one" matInput [formControl]="selectedStudent"
+                    [matAutocomplete]="auto2" (input)="filter('student')" (focus)="filter('student')">
+                <mat-autocomplete #auto2="matAutocomplete" [displayWith]="displayFn">
+                    @for (option of studentfilteredOptions; track option) {
+                    <mat-option [value]="option">{{option['First_Name']}}</mat-option>
+                    }
+                </mat-autocomplete>
+            </mat-form-field>
+
+            <!-- Batch Filter -->
+            <mat-form-field appearance="fill" class="min-w-[200px] flex-1">
+                <mat-label>Batch</mat-label>
+                <input #Batch type="text" placeholder="Pick one" matInput [formControl]="selectedBatch"
+                    [matAutocomplete]="auto3" (input)="filter('batch')" (focus)="filter('batch')">
+                <mat-autocomplete [displayWith]="displayFn" #auto3="matAutocomplete">
+                    <mat-option *ngFor="let option of bacthfilteredOptions" [value]="option">
+                        {{option['Batch_Name']}}
+                    </mat-option>
+                </mat-autocomplete>
+            </mat-form-field>
+
+            <!-- From Date -->
+            <mat-form-field appearance="fill" class="min-w-[180px] flex-1">
+                <mat-label>From Date</mat-label>
+                <input matInput [formControl]="fromDate" [matDatepicker]="picker">
+                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+            </mat-form-field>
+
+            <!-- To Date -->
+            <mat-form-field appearance="fill" class="min-w-[180px] flex-1">
+                <mat-label>To Date</mat-label>
+                <input matInput [formControl]="toDate" [matDatepicker]="picker2">
+                <mat-datepicker-toggle matIconSuffix [for]="picker2"></mat-datepicker-toggle>
+                <mat-datepicker #picker2></mat-datepicker>
+            </mat-form-field>
+        </div>
+
+    </section>
+
+
+    
+    <!-- Table Section -->
+    <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+        <table class="w-full text-sm text-left text-gray-500">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                <tr>
+                    <th *ngFor="let column of displayedColumns" class="px-6 py-3 font-semibold tracking-wider">
+                        {{ column.replace('_', ' ') }}
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let row of tableData" class="bg-white border-b hover:bg-gray-50 transition duration-150">
+                    <td *ngFor="let column of displayedColumns" class="px-6 py-4 whitespace-nowrap">
+                        {{ column === 'Payment_Date' ? (row[column] | date:'dd-MM-yyyy') : row[column] }}
+                    </td>
+                </tr>
+                <tr *ngIf="!tableData?.length">
+                    <td [attr.colspan]="displayedColumns.length" class="px-6 py-4 text-center text-gray-500">
+                        No data available
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex items-center justify-between p-4 bg-white border-t">
+        <div class="flex items-center space-x-2">
+            <label>per page</label>
+            <select [(ngModel)]="pageSize" (change)="onPageChange({ pageIndex: 0, pageSize: pageSize })"
+                style="width: 80px; padding-right: 8px;" class="border rounded px-2 py-1 text-sm">
+                <option [value]="10">10</option>
+                <option [value]="25">25</option>
+                <option [value]="50">50</option>
+                <option [value]="75">75</option>
+                <option [value]="100">100</option>
+            </select>
+            <span class="text-sm font-medium text-gray-700">
+                Total Entries: {{totalRecords}}
+            </span>
+        </div>
+
+        <div class="flex items-center space-x-4">
+            <button (click)="onPageChange({pageIndex: currentPage - 2, pageSize: pageSize})"
+                [disabled]="currentPage === 1"
+                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                Previous
+            </button>
+            <span class="text-sm text-gray-700">
+                Page {{ currentPage }} of {{ Math.ceil(totalRecords / pageSize) }}
+            </span>
+            <button (click)="onPageChange({pageIndex: currentPage, pageSize: pageSize})"
+                [disabled]="currentPage >= Math.ceil(totalRecords / pageSize)"
+                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                Next
+            </button>
+        </div>
+    </div>
+
+</div>

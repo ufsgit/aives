@@ -1,0 +1,87 @@
+.textName {
+    font-size: 18px;
+    font-weight: 400;
+    line-height: 27px;
+    text-align: left;
+    color: #00000080;
+}
+
+label {
+    font-size: 16px;
+    font-weight: 500;
+    color: #0F1035;
+    line-height: 24px;
+}
+
+table {
+  width: 100%;
+  border-spacing: 0;
+  border-collapse: collapse;
+  font-family: 'Inter', sans-serif;
+
+  th, td {
+    &:not(:last-child) {
+      border-right: 1px solid rgba(229, 231, 235, 0.5);
+    }
+  }
+
+  thead th {
+        position: sticky;
+    top: 0;
+    z-index: 6;
+    padding: 0.775rem;
+    text-align: left;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 18px;
+    font-weight: 550;
+    text-transform: capitalize;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    border-bottom: 2px solid #e2e8f0;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+    transition: background 0.15s ease;
+    &:hover {
+      background-color: #f8fafc;
+      cursor: pointer;
+    }
+    &:last-child {
+      border-bottom: none;
+    }
+    td {
+      padding: 0.375rem 0.5rem;
+      font-size: 0.875rem;
+      color: #64748b;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+  }
+
+  tfoot td {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 800;
+    color: #1f2732;
+    background: #f1f5f9;
+    border-top: 2px solid #e2e8f0;
+    letter-spacing: 0.025em;
+  }
+}
+
+.table-wrap {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+/* Match Enquiry Summary Table Design */
+:host {
+  font-family: 'Inter', sans-serif !important;
+}

@@ -1,0 +1,93 @@
+.Dialogbox-Class {
+    max-width: 400px;
+}
+
+.material-symbols-outlined {
+    font-size: 20px;
+}
+
+/* Active/Inactive Toggle Switch */
+.toggle-container {
+    display: flex;
+    align-items: center;
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.toggle-text {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    min-width: 72px;
+    text-align: center;
+
+    &.active {
+        color: #15803d;
+        background-color: #dcfce7;
+        border: 1px solid #bbf7d0;
+    }
+
+    &.inactive {
+        color: #b91c1c;
+        background-color: #fee2e2;
+        border: 1px solid #fecaca;
+    }
+}
+
+.toggle-switch {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    display: inline-block;
+
+    input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+
+        &:checked + .toggle-slider {
+            background-color: #22c55e;
+        }
+
+        &:checked + .toggle-slider::before {
+            transform: translateX(22px);
+        }
+
+        &:focus + .toggle-slider {
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
+        }
+    }
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #d1d5db;
+    transition: all 0.3s ease;
+    border-radius: 26px;
+
+    &::before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: all 0.3s ease;
+        border-radius: 50%;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+}

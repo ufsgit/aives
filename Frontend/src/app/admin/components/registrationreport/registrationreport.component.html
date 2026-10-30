@@ -1,0 +1,139 @@
+<div style="overflow: hidden;">
+    <!-- Filters Section -->
+    <section class="container-section">
+      <div class="filter-row">
+        <!-- Search Input -->
+        <div class="flex-1 min-w-[200px]">
+          <input type="text" [(ngModel)]="searchTerm" (keyup)="onSearchChange()"
+              placeholder="Search by name, contact, roll no..."
+              class="w-full border-2 border-gray-300 rounded-md focus:outline-none px-3 py-2 h-[42px]">
+        </div>
+    
+        <!-- From Date -->
+        <div class="flex-1 min-w-[200px]">
+          <input type="date" [(ngModel)]="fromDate" (change)="onFilterChange()"
+              class="w-full border-2 border-gray-300 rounded-md focus:outline-none px-3 py-2 h-[42px]">
+        </div>
+        
+        <!-- To Date -->
+        <div class="flex-1 min-w-[200px]">
+          <input type="date" [(ngModel)]="toDate" (change)="onFilterChange()"
+              class="w-full border-2 border-gray-300 rounded-md focus:outline-none px-3 py-2 h-[42px]">
+        </div>
+  
+        <!-- Enrolled By Filter -->
+        <div class="flex-1 min-w-[200px]">
+          <div class="relative h-full">
+            <select [(ngModel)]="selectedEnrolledById" (change)="onFilterChange()" 
+                class="w-full h-[42px] appearance-none bg-white border-2 border-gray-300 rounded-md px-3 pr-10 focus:outline-none">
+              <option [ngValue]="null">All Enrolled By</option>
+              <option *ngFor="let staff of staffData" [value]="staff.User_ID">
+                {{ staff.First_Name }} {{ staff.Last_Name }}
+              </option>
+            </select>
+            <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none"
+                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clip-rule="evenodd" />
+            </svg>
+          </div>
+        </div>
+    
+        <!-- Course Filter -->
+        <div class="flex-1 min-w-[200px]">
+          <div class="relative h-full">
+            <select [(ngModel)]="selectedCourseId" (change)="onFilterChange()" 
+                class="w-full h-[42px] appearance-none bg-white border-2 border-gray-300 rounded-md px-3 pr-10 focus:outline-none">
+              <option [ngValue]="null">All Courses</option>
+              <option *ngFor="let course of courseList" [value]="course.Course_ID">
+                {{ course.Course_Name }}
+              </option>
+            </select>
+            <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none"
+                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clip-rule="evenodd" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Table Section -->
+    <div class="relative overflow-x-auto shadow-md sm:rounded-lg mt-4">
+      <table class="w-full text-sm text-left text-gray-500">
+        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 font-semibold tracking-wider text-left whitespace-nowrap">Name</th>
+            <th class="px-4 py-3 font-semibold tracking-wider text-left whitespace-nowrap">Roll Number</th>
+            <th class="px-4 py-3 font-semibold tracking-wider text-left whitespace-nowrap">Course</th>
+            <th class="px-4 py-3 font-semibold tracking-wider text-left whitespace-nowrap">Batch Name</th>
+            <th class="px-4 py-3 font-semibold tracking-wider text-left whitespace-nowrap">Email</th>
+            <th class="px-4 py-3 font-semibold tracking-wider text-left whitespace-nowrap">Contact</th>
+            <th class="px-4 py-3 font-semibold tracking-wider text-left whitespace-nowrap">Enrolled Date</th>
+            <th class="px-4 py-3 font-semibold tracking-wider text-left whitespace-nowrap">Enrolled By</th>
+            <th class="px-4 py-3 font-semibold tracking-wider text-left whitespace-nowrap">Branch</th>
+          </tr>
+        </thead>
+    
+        <tbody>
+          <tr *ngIf="isLoading">
+              <td colspan="10" class="px-6 py-4 text-center text-gray-500">Loading data...</td>
+          </tr>
+          <tr *ngIf="!isLoading && reportData.length === 0">
+              <td colspan="10" class="px-6 py-4 text-center text-gray-500">No data available</td>
+          </tr>
+          <ng-container *ngIf="!isLoading">
+              <tr *ngFor="let item of reportData; let i = index" class="bg-white border-b hover:bg-gray-50 transition duration-150">
+                  <td class="px-4 py-3 whitespace-nowrap text-gray-900">{{ item.First_Name }} {{ item.Last_Name }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap">{{ item['Roll_No_Character'] || item['Roll_No'] || '-' }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap">{{ item['Course_Name'] || '-' }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap">{{ item['Batch_Name'] || '-' }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap">{{ item.Email || '-' }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap">{{ item.Country_Code }} {{ item.Phone_Number }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap">{{ item.Registered_On ? (item.Registered_On | date: 'dd-MM-yyyy') : '-' }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap">{{ item.Registered_By_Name || '-' }}</td>
+                  <td class="px-4 py-3 whitespace-nowrap">{{ item['Branch_Name'] || '-' }}</td>
+              </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+    
+    <!-- Pagination -->
+    <div class="flex items-center justify-between p-4 bg-white border-t mt-4">
+      <div class="flex items-center space-x-2">
+        <label class="text-sm">per page</label>
+        <select [ngModel]="pageSize" (ngModelChange)="changePageSize($event)"
+            style="width: 80px; padding-right: 8px;" class="border rounded px-2 py-1 text-sm bg-white">
+          <option [value]="10">10</option>
+          <option [value]="12">12</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="75">75</option>
+          <option [value]="100">100</option>
+        </select>
+        <span class="text-sm font-medium text-gray-700 ml-2">
+            Showing {{ getStartIndex() }} to {{ getEndIndex() }} of {{ Total_Entries }} Entries
+        </span>
+      </div>
+    
+      <div class="flex items-center space-x-4">
+        <button (click)="onPageChange(currentPage - 1)" [disabled]="currentPage === 1"
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+          Previous
+        </button>
+        
+        <span class="text-sm text-gray-700">
+            Page {{ currentPage }} of {{ totalPages || 1 }}
+        </span>
+  
+        <button (click)="onPageChange(currentPage + 1)" [disabled]="currentPage >= totalPages || totalPages === 0"
+          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+          Next
+        </button>
+      </div>
+    </div>
+  </div>

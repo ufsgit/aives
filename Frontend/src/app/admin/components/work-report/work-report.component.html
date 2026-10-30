@@ -1,0 +1,173 @@
+<div class="work-report-page">
+
+  <!-- Summary Filter -->
+  <section class="filter-card" *ngIf="!isDetailView">
+    <div class="filters">
+      <label class="checkbox-line">
+        <input type="checkbox" [(ngModel)]="useCreatedDate" (change)="loadSummary()" />
+        <span>Created On</span>
+      </label>
+
+      <div class="date-range" [class.disabled]="!useCreatedDate">
+        <div class="field">
+          <span>From Date</span>
+          <input type="date" [(ngModel)]="fromDate" (change)="onDateRangeChanged()" [disabled]="!useCreatedDate" />
+        </div>
+        <div class="field">
+          <span>To Date</span>
+          <input type="date" [(ngModel)]="toDate" (change)="onDateRangeChanged()" [min]="fromDate" [disabled]="!useCreatedDate" />
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary-btn" (click)="applySummaryFilters()" style="background-color: blue !important; color: white !important;">
+          Search
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Summary Table -->
+  <section class="table-card" *ngIf="!isDetailView">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>By Staff</th>
+            <th>No. Of Follow Up</th>
+            <th class="action-col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="isLoadingSummary">
+            <td colspan="4" class="empty-state">Loading work report...</td>
+          </tr>
+          <tr *ngFor="let row of summaryRows">
+            <td>{{ row.rowNo }}</td>
+            <td class="source-cell">{{ row.Staff_Name || '-' }}</td>
+            <td>
+              <span class="count-pill">{{ row.Follow_Up_Count || 0 }}</span>
+            </td>
+            <td class="action-col">
+              <button class="ghost-btn small" (click)="openDetails(row)">View Details</button>
+            </td>
+          </tr>
+          <tr *ngIf="!isLoadingSummary && !summaryRows.length">
+            <td colspan="4" class="empty-state">No work report data found for the selected dates.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Detail View -->
+  <ng-container *ngIf="isDetailView">
+
+    <!-- Detail Filter -->
+    <section class="filter-card">
+      <div class="filters">
+        <label class="checkbox-line">
+          <input type="checkbox" [(ngModel)]="useEntryDate" (change)="loadDetails()" />
+          <span>Entry Date</span>
+        </label>
+
+        <div class="date-range" [class.disabled]="!useEntryDate">
+          <div class="field">
+            <span>From</span>
+            <input type="date" [(ngModel)]="fromDate" (change)="onDateRangeChanged()" [disabled]="!useEntryDate" />
+          </div>
+          <div class="field">
+            <span>To</span>
+            <input type="date" [(ngModel)]="toDate" (change)="onDateRangeChanged()" [min]="fromDate" [disabled]="!useEntryDate" />
+          </div>
+        </div>
+
+        <div class="field">
+          <!-- <span>Search By</span> -->
+          <select [(ngModel)]="searchBy">
+            <option value="name">Name</option>
+            <option value="mobile">Mobile</option>
+          </select>
+        </div>
+
+        <div class="field search-field">
+          <!-- <span>Search</span> -->
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            [placeholder]="searchBy === 'mobile' ? 'Search mobile' : 'Search name'"
+          />
+        </div>
+
+        <div class="field">
+          <!-- <span>Department</span> -->
+          <select [(ngModel)]="selectedDepartmentId">
+            <option [ngValue]="null">All Departments</option>
+            <option *ngFor="let department of departments" [ngValue]="department.Department_Id || department.Department_ID">
+              {{ department.Department_Name }}
+            </option>
+          </select>
+        </div>
+
+        <div class="actions">
+          <button class="primary-btn" (click)="applyDetailFilters()" style="background-color: blue !important; color: white !important;">
+            Search
+          </button>
+          <button class="ghost-btn" (click)="backToSummary()">Back</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Detail Table -->
+    <section class="table-card">
+      <div class="table-header">
+        <div class="header-main">
+          <h2>Work Report – {{ selectedStaff?.Staff_Name }}</h2>
+          <!-- <p>Follow-up history for this staff member</p> -->
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Student</th>
+              <th>Mobile</th>
+              <th>Follow Up</th>
+              <th>Entry Date</th>
+              <th>Department</th>
+              <th>Status</th>
+              <th>Follow Up By</th>
+              <th>Assigned To</th>
+              <th>Remark</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="isLoadingDetails">
+              <td colspan="10" class="empty-state">Loading details...</td>
+            </tr>
+            <tr *ngFor="let row of detailRows">
+              <td>{{ row.rowNo }}</td>
+              <td class="name-cell">{{ row.Student_Name || '-' }}</td>
+              <td>{{ row.Mobile || '-' }}</td>
+              <td>{{ formatDate(row.Next_Follow_Up_Date) }}</td>
+              <td>{{ formatDate(row.Created_Date) }}</td>
+              <td>
+                <span class="tag">{{ row.Department_Name || '-' }}</span>
+              </td>
+              <td class="status-cell">{{ row.Follow_Up_Status_Name || '-' }}</td>
+              <td>{{ row.Follow_Up_By_Name || selectedStaff?.Staff_Name || '-' }}</td>
+              <td>{{ row.Assigned_Staff_Name || '-' }}</td>
+              <td class="remark-cell">{{ row.Remark || '-' }}</td>
+            </tr>
+            <tr *ngIf="!isLoadingDetails && !detailRows.length">
+              <td colspan="10" class="empty-state">No follow-up history found for this staff and filter set.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </ng-container>
+</div>

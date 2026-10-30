@@ -1,0 +1,106 @@
+<div class="summary-container p-0">
+  <!-- Date Filter Section -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-3 mb-4 mt-4 transition-all duration-300 hover:shadow-md">
+    <div class="flex flex-wrap items-center gap-3">
+      <!-- Checkbox -->
+      <div class="flex items-center gap-2 group cursor-pointer">
+        <input type="checkbox" id="createdOn" [(ngModel)]="isDateFilterEnabled" (ngModelChange)="onSearchClick()"
+               class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 transition-colors cursor-pointer">
+        <label for="createdOn" class="text-sm font-semibold text-gray-700 cursor-pointer group-hover:text-blue-600 transition-colors">
+          Created On
+        </label>
+      </div>
+
+      <!-- From Date -->
+      <div class="flex items-center gap-3">
+        <label for="fromDate" class="text-xs font-medium text-gray-500 uppercase tracking-wider">From Date</label>
+        <input type="date" id="fromDate" [(ngModel)]="fromDateFilter" (ngModelChange)="onSearchClick()" [disabled]="!isDateFilterEnabled"
+               class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all disabled:bg-gray-50 disabled:text-gray-400">
+      </div>
+
+      <!-- To Date -->
+      <div class="flex items-center gap-3">
+        <label for="toDate" class="text-xs font-medium text-gray-500 uppercase tracking-wider">To Date</label>
+        <input type="date" id="toDate" [(ngModel)]="toDateFilter" (ngModelChange)="onSearchClick()" [disabled]="!isDateFilterEnabled"
+               class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all disabled:bg-gray-50 disabled:text-gray-400">
+      </div>
+    </div>
+  </div>
+  <!-- Loading State -->
+  @if (isLoading) {
+    <div class="flex flex-col items-center justify-center py-20 bg-white rounded-3xl shadow-sm border border-gray-100">
+      <div class="loader mb-4"></div>
+      <p class="text-gray-400 font-medium animate-pulse">Calculating summary metrics...</p>
+    </div>
+  } @else {
+    <!-- Table Card -->
+    <div class="bg-white rounded-xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden transition-all duration-500">
+      <div class="overflow-auto max-h-[calc(100vh-140px)]">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="header-row">
+              <th class="p-1.5 font-bold text-gray-700 border-b-2 border-gray-200 sticky top-0 left-0 bg-gray-100 z-30 w-48 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
+                <div class="flex items-center gap-2">
+                  <button (click)="loadData()" 
+                          [disabled]="isLoading" 
+                          class="p-0.5 hover:bg-gray-200 rounded-lg transition-colors focus:outline-none flex items-center justify-center bg-white/50 shadow-sm"
+                          title="Refresh Data">
+                    <span class="material-symbols-outlined text-gray-500 hover:text-blue-600 transition-all duration-300 text-xl"
+                          [class.animate-spin]="isLoading">
+                      sync
+                    </span>
+                  </button>
+                  <span class="uppercase tracking-wider text-xs">Enquiry Source</span>
+                </div>
+              </th>
+              @for (status of statuses; track status.Status_Id) {
+                <th class="p-1.5  border-b-2 border-gray-200 text-center min-w-[120px] text-[10px] uppercase tracking-wider sticky top-0 bg-gray-100 z-20">
+                  {{ status.Status_Name }}
+                </th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of tableData; track row.id) {
+              <tr class="data-row hover:bg-blue-50/30 transition-colors duration-200 group">
+                <td class="p-1.5  border-gray-100 sticky left-0 bg-white z-10 transition-colors group-hover:bg-blue-50/50 shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
+                  <div class="flex items-center gap-3">
+                    <div class="w-2 h-2 rounded-full bg-blue-400/60"></div>
+                    {{ row.name }}
+                  </div>
+                </td>
+                @for (status of statuses; track status.Status_Id) {
+                  <td class="p-1.5 text-center border-b border-gray-100  text-xs">
+                    {{ row.counts[status.Status_Id] || 0 }}
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+          <!-- Summary Footer -->
+          <tfoot>
+            <tr class="footer-row">
+              <td class="p-1.5 font-bold text-gray-800 border-t-2 border-gray-200 sticky bottom-0 left-0 bg-gray-100 z-30 transition-colors shadow-[1px_0_0_0_rgba(0,0,0,0.05)]">
+                <span class="uppercase tracking-wider text-xs">Grand Total</span>
+              </td>
+              @for (status of statuses; track status.Status_Id) {
+                <td class="p-1.5 text-center font-bold text-blue-700 border-t-2 border-gray-200 sticky bottom-0 bg-gray-100 z-20 text-xs">
+                  {{ getTotalForStatus(status.Status_Id) }}
+                </td>
+              }
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    @if (tableData.length === 0) {
+      <div class="flex flex-col items-center justify-center py-24 bg-white rounded-3xl shadow-sm border border-gray-100 mt-6">
+        <span class="material-symbols-outlined text-6xl text-gray-200 mb-4">search_off</span>
+        <h3 class="text-xl font-semibold text-gray-600">No Enquiry Data Found</h3>
+        <p class="text-gray-400 mt-2">Leads might not have an assigned enquiry source or status yet.</p>
+      </div>
+    }
+  }
+</div>

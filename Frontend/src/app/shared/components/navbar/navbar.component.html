@@ -1,0 +1,159 @@
+<div class="flex h-screen overflow-hidden">
+
+  <!-- ✅ Sidebar -->
+  <aside id="logo-sidebar" [ngClass]="{
+      'translate-x-0': isSidebarVisible || isSidebarPinned,
+      '-translate-x-full': !isSidebarVisible && !isSidebarPinned
+    }"
+    class="fixed top-0 left-0 z-40 w-64 h-screen pt-4 transition-transform duration-300 ease-in-out bg-blue-50/50 border-r border-blue-100 shadow-[2px_0_10px_#00000002]"
+    aria-label="Sidebar">
+    <div class="h-full flex flex-col bg-blue-50/50 px-4 pb-4">
+      <!-- Sticky Logo -->
+      <div class="sticky top-0 flex items-center mb-8 bg-blue-50/50 z-10 pl-2 pt-2">
+        <img src="assets/images/logo3.svg" width="140px" alt="Trackbox Logo" />
+      </div>
+     
+    <div class="flex-1 overflow-y-auto pb-8 scrollbar-hide">
+      <ul class="space-y-1.5 font-medium">
+        @for (item of menuItems; track item) {       
+        @if (!item.subItems) {
+        <li (click)="performAction(item.Menu_Name)">
+          <a [routerLink]="getMenuRoute(item)" [queryParams]="{ item: item | json }" routerLinkActive="router-link-active" 
+            class="flex items-center px-4 py-3 rounded-xl hover:bg-blue-50/50 hover:text-blue-600 group transition-all duration-200">
+            <span class="flex items-center gap-3 w-full">
+              <span class="material-symbols-outlined text-[20px] opacity-70 group-hover:opacity-100 transition-opacity" 
+                    [ngClass]="isActive(getMenuRoute(item)) ? 'text-blue-600 opacity-100' : ''">
+                {{ getMaterialIcon(item.Menu_Name) }}
+              </span>
+              <span class="text-sm font-semibold text-slate-600 group-hover:text-blue-600 transition-colors"
+                    [ngClass]="isActive(getMenuRoute(item)) ? 'text-blue-600' : ''">
+                {{ item.Menu_Name }}
+              </span>
+            </span>
+          </a>
+        </li>
+        }
+        @if (item.subItems) {
+        
+        <li>
+          <button type="button"
+            class="flex items-center w-full px-4 py-3 text-sm font-semibold text-slate-600 rounded-xl hover:bg-slate-50 transition-colors group">
+            <span class="flex-1 text-left whitespace-nowrap group-hover:text-slate-800 transition-colors">E-{{ item.Menu_Name }}</span>
+            <span class="material-symbols-outlined text-slate-400 group-hover:text-slate-600">expand_more</span>
+          </button>
+          <ul class="py-1 space-y-1 mt-1 bg-slate-50/50 rounded-xl mx-2">
+            @for (subItem of item.subItems; track subItem) {
+            <li (click)="performAction(item.action)">
+              <a [routerLink]="subItem.link" routerLinkActive="router-link-active"
+                class="flex items-center w-full px-4 py-2.5 pl-10 text-sm font-medium text-slate-500 rounded-lg hover:text-blue-600 hover:bg-blue-50/50 transition-all">
+                {{ subItem.Menu_Name }}
+              </a>
+            </li>
+            }
+          </ul>
+        </li>
+        }
+        }
+      </ul>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ✅ Main Content Area -->
+  <div [class.ml-64]="isSidebarVisible || isSidebarPinned"
+    class="flex-1 flex flex-col transition-all duration-300 bg-[#F7F9FB] h-screen overflow-hidden">
+
+    <!-- ✅ Navbar -->
+    <nav class="fixed top-0 z-40 right-0 bg-transparent transition-all duration-300"
+         [ngClass]="(isSidebarVisible || isSidebarPinned) ? 'w-full lg:w-[calc(100%-16rem)]' : 'w-full'">
+      <div class="px-1 py-1 lg:px-1 bg-[#F7F9FB]">
+        <div class="flex items-center justify-between bg-white rounded-xl shadow-sm px-3 py-1.5 border border-slate-100">
+          
+          <!-- Left: Hamburger & Title -->
+          <div class="flex items-center gap-3">
+            <button class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-slate-50 rounded-lg transition-colors focus:outline-none" (click)="togglePinSidebar()">
+              <span class="material-symbols-outlined text-xl">
+                {{ isSidebarPinned ? 'menu_open' : 'menu' }}
+              </span>
+            </button>
+            <div class="hidden sm:block font-bold text-lg text-slate-800">
+              {{ title }}
+            </div>
+          </div>
+
+          <!-- Right: Search, Notifications, Profile -->
+          <div class="flex items-center gap-4 lg:gap-6">
+
+
+            <!-- Notifications Container -->
+            <div class="notification-container relative flex items-center">
+              <button (click)="isLeadPage() ? toggleNotificationDropdown($event) : null" 
+                      [title]="isLeadPage() ? 'Follow-Up Notifications' : 'Notifications'" 
+                      class="relative p-1.5 text-slate-500 hover:text-blue-600 transition-colors focus:outline-none cursor-pointer">
+                <span class="material-symbols-outlined text-[22px]">notifications</span>
+                <!-- Combined Badge (Today + Pending + Interested) -->
+                <span *ngIf="isLeadPage() && (todayFollowUpsCount + pendingFollowUpsCount + interestedLeadsCount) > 0" 
+                      class="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[9px] font-bold text-white bg-red-500 border-2 border-white rounded-full shadow-sm">
+                  {{ todayFollowUpsCount + pendingFollowUpsCount + interestedLeadsCount }}
+                </span>
+                <!-- Standard Notification Badge (On other pages) -->
+                <span *ngIf="!isLeadPage()" class="absolute top-1.5 right-1.5 w-2 h-2 bg-orange-500 border-2 border-white rounded-full"></span>
+              </button>
+
+              <!-- Notification Dropdown Menu (Lead Page Only) -->
+              <div *ngIf="isLeadPage() && isNotificationDropdownOpen" 
+                   class="absolute right-0 top-10 mt-1 w-64 bg-white border border-slate-100 rounded-xl shadow-xl z-50 overflow-hidden py-1 transition-all duration-300">
+                <div class="px-4 py-2 border-b border-slate-50 font-bold text-xs text-slate-400 tracking-wider uppercase">
+                  Follow-Up Tasks
+                </div>
+                <button (click)="onSelectTodayFollowUps()" 
+                        class="w-full flex items-center justify-between px-4 py-3 hover:bg-blue-50/50 text-left transition-colors border-none bg-transparent cursor-pointer group">
+                  <span class="text-sm font-semibold text-slate-600 group-hover:text-blue-600">Today's Follow-Ups</span>
+                  <span class="px-2 py-0.5 text-xs font-bold rounded-full bg-blue-50 text-blue-600 group-hover:bg-blue-100">
+                    {{ todayFollowUpsCount }}
+                  </span>
+                </button>
+                <button (click)="onSelectPendingFollowUps()" 
+                        class="w-full flex items-center justify-between px-4 py-3 hover:bg-red-50/50 text-left transition-colors border-none bg-transparent cursor-pointer group">
+                  <span class="text-sm font-semibold text-slate-600 group-hover:text-red-600">Pending/Overdue Follow-Ups</span>
+                  <span class="px-2 py-0.5 text-xs font-bold rounded-full bg-red-50 text-red-600 group-hover:bg-red-100">
+                    {{ pendingFollowUpsCount }}
+                  </span>
+                </button>
+                <button (click)="onSelectInterestedLeads()" 
+                        class="w-full flex items-center justify-between px-4 py-3 hover:bg-emerald-50/50 text-left transition-colors border-none bg-transparent cursor-pointer group">
+                  <span class="text-sm font-semibold text-slate-600 group-hover:text-emerald-600">Interested Leads</span>
+                  <span class="px-2 py-0.5 text-xs font-bold rounded-full bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100">
+                    {{ interestedLeadsCount }}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Profile Dropdown -->
+            <div class="flex items-center gap-2.5 cursor-pointer hover:bg-slate-50 p-1 pr-2 rounded-xl transition-colors">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shadow-sm" style="background-color: #3b82f6; color: white;">
+                {{ First_Name ? First_Name.trim().charAt(0).toUpperCase() : 'A' }}
+              </div>
+              <div class="hidden sm:block text-sm font-semibold text-slate-700">{{ First_Name }}</div>
+              <span class="material-symbols-outlined text-slate-400 text-sm hidden sm:block">expand_more</span>
+            </div>
+            
+            <!-- Logout Button -->
+            <a (click)="logout()" class="p-1.5 text-slate-400 hover:text-red-500 transition-colors cursor-pointer border-l border-slate-200 pl-3 ml-1">
+              <span class="material-symbols-outlined text-[20px]">logout</span>
+            </a>
+
+          </div>
+
+        </div>
+      </div>
+    </nav>
+
+    <!-- ✅ Scrollable Page Content -->
+    <main class="flex-1 overflow-y-auto pt-[76px] px-1">
+      <router-outlet></router-outlet>
+    </main>
+
+  </div>
+</div>

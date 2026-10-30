@@ -1,0 +1,152 @@
+<div class="dashboard-shell">
+  <section class="dashboard-hero">
+    <div class="hero-copy">
+      <span class="hero-eyebrow">Dashboard Overview</span>
+      <h1>Welcome back, Admin</h1>
+      <p>Track leads, enrollments, course movement, and student status from one focused workspace.</p>
+    </div>
+  </section>
+
+  <section class="metric-strip" aria-label="Dashboard summary">
+    <div class="metric-card metric-card--blue">
+      <span class="material-symbols-outlined">account_balance_wallet</span>
+      <div>
+        <p>Collecting Amount</p>
+        <strong>{{ totalAccountBalance | number:'1.0-0' }}</strong>
+      </div>
+    </div>
+
+    <div class="metric-card metric-card--green">
+      <span class="material-symbols-outlined">school</span>
+      <div>
+        <p>Total Courses</p>
+        <strong>{{ popularCourseTotal | number:'1.0-0' }}</strong>
+      </div>
+    </div>
+
+    <div class="metric-card metric-card--orange">
+      <span class="material-symbols-outlined">trending_up</span>
+      <div>
+        <p>Students This Year</p>
+        <strong>{{ enrolledThisYear | number:'1.0-0' }}</strong>
+      </div>
+    </div>
+
+    <div class="metric-card metric-card--teal">
+      <span class="material-symbols-outlined">verified_user</span>
+      <div>
+        <p>Active Students</p>
+        <strong>{{ activeStudents | number:'1.0-0' }}</strong>
+      </div>
+    </div>
+  </section>
+
+  <app-lead-summary class="lead-summary-block"></app-lead-summary>
+
+  <section class="chart-grid" aria-label="Dashboard charts">
+    <article class="chart-card chart-card--indigo">
+      <header>
+        <div class="chart-title">
+          <span class="material-symbols-outlined">school</span>
+          <div>
+            <h2>Popular Course</h2>
+            <p>Enrollment distribution</p>
+          </div>
+        </div>
+        <button type="button">View All</button>
+      </header>
+      <div class="chart-frame">
+        <canvas baseChart
+          [data]="barChartData"
+          [options]="barChartOptions"
+          [type]="barChartType"
+          [legend]="barChartLegend">
+        </canvas>
+      </div>
+    </article>
+
+    <article class="chart-card chart-card--orange">
+      <header>
+        <div class="chart-title">
+          <span class="material-symbols-outlined">bar_chart</span>
+          <div>
+            <h2>Student Enrollment</h2>
+            <p>Month wise breakdown</p>
+          </div>
+        </div>
+        <button type="button">View All</button>
+      </header>
+      <div class="chart-frame">
+        <canvas baseChart
+          [data]="barChartData2"
+          [options]="barChartOptions"
+          [type]="'bar'"
+          [legend]="barChartLegend">
+        </canvas>
+      </div>
+    </article>
+
+    <article class="chart-card chart-card--purple">
+      <header>
+        <div class="chart-title">
+          <span class="material-symbols-outlined">group_add</span>
+          <div>
+            <h2>Lead Report</h2>
+            <p>Monthly lead generation</p>
+          </div>
+        </div>
+        <button type="button">View All</button>
+      </header>
+      <div class="chart-frame">
+        <canvas baseChart
+          [data]="barChartData4"
+          [options]="barChartOptions"
+          [type]="'bar'"
+          [legend]="barChartLegend">
+        </canvas>
+      </div>
+    </article>
+
+    <article class="chart-card chart-card--green">
+      <header>
+        <div class="chart-title">
+          <span class="material-symbols-outlined">insights</span>
+          <div>
+            <h2>Course Monthly Enrollment</h2>
+            <p>Trend analysis by course</p>
+          </div>
+        </div>
+        <button type="button">View All</button>
+      </header>
+      <div class="chart-frame">
+        <canvas baseChart
+          [data]="barChartData3"
+          [options]="barChartOptions"
+          [type]="'line'"
+          [legend]="barChartLegend">
+        </canvas>
+      </div>
+    </article>
+
+    <article class="chart-card chart-card--teal chart-card--wide">
+      <header>
+        <div class="chart-title">
+          <span class="material-symbols-outlined">donut_large</span>
+          <div>
+            <h2>Student Status</h2>
+            <p>Current active vs completed</p>
+          </div>
+        </div>
+        <button type="button">View All</button>
+      </header>
+      <div class="chart-frame chart-frame--donut">
+        <canvas baseChart
+          [data]="pieChartData3"
+          [options]="pieChartOptions"
+          [type]="pieChartType"
+          [legend]="pieChartLegend">
+        </canvas>
+      </div>
+    </article>
+  </section>
+</div>

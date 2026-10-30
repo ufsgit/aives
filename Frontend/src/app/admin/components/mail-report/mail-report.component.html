@@ -1,0 +1,102 @@
+<div class="mail-report-container">
+  <div class="filter-section">
+    <!-- Sent On Checkbox -->
+    <div class="filter-item checkbox-group">
+      <input type="checkbox" id="sentOnCheckbox" [(ngModel)]="sentOn" (change)="fetchReportData()" class="custom-checkbox">
+      <label for="sentOnCheckbox" class="checkbox-label">Created On</label>
+    </div>
+
+    <!-- From Date -->
+    <div class="filter-item" [class.disabled]="!sentOn">
+      <label class="field-label">FROM DATE</label>
+      <input type="date" [(ngModel)]="fromDate" (change)="fetchReportData()" [disabled]="!sentOn" class="native-date-input">
+    </div>
+    
+    <!-- To Date -->
+    <div class="filter-item" [class.disabled]="!sentOn">
+      <label class="field-label">TO DATE</label>
+      <input type="date" [(ngModel)]="toDate" (change)="fetchReportData()" [disabled]="!sentOn" class="native-date-input">
+    </div>
+
+    <!-- Mail Template Dropdown -->
+    <div class="filter-item">
+      <label class="field-label">MAIL TEMPLATE</label>
+      <select [(ngModel)]="selectedTemplateId" (change)="fetchReportData()" class="native-select-input">
+        <option [ngValue]="null">All Templates</option>
+        <option *ngFor="let template of templates" [value]="template.Template_ID">
+          {{template.Template_Name}}
+        </option>
+      </select>
+    </div>
+
+    <!-- Sync Brevo Opens Button -->
+    <div class="filter-item sync-group">
+      <button class="sync-btn" (click)="syncBrevoOpens()" [disabled]="isSyncing" title="Fetch latest open events from Brevo">
+        <span class="sync-icon" [class.spinning]="isSyncing">&#8635;</span>
+        {{ isSyncing ? 'Syncing...' : 'Sync Opens' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Sync message -->
+  <div *ngIf="syncMessage" class="sync-message" [class.sync-error]="syncMessage.includes('failed')">
+    {{ syncMessage }}
+  </div>
+
+  <div class="table-card">
+    <div class="table-container">
+      <div *ngIf="!isLoaded" class="loading-overlay">
+        <div class="spinner"></div>
+      </div>
+
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Lead Name</th>
+            <th>Mail Template</th>
+            <th>Email Address</th>
+            <th>Subject</th>
+            <th>Delivery Status</th>
+            <th class="text-center">Opened</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let element of tableData">
+            <td>{{element.Sent_At | date:'dd-MM-yyyy HH:mm'}}</td>
+            <td>{{element.Lead_Name}}</td>
+            <td>
+              <span class="template-badge" [ngClass]="element.Mail_Template ? 'template-custom' : 'template-direct'">
+                {{element.Mail_Template || 'Direct Email'}} 
+              </span>
+            </td>
+            <td>{{element.Email_Address}}</td>
+            <td>{{element.Subject}}</td>
+            <td>
+              <span class="status-badge" 
+                    [ngClass]="{
+                      'status-success': element.Status === 'Success',
+                      'status-failed': element.Status === 'Failed'
+                    }">
+                {{element.Status}}
+              </span>
+            </td>
+            <td class="text-center">
+              <div *ngIf="element.Opened_At" class="opened-wrapper">
+                <span class="opened-badge">
+                   Opened
+                </span>
+                <span class="opened-time">{{element.Opened_At | date:'dd-MM-yyyy HH:mm'}}</span>
+              </div>
+              <span *ngIf="!element.Opened_At" class="no-data">—</span>
+            </td>
+          </tr>
+          
+          <tr *ngIf="isLoaded && tableData.length === 0">
+            <td colspan="7" class="empty-row">No data found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

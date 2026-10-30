@@ -1,0 +1,84 @@
+# Node.js
+node_modules/
+.env
+.env.*
+!.env.example
+
+# Logs
+logs
+
+npm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Dependency directories
+lib/
+vendor/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn
+yarn-error.log
+.pnp
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# VSCode
+.vscode/
+
+# Test coverage
+coverage/
+
+# .nyc_output
+.nyc_output/
+
+# Grunt intermediate storage (https://gruntjs.com/creating-plugins#storing-task-files)
+.grunt/
+
+# Puppeteer
+node_modules/puppeteer/.local-chromium/
+
+# Debug logs
+debug.log
+
+# Parcel
+.cache/
+dist/
+
+# Next.js
+.next/
+out/
+
+# Nuxt.js
+.nuxt/
+dist/
+
+# NestJS
+/dist
+
+# Sapper
+__sapper__/
+
+
+
+
+
