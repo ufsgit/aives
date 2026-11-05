@@ -184,6 +184,9 @@ async function sendRegistrationConfirmationEmails({ studentId, courseId = null, 
                 transactionId = f.Transaction_ID || '-';
                 if (f.Currency === 'AUD') currencySymbol = 'A$';
                 else if (f.Currency === 'USD') currencySymbol = '$';
+                else if (f.Currency === 'GBP') currencySymbol = '£';
+                else if (f.Currency === 'EUR') currencySymbol = '€';
+                else if (f.Currency === 'AED') currencySymbol = 'AED';
             }
         } catch (feeErr) {}
 
