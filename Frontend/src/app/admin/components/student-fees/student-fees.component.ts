@@ -230,10 +230,11 @@ export class StudentFeesComponent {
   }
 
   getCurrencySymbol(currencyStr: string, forPdf: boolean = false): string {
-    const currency = (currencyStr || 'INR').toUpperCase();
-    
-    if (currency === 'INR') return '₹';
-    if (currency === 'EUR' || currency === 'EURO') return '€';
+    const currency = (currencyStr || 'INR').toUpperCase().trim();
+
+    if (currency === 'AED') return 'AED';
+    if (currency === 'INR') return forPdf ? 'Rs.' : '₹';
+    if (currency === 'EUR' || currency === 'EURO') return forPdf ? 'EUR' : '€';
     if (currency === 'USD') return '$';
     if (currency === 'GBP') return '£';
     if (currency === 'AUD') return 'A$';

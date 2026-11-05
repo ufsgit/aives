@@ -27,12 +27,13 @@ export class EmailTemplateService {
     return this.http.get(this.basePath + `EmailTemplate/Delete_Email_Template/${id}`);
   }
 
-  sendTemplateEmail(templateId: number, toEmail: string, placeholders: any = {}, attachments: any[] = []): Observable<any> {
+  sendTemplateEmail(templateId: number, toEmail: string, placeholders: any = {}, attachments: any[] = [], studentId: number = 0): Observable<any> {
     return this.http.post(this.basePath + 'EmailTemplate/Send_Email_With_Template', {
       Template_ID: templateId,
       To_Email: toEmail,
       Placeholders: placeholders,
       Attachments: attachments,
+      Student_ID: studentId,
       Sender_Email: localStorage.getItem('Email'),
       Sender_Name: localStorage.getItem('Name')
     });

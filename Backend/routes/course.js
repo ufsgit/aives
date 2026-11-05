@@ -327,7 +327,7 @@ router.get('/Get_Teachers_By_Course_And_Batch', async (req, res, next) => {
         const { Course_Id, Batch_Id } = req.query;
         const db = require('../config/dbconnection');
         const query = `
-            SELECT u.User_ID as Teacher_ID, CONCAT(u.First_Name, ' ', u.Last_Name) as Teacher_Name, tts.Slot_Id
+            SELECT u.User_ID as Teacher_ID, u.User_ID, u.Email, u.PhoneNumber, CONCAT(u.First_Name, ' ', u.Last_Name) as Teacher_Name, tts.Slot_Id
             FROM course_teacher ct
             JOIN users u ON ct.Teacher_ID = u.User_ID
             LEFT JOIN teacher_time_slot tts ON tts.CourseTeacher_ID = ct.CourseTeacher_ID AND tts.Delete_Status = 0 AND (tts.batch_id = ? OR tts.batch_id IS NULL)

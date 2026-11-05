@@ -6,7 +6,8 @@ const axios = require('axios');
 const https = require('https');
 const emailHelper = require('../helpers/email-helper');
 const emailLog = require('../models/email_log');
-const { sendLeadWelcomeEmail } = require('../helpers/lead-welcome-helper');
+const { sendLeadWelcomeEmail, buildLeadResponseBlock, getOfficialContactInfo } = require('../helpers/lead-welcome-helper');
+const { sendRegistrationConfirmationEmails } = require('../helpers/registration-email-helper');
 const db = require('../config/dbconnection');
 
 const brevoHttpsAgent = new https.Agent({
@@ -48,20 +49,180 @@ router.post('/Send_Bulk_Email', async (req, res, next) => {
 
         // Loop and send email
         for (const student of students) {
-            if (student.Email) {
+            let studentEmail = (student.Email || student.email || '').trim();
+            let studentId = Number(student.Student_ID || student.student_id || student.StudentID || 0);
+            let firstName = (student.First_Name || student.first_name || '').trim();
+            let lastName = (student.Last_Name || student.last_name || '').trim();
+            let fullName = (student.Name || student.name || student.Student_Name || student.student_name || '').trim();
+            let rollNo = (student.Roll_No || student.roll_no || student.RollNumber || student.roll_number || '').trim();
+            let courseName = (student.Course_Name || student.course_name || student.Course || student.course || '').trim();
+
+            // If name or details are missing and studentId is present, fetch from database
+            if (studentId > 0 && (!firstName || !fullName || !rollNo || !courseName)) {
                 try {
-                    const response = await emailHelper.sendEmail(student.Email, subject, body.replace(/\n/g, '<br>'), effectiveSenderEmail, effectiveSenderName);
+                    const [dbStudentRows] = await db.promise().query(
+                        `SELECT s.First_Name, s.Last_Name, s.Roll_No, s.Email, c.Course_Name 
+                         FROM student s 
+                         LEFT JOIN course c ON s.Course_ID = c.Course_ID 
+                         WHERE s.Student_ID = ? LIMIT 1`,
+                        [studentId]
+                    );
+                    if (dbStudentRows && dbStudentRows.length > 0) {
+                        const dbS = dbStudentRows[0];
+                        if (!firstName && dbS.First_Name) firstName = dbS.First_Name.trim();
+                        if (!lastName && dbS.Last_Name) lastName = dbS.Last_Name.trim();
+                        if (!rollNo && dbS.Roll_No) rollNo = dbS.Roll_No.trim();
+                        if (!courseName && dbS.Course_Name) courseName = dbS.Course_Name.trim();
+                        if (!studentEmail && dbS.Email) studentEmail = dbS.Email.trim();
+                    }
+                } catch (dbErr) {
+                    console.warn(`[Send_Bulk_Email] Error fetching details for Student_ID ${studentId}:`, dbErr.message);
+                }
+            }
+
+            // If studentId was not provided, but email was, attempt lookup by email
+            if (!firstName && !fullName && studentEmail) {
+                try {
+                    const [dbEmailRows] = await db.promise().query(
+                        `SELECT s.Student_ID, s.First_Name, s.Last_Name, s.Roll_No, c.Course_Name 
+                         FROM student s 
+                         LEFT JOIN course c ON s.Course_ID = c.Course_ID 
+                         WHERE s.Email = ? LIMIT 1`,
+                        [studentEmail]
+                    );
+                    if (dbEmailRows && dbEmailRows.length > 0) {
+                        const dbS = dbEmailRows[0];
+                        studentId = dbS.Student_ID || studentId;
+                        if (!firstName && dbS.First_Name) firstName = dbS.First_Name.trim();
+                        if (!lastName && dbS.Last_Name) lastName = dbS.Last_Name.trim();
+                        if (!rollNo && dbS.Roll_No) rollNo = dbS.Roll_No.trim();
+                        if (!courseName && dbS.Course_Name) courseName = dbS.Course_Name.trim();
+                    }
+                } catch (emailQueryErr) {
+                    console.warn(`[Send_Bulk_Email] Error fetching details for Email ${studentEmail}:`, emailQueryErr.message);
+                }
+            }
+
+            if (!fullName) {
+                fullName = ((firstName + ' ' + lastName).trim()) || firstName || 'Student';
+            }
+            if (!firstName) {
+                firstName = fullName.split(' ')[0] || 'Student';
+            }
+
+            const today = new Date();
+            const formattedToday = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+
+            const contactInfo = await getOfficialContactInfo();
+            const officialEmail = effectiveSenderEmail || contactInfo.email;
+            const contactNumber = contactInfo.phone;
+
+            const placeholders = {
+                'Student Name': fullName,
+                'Student_Name': fullName,
+                'First Name': firstName,
+                'First_Name': firstName,
+                'Last Name': lastName,
+                'Last_Name': lastName,
+                'Name': fullName,
+                'Lead Name': fullName,
+                'Lead_Name': fullName,
+                'Official Email': officialEmail,
+                'Official_Email': officialEmail,
+                'Contact Number': contactNumber,
+                'Contact_Number': contactNumber,
+                'Phone': contactNumber,
+                'Contact': contactNumber,
+                'Roll Number': rollNo,
+                'Roll_No': rollNo,
+                'Student ID': rollNo || (studentId ? String(studentId) : ''),
+                'CRM ID': rollNo || (studentId ? String(studentId) : ''),
+                'Course Name': courseName,
+                'Course_Name': courseName,
+                'Programme': courseName || 'PTE Academic Training',
+                'Date': formattedToday,
+                'Enrolment Date': formattedToday
+            };
+
+            let customizedSubject = subject || '';
+            let customizedBody = body || '';
+
+            Object.keys(placeholders).forEach(key => {
+                const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`\\[${escapedKey}\\]`, 'gi');
+                const replacementValue = placeholders[key] !== undefined && placeholders[key] !== null ? String(placeholders[key]) : '';
+                if (customizedSubject) customizedSubject = customizedSubject.replace(regex, () => replacementValue);
+                if (customizedBody) customizedBody = customizedBody.replace(regex, () => replacementValue);
+            });
+
+            customizedBody = customizedBody
+                .replace(/\[Official[\s_]*(?:Email|Mail)\]/gi, officialEmail)
+                .replace(/\[(?:Contact[\s_]*Number|Contact|Phone|Phone[\s_]*Number)\]/gi, contactNumber);
+            customizedSubject = customizedSubject
+                .replace(/\[Official[\s_]*(?:Email|Mail)(?:[\s_]*Address)?\]/gi, officialEmail)
+                .replace(/\[(?:Official[\s_]*)?(?:Contact|Phone|Mobile)(?:[\s_]*(?:Number|No))?\]/gi, contactNumber);
+
+            // If template contains verification buttons or lead-response links, ensure they are personalized for THIS student
+            if (studentId > 0 && studentEmail && (
+                customizedBody.includes('/lead-response') ||
+                customizedBody.includes('[Response Buttons]') ||
+                customizedBody.includes('[YES, I AM INTERESTED') ||
+                customizedBody.includes('[YES, I WOULD LIKE TO DISCUSS') ||
+                /\[YES,[\s\S]*?(?:OPTIONS|ENQUIRY)\]/i.test(customizedBody) ||
+                /✓\s*YES,\s*I/i.test(customizedBody) ||
+                /Open verification form/i.test(customizedBody)
+            )) {
+                const { interestedUrl, notInterestedUrl, responseFormUrl, buttonsHtml } = buildLeadResponseBlock({
+                    studentId: studentId,
+                    email: studentEmail,
+                    name: fullName || firstName,
+                    req: req
+                });
+
+                // Strip any old button tables or containers that may exist in saved templates
+                customizedBody = customizedBody
+                    .replace(/<table[^>]*role="presentation"[^>]*>[\s\S]*?(?:DISCUSS MY PTE TRAINING OPTIONS|OPTIONS|ENQUIRY)[\s\S]*?<\/table>/gi, buttonsHtml)
+                    .replace(/<table[^>]*>[\s\S]*?Open verification form[\s\S]*?<\/table>/gi, buttonsHtml);
+
+                customizedBody = customizedBody
+                    .replace(/href=["'][^"']*\/lead-response[^"']*choice=(?:Interested|yes)[^"']*["']/gi, `href="${interestedUrl}"`)
+                    .replace(/href=["'][^"']*\/lead-response[^"']*choice=(?:Not[+_]Interested|no)[^"']*["']/gi, `href="${notInterestedUrl}"`)
+                    .replace(/href=["'][^"']*\/lead-response[^"']*["']/gi, (m) => {
+                        if (m.toLowerCase().includes('choice=not')) return `href="${notInterestedUrl}"`;
+                        if (m.toLowerCase().includes('choice=')) return `href="${interestedUrl}"`;
+                        return `href="${responseFormUrl}"`;
+                    });
+
+                if (customizedBody.includes('[YES, I WOULD LIKE TO DISCUSS MY PTE TRAINING OPTIONS]')) {
+                    customizedBody = customizedBody.replace(/\[YES, I WOULD LIKE TO DISCUSS MY PTE TRAINING OPTIONS\]/g, buttonsHtml);
+                } else if (customizedBody.includes('[YES, I AM INTERESTED – VERIFY MY ENQUIRY]')) {
+                    customizedBody = customizedBody.replace(/\[YES, I AM INTERESTED – VERIFY MY ENQUIRY\]/g, buttonsHtml);
+                } else if (customizedBody.includes('[YES, I AM INTERESTED - VERIFY MY ENQUIRY]')) {
+                    customizedBody = customizedBody.replace(/\[YES, I AM INTERESTED - VERIFY MY ENQUIRY\]/g, buttonsHtml);
+                } else if (customizedBody.includes('[Response Buttons]')) {
+                    customizedBody = customizedBody.replace(/\[Response Buttons\]/g, buttonsHtml);
+                } else if (/\[YES,[\s\S]*?(?:OPTIONS|ENQUIRY)\]/i.test(customizedBody)) {
+                    customizedBody = customizedBody.replace(/\[YES,[\s\S]*?(?:OPTIONS|ENQUIRY)\]/gi, buttonsHtml);
+                } else if (/✓\s*YES,\s*I[\s\S]*?(?:OPTIONS|ENQUIRY)/i.test(customizedBody)) {
+                    customizedBody = customizedBody.replace(/✓\s*YES,\s*I[\s\S]*?(?:OPTIONS|ENQUIRY)/gi, buttonsHtml);
+                }
+            }
+
+            if (studentEmail) {
+                try {
+                    const htmlContent = customizedBody ? customizedBody.replace(/\n/g, '<br>') : '';
+                    const response = await emailHelper.sendEmail(studentEmail, customizedSubject, htmlContent, effectiveSenderEmail, effectiveSenderName);
                     const messageId = response?.messageId || null;
-                    await emailLog.Save_Email_Log(student.Student_ID, templateId || null, student.Email, subject, messageId, body, 'Success', null);
+                    await emailLog.Save_Email_Log(studentId || null, templateId || null, studentEmail, customizedSubject, messageId, customizedBody, 'Success', null);
                     successCount++;
                 } catch (emailError) {
-                    console.error('Error sending email to', student.Email, emailError);
+                    console.error('Error sending email to', studentEmail, emailError);
                     lastError = emailError.message || String(emailError);
-                    await emailLog.Save_Email_Log(student.Student_ID, templateId || null, student.Email, subject, null, body, 'Failed', lastError);
+                    await emailLog.Save_Email_Log(studentId || null, templateId || null, studentEmail, customizedSubject, null, customizedBody, 'Failed', lastError);
                     failureCount++;
                 }
             } else {
-                await emailLog.Save_Email_Log(student.Student_ID, templateId || null, null, subject, null, body, 'Failed', 'No email address');
+                await emailLog.Save_Email_Log(studentId || null, templateId || null, null, customizedSubject, null, customizedBody, 'Failed', 'No email address');
                 failureCount++;
                 lastError = 'No email address';
             }
@@ -442,6 +603,14 @@ router.post('/Save_student/', async (req, res, next) => {
                 senderEmail: loggedInSenderEmail,
                 senderName: loggedInSenderName
             }).catch(err => console.error('[Save_student] Welcome email error:', err));
+        } else if (isRegistrationFlow && newStudentId && studentEmail) {
+            sendRegistrationConfirmationEmails({
+                studentId: newStudentId,
+                courseId: req.body.Course_ID || (req.body.Course && req.body.Course.Course_ID) || null,
+                batchId: req.body.Batch_ID || null,
+                slotId: req.body.Slot_Id || null,
+                req
+            }).catch(err => console.error('[Save_student] Registration emails error:', err));
         }
 
         res.json(rows);
@@ -598,6 +767,20 @@ router.post('/enroleCourseFromAdmin/', async (req, res, next) => {
         console.log('req.body: of enroleCourseFromAdmin', req.body);
         const rows = await student.enroleCourseFromAdmin(req.body);
         res.json(rows);
+
+        const courseStudentId = req.body.Student_ID;
+        const courseIdVal = req.body.Course_ID;
+        const batchIdVal = req.body.Batch_ID;
+        const slotIdVal = req.body.Slot_Id;
+        if (courseStudentId && (courseIdVal || batchIdVal)) {
+            sendRegistrationConfirmationEmails({
+                studentId: courseStudentId,
+                courseId: courseIdVal,
+                batchId: batchIdVal,
+                slotId: slotIdVal,
+                req
+            }).catch(err => console.error('[enroleCourseFromAdmin] Registration emails error:', err));
+        }
         //console.log('rows: ', rows);
 
         let transporter = nodemailer.createTransport({

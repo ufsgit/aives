@@ -549,16 +549,24 @@ export class StudentLeadComponent implements OnInit {
   }
 
   openResponseDetailsModal(lead: any) {
-    this.selectedLeadForResponse = lead;
+    this.selectedLeadForResponse = { ...lead };
     this.isResponseModalOpen = true;
 
-    if (!lead.Lead_Response && lead.Student_ID) {
+    if (lead?.Student_ID) {
       this.loadingResponseDetails = true;
       this.student_Service_.Get_Lead_Response(lead.Student_ID).subscribe({
         next: (res: any) => {
           this.loadingResponseDetails = false;
           if (res && res.data) {
-            this.selectedLeadForResponse.Lead_Response = res.data;
+            // Ensure response belongs to this student and not another lead
+            const rStudentId = res.data.Student_ID ? Number(res.data.Student_ID) : null;
+            if (!rStudentId || rStudentId === Number(lead.Student_ID)) {
+              this.selectedLeadForResponse.Lead_Response = res.data;
+            } else {
+              this.selectedLeadForResponse.Lead_Response = null;
+            }
+          } else {
+            this.selectedLeadForResponse.Lead_Response = null;
           }
         },
         error: () => {
@@ -574,15 +582,18 @@ export class StudentLeadComponent implements OnInit {
     this.loadingResponseDetails = false;
   }
 
-  sendSelectedEmail(email: string, studentName: string) {
-    console.log('Attempting to send email:', { email, templateId: this.selectedTemplateId });
+  sendSelectedEmail(email: string, studentName: string, studentId: number = 0) {
+    console.log('Attempting to send email:', { email, templateId: this.selectedTemplateId, studentId });
     if (this.selectedTemplateId && email) {
       // Find the selected template name to check if it's the PTE one
       const selectedTemplate = this.emailTemplates.find(t => t.Template_ID == this.selectedTemplateId);
 
       const placeholders: any = {
         'Student Name': studentName,
-        'Lead Name': studentName
+        'Lead Name': studentName,
+        'First Name': studentName ? studentName.split(' ')[0] : 'Student',
+        'Official Email': 'cs.mgr@testprepinenglish.com',
+        'Contact Number': '+91 79944 43028'
       };
 
       // If it's the PTE template, add specific placeholders from the lead record if available
@@ -592,9 +603,18 @@ export class StudentLeadComponent implements OnInit {
         placeholders['StartTime'] = this.selectedStudent.Time_Slot || '-';
       }
 
-      this.emailTemplateService.sendTemplateEmail(this.selectedTemplateId, email, placeholders).subscribe({
+      const effectiveStudentId = studentId || this.selectedStudent?.Student_ID || this.selectedStudentForFollowup?.Student_ID || 0;
+
+      this.emailTemplateService.sendTemplateEmail(this.selectedTemplateId, email, placeholders, [], effectiveStudentId).subscribe({
         next: (res) => {
-          console.log('Email sent successfully response:', res);
+          console.log('Email sent response:', res);
+          if (res?.skipped) {
+            this.dialogBox.open(DialogBox_Component, {
+              panelClass: 'Dialogbox-Class',
+              data: { Message: res.message || 'Email skipped (template inactive or duplicate prevented)', Type: '3' },
+            });
+            return;
+          }
           this.dialogBox.open(DialogBox_Component, {
             panelClass: 'Dialogbox-Class',
             data: { Message: 'Email sent successfully', Type: 'false' },
@@ -1919,9 +1939,16 @@ onCancelEdit(): void {
             data: { Message: 'Student Already Exists', Type: '3' },
           });
         } else if (Number(Save_status[0].Student_ID) > 0) {
+          const studentEmail = (this.student_Form.get('Email')?.value || '').trim();
+          const subMsg = studentEmail ? 'Lead welcome mail sent successfully' : '';
+
           this.dialogBox.open(DialogBox_Component, {
             panelClass: 'Dialogbox-Class',
-            data: { Message: 'Saved', Type: 'false' },
+            data: { 
+              Message: 'Saved', 
+              SubMessage: subMsg,
+              Type: 'false' 
+            },
           });
           this.pageLoad();
         } else {
@@ -2075,11 +2102,20 @@ onCancelEdit(): void {
                 studentResponse: this.student_Service_.Get_student(
                   row.Student_ID
                 ).pipe(catchError(() => of(null))),
+                leadResponse: this.student_Service_.Get_Lead_Response(
+                  row.Student_ID
+                ).pipe(catchError(() => of(null))),
               }).pipe(
-                map(({ followupResponse, studentResponse }: any) => {
+                map(({ followupResponse, studentResponse, leadResponse }: any) => {
                   const studentDetails =
                     this.normalizeStudentDetails(studentResponse);
                   const normalizedFollowup = this.normalizeCurrentFollowup(followupResponse);
+                  const respData = leadResponse?.data || row.Lead_Response || null;
+                  const respChoice = (respData?.Response_Choice || respData?.Interested_Course || '').trim();
+                  const hasResponded = !!(respData && respChoice) || (row.Response_Status && row.Response_Status !== 'Pending') || row.Has_Responded || false;
+                  const responseStatus = (respData && respChoice)
+                    ? (respChoice.toLowerCase().includes('not') ? 'Not Interested' : 'Interested')
+                    : (row.Response_Status || row.Priority || (row.Status_Name === 'Interested' ? 'Interested' : (row.Status_Name === 'Not interested' ? 'Not Interested' : 'Pending')));
 
                   return {
                     ...row,
@@ -2107,9 +2143,9 @@ onCancelEdit(): void {
                       normalizedFollowup.Assigned_Staff_Name ||
                       studentDetails.Assigned_Staff_Name ||
                       '-',
-                    Has_Responded: row.Has_Responded || false,
-                    Response_Status: row.Response_Status || 'Pending',
-                    Lead_Response: row.Lead_Response || null,
+                    Has_Responded: hasResponded || row.Has_Responded || false,
+                    Response_Status: responseStatus,
+                    Lead_Response: respData || row.Lead_Response || null,
                   };
                 }),
                 catchError(() =>
@@ -3509,12 +3545,7 @@ private getStudentStatusValue(student: any): string {
           }),
           switchMap(() => saveStudentAndFollowUp$(studentPayload).pipe(
             tap(() => {
-              // Send Lead Welcome Email only when creating a NEW lead (Student_ID is 0)
-              // Do NOT send when converting an existing lead to a student (registration flow)
-              const isNewLeadCreation = !studentPayload.Student_ID || Number(studentPayload.Student_ID) === 0;
-              if (isNewLeadCreation) {
-                this.sendSelectedEmail(studentPayload.Email, studentPayload.First_Name);
-              }
+              // Lead Welcome Email is automatically handled by the backend Save_student route
               this.loadTodayFollowUps();
               this.loadPendingFollowUps();
               this.loadInterestedLeads();
@@ -3524,12 +3555,7 @@ private getStudentStatusValue(student: any): string {
         .subscribe();
     } else {
       saveStudentAndFollowUp$(studentPayload).subscribe(() => {
-        // Send Lead Welcome Email only when creating a NEW lead (Student_ID is 0)
-        // Do NOT send when converting an existing lead to a student (registration flow)
-        const isNewLeadCreation = !studentPayload.Student_ID || Number(studentPayload.Student_ID) === 0;
-        if (isNewLeadCreation) {
-          this.sendSelectedEmail(studentPayload.Email, studentPayload.First_Name);
-        }
+        // Lead Welcome Email is automatically handled by the backend Save_student route
         this.loadTodayFollowUps();
         this.loadPendingFollowUps();
         this.loadInterestedLeads();
@@ -3606,7 +3632,8 @@ private getStudentStatusValue(student: any): string {
           if (this.selectedStudentForFollowup) {
             this.sendSelectedEmail(
               this.selectedStudentForFollowup.Email,
-              this.selectedStudentForFollowup.First_Name
+              this.selectedStudentForFollowup.First_Name,
+              this.selectedStudentForFollowup.Student_ID
             );
           }
 

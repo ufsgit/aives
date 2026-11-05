@@ -6,7 +6,10 @@
         <ng-lottie [options]="lottieOptions"   height="220px"></ng-lottie>
 
         <!-- <img class="w-24 h-24 mx-auto" src="{{ Image_Url }}" alt="Image"> -->
-        <p class="text-lg font-bold text-center mt-4">{{ message }}</p>
+        <p class="text-lg font-bold text-center mt-4 whitespace-pre-line">{{ message }}</p>
+        @if (subMessage) {
+          <p class="text-sm font-medium text-gray-600 text-center mt-1.5 whitespace-pre-line">{{ subMessage }}</p>
+        }
       </div>
       <div class="flex justify-end p-4">
         <button class="px-4 py-2 mr-2 bg-blue text-white font-semibold rounded hover:bg-blue-600" (click)="onYesClick()">{{ YesButton }}</button>

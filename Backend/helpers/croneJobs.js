@@ -2,19 +2,37 @@ require('dotenv').config();
 const cron = require('node-cron');
 const { executeTransaction } = require('./sp-caller');
 const { subscribeToTopic, sendNotifToTopic } = require('./firebase');
-const AWS = require('aws-sdk');
+let S3Client, DeleteObjectCommand, s3Client, s3V2;
+
+try {
+    const s3V3 = require('@aws-sdk/client-s3');
+    S3Client = s3V3.S3Client;
+    DeleteObjectCommand = s3V3.DeleteObjectCommand;
+    s3Client = new S3Client({
+        region: process.env.AWS_REGION || "us-east-2",
+        credentials: (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) ? {
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        } : undefined
+    });
+} catch (v3Err) {
+    try {
+        const AWS = require('aws-sdk');
+        AWS.config.update({
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+            region: process.env.AWS_REGION || "us-east-2",
+        });
+        s3V2 = new AWS.S3();
+    } catch (v2Err) {
+        console.warn('[AWS S3] No S3 SDK available:', v2Err.message);
+    }
+}
 var teacher = require('../models/teacher');
 const axios = require('axios');
 const moment = require('moment-timezone');
 
-AWS.config.update({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.AWS_REGION || "us-east-2",
-});
-
-const s3 = new AWS.S3();
-
+// S3 Client initialized above with graceful fallback
 // Logging function
 function log(level, message, error = null) {
     const timestamp = new Date().toISOString();
@@ -145,15 +163,25 @@ async function checkAndNotifyExpiringCourses() {
 }
 
 async function deleteS3Object(key) {
-    const params = {
-        Bucket: process.env.AWS_S3_BUCKET || 'ufsnabeelphotoalbum',
-        Key: key
-    };
     try {
-        await s3.deleteObject(params).promise();
-        log('info', `Deleted S3 object: ${key}`);
+        if (s3Client && DeleteObjectCommand) {
+            const command = new DeleteObjectCommand({
+                Bucket: process.env.AWS_S3_BUCKET || 'ufsnabeelphotoalbum',
+                Key: key
+            });
+            await s3Client.send(command);
+            log('info', 'Deleted S3 object: ' + key);
+        } else if (s3V2) {
+            await s3V2.deleteObject({
+                Bucket: process.env.AWS_S3_BUCKET || 'ufsnabeelphotoalbum',
+                Key: key
+            }).promise();
+            log('info', 'Deleted S3 object (v2): ' + key);
+        } else {
+            log('warn', 'S3 client not initialized. Skipped deleting: ' + key);
+        }
     } catch (error) {
-        log('error', `Error deleting S3 object: ${key}`, error);
+        log('error', 'Error deleting S3 object: ' + key, error);
         throw error;
     }
 }

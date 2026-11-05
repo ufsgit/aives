@@ -1,8 +1,12 @@
 var mysql = require("mysql2");
 require("dotenv").config();
 
+// Normalize localhost to 127.0.0.1 to avoid Windows IPv6 resolution timeouts (ETIMEDOUT)
+const rawDbHost = process.env.DB_HOST || "127.0.0.1";
+const dbHost = (rawDbHost === "localhost") ? "127.0.0.1" : rawDbHost;
+
 var connection = mysql.createPool({
-    host: process.env.DB_HOST || "localhost",
+    host: dbHost,
     user: process.env.DB_USER || "root",
     password: process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : "password",
     database: process.env.DB_NAME || "aives_db",
@@ -11,6 +15,7 @@ var connection = mysql.createPool({
     connectionLimit: 100,
     waitForConnections: true,
     queueLimit: 0,
+    connectTimeout: 10000,
 });
 
 // Remove ONLY_FULL_GROUP_BY from sql_mode on every new connection

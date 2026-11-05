@@ -58,25 +58,215 @@ async function initializeDatabase() {
                 LIMIT 1
             `);
 
+            const latestTemplateSubject = "Take the Next Step Towards Your PTE Goal | Aives Australia's TESTPREP";
+            const latestTemplateBody = `Dear [First Name],
+
+Greetings from Aives Australia's TESTPREP!
+
+We noticed that you recently expressed interest in our PTE Academic Training Programme but have not yet taken the next step towards enrolment.
+
+Before you decide, we want to share something important.
+
+Are You Preparing for a Test, or Preparing for Your Future?
+For many candidates, achieving the required PTE score is not simply about passing an English language examination.
+
+It could be an important step towards:
+
+Australian permanent residency or skilled migration.
+
+Professional registration in Australia.
+
+Higher education and career opportunities.
+
+Meeting English language requirements for your future plans.
+
+Your PTE score may be one of the important requirements standing between you and your next opportunity.
+
+That is why choosing the right preparation programme matters.
+
+What Makes Aives Australia's TESTPREP Different?
+Unlike conventional language coaching programmes, Aives Australia's TESTPREP is developed under the guidance of qualified Australian immigration law professionals with years of practical experience in migration-related English language requirements and candidate preparation.
+
+We understand that different candidates have different objectives, target scores, and challenges.
+
+Our approach brings together:
+
+1. Professional IELTS/PTE Training
+Qualified trainers help you understand the examination format, task requirements, scoring criteria, and practical techniques.
+
+2. Practical Mock Tests & Individual Feedback
+Mock examinations and trainer feedback help identify your strengths, weaknesses, and areas requiring further practice.
+
+3. NLP-Based Mindset Preparation
+Our NLP Master Trainers introduce supplementary techniques focused on confidence, concentration, and mental preparation for examination conditions.
+
+4. A Structured Learning Journey
+We combine trainer-led sessions, regular practice, performance monitoring, and individual guidance to support your progress.
+
+A Question Worth Asking Yourself
+If you have already attempted PTE Academic without achieving your desired score, have you identified what needs to change before your next attempt?
+
+And if this is your first attempt, wouldn't it be better to begin with a structured preparation strategy rather than relying on trial and error?
+
+At TESTPREP, we encourage students to understand their challenges before investing further time and effort in examination preparation.
+
+Let's Understand Your PTE Goal
+We would be pleased to discuss your current preparation level, target score, and examination timeline before recommending a suitable training option.
+
+[YES, I WOULD LIKE TO DISCUSS MY PTE TRAINING OPTIONS]
+
+Our Student Admissions Team will contact you to understand your requirements and explain how our programme works.
+
+One Final Thought
+
+A successful PTE preparation journey is not measured merely by the number of classes attended. It is built through the right guidance, consistent practice, meaningful feedback, and the ability to apply what you have learned.
+
+Your goal deserves more than ordinary preparation.
+
+We look forward to helping you take the next step.
+
+Warm regards,
+
+Student Admissions Team
+Aives Australia's TESTPREP
+[Official Email] | [Contact Number]`;
+
             if (templates.length === 0) {
                 await db.promise().query(`
                     INSERT INTO email_templates (
-                        Template_Name, Subject, Body, Category, Status, Created_Date, Delete_Status
+                        Template_Name, Subject, Body, Category, Status, Created_Date, Delete_Status, Is_Active
                     ) VALUES (
                         'Lead Welcome & Response Form',
-                        'Welcome to Trackbox - Are you interested in our courses?',
-                        'Dear [Student Name],\\n\\nThank you for reaching out to Trackbox! We are excited to support you on your learning journey.\\n\\nPlease let us know if you are interested in joining our coaching programs:\\n\\n[Response Buttons]\\n\\nIf you have any questions, you can reply directly to this email or reach our admissions team.\\n\\nBest regards,\\nTrackbox Admissions & Training Team',
+                        ?,
+                        ?,
                         'Leads',
                         'Active',
                         NOW(),
-                        0
+                        0,
+                        1
                     )
-                `);
+                `, [latestTemplateSubject, latestTemplateBody]);
                 console.log('[DB-INIT] Seeded "Lead Welcome & Response Form" email template.');
+            } else {
+                // Ensure existing template is up to date and does not contain hardcoded links or stale recipient IDs
+                await db.promise().query(
+                    `UPDATE email_templates SET Subject = ?, Body = ? WHERE Template_ID = ?`,
+                    [latestTemplateSubject, latestTemplateBody, templates[0].Template_ID]
+                );
+                console.log('[DB-INIT] Verified and updated "Lead Welcome & Response Form" email template.');
             }
+
+            // Also clean up any other templates that may contain legacy button HTML tables or Open verification form
+            await db.promise().query(`
+                UPDATE email_templates 
+                SET Body = REPLACE(REPLACE(Body, '<table role="presentation"', '<div style="display:none"'), 'Open verification form', '')
+                WHERE Body LIKE '%Open verification form%' AND Template_Name != 'Lead Welcome & Response Form'
+            `).catch(() => {});
         } catch (tmplErr) {
             console.warn('[DB-INIT] Warning verifying email template:', tmplErr.message);
         }
+            // 3b. Ensure Registration Confirmation ('Welcome mail with receipt') Template exists
+            try {
+                const [receiptTemplates] = await db.promise().query(
+                    `SELECT Template_ID FROM email_templates 
+                     WHERE (Template_Name LIKE '%receipt%' OR Template_Name LIKE '%Welcome mail with receipt%') 
+                       AND (Delete_Status = 0 OR Delete_Status IS NULL) LIMIT 1`
+                );
+                const receiptSubject = "Enrolment Confirmation & Fee Receipt – [Course Name] | Aives Australia's TESTPREP";
+                const receiptBody = `Dear [First Name],
+
+Welcome to Aives Australia's TESTPREP! We are delighted to confirm your enrolment in our [Course Name] programme.
+
+Your Enrolment Details:
+• Student Name: [Student Name]
+• Roll Number: [Roll Number]
+• Programme: [Course Name]
+• Training Mode: [Training Mode]
+• Course Commencement: [Start Date]
+• Daily Training Time: [Daily Training Time] ([Time Zone])
+• Payment Amount: [Payment Amount]
+• Transaction Reference: [Transaction ID]
+
+Attached to this email is your official Payment Receipt for your records.
+
+Our Student Support and Academic Team will guide you through every stage of your preparation. If you have any questions prior to class commencement, please reach out to us at [Official Email] or [Contact Number].
+
+We wish you the very best in achieving your target score!
+
+Warm regards,
+
+Student Admissions & Administration Team
+Aives Australia's TESTPREP
+[Official Email] | [Contact Number]`;
+
+                if (receiptTemplates.length === 0) {
+                    await db.promise().query(
+                        `INSERT INTO email_templates (
+                            Template_ID, Template_Name, Subject, Body, Category, Status, Created_Date, Delete_Status, Is_Active
+                        ) VALUES (19, 'Welcome mail with receipt', ?, ?, 'Registration', 'Active', NOW(), 0, 1)
+                        ON DUPLICATE KEY UPDATE Template_Name = 'Welcome mail with receipt', Subject = VALUES(Subject), Body = VALUES(Body), Is_Active = 1, Delete_Status = 0`,
+                        [receiptSubject, receiptBody]
+                    );
+                    console.log('[DB-INIT] Seeded "Welcome mail with receipt" email template.');
+                } else {
+                    await db.promise().query(
+                        `UPDATE email_templates SET Is_Active = 1, Delete_Status = 0 WHERE Template_ID = ?`,
+                        [receiptTemplates[0].Template_ID]
+                    );
+                }
+            } catch (rErr) {
+                console.warn('[DB-INIT] Warning verifying Welcome mail with receipt template:', rErr.message);
+            }
+
+            // 3c. Ensure Assigned Staff Template exists
+            try {
+                const [staffTemplates] = await db.promise().query(
+                    `SELECT Template_ID FROM email_templates 
+                     WHERE (Template_Name LIKE '%assigned staff%' OR Template_Name LIKE '%assigned trainer%') 
+                       AND (Delete_Status = 0 OR Delete_Status IS NULL) LIMIT 1`
+                );
+                const staffSubject = "Trainer Allocation & Class Schedule – [Course Name] | Aives Australia's TESTPREP";
+                const staffBody = `Dear [First Name],
+
+Greetings from Aives Australia's TESTPREP!
+
+We are pleased to inform you that your trainer has been allocated for the [Course Name] programme.
+
+Trainer & Class Details:
+• Assigned Trainer: [Trainer Name]
+• Trainer Contact: [Trainer Contact Details]
+• Batch Time: [Daily Training Time] ([Time Zone])
+• First Class Date: [Start Date]
+
+Your trainer will guide you throughout the training journey, conduct practice sessions, provide individual feedback, and assist you in achieving your required examination score.
+
+Please be ready for your first session at the scheduled batch time. If you need any assistance, feel free to contact us at [Official Email] or [Contact Number].
+
+Warm regards,
+
+Academic Coordination Team
+Aives Australia's TESTPREP
+[Official Email] | [Contact Number]`;
+
+                if (staffTemplates.length === 0) {
+                    await db.promise().query(
+                        `INSERT INTO email_templates (
+                            Template_ID, Template_Name, Subject, Body, Category, Status, Created_Date, Delete_Status, Is_Active
+                        ) VALUES (23, 'Assigned Staff', ?, ?, 'Staff Assignment', 'Active', NOW(), 0, 1)
+                        ON DUPLICATE KEY UPDATE Template_Name = 'Assigned Staff', Subject = VALUES(Subject), Body = VALUES(Body), Is_Active = 1, Delete_Status = 0`,
+                        [staffSubject, staffBody]
+                    );
+                    console.log('[DB-INIT] Seeded "Assigned Staff" email template.');
+                } else {
+                    await db.promise().query(
+                        `UPDATE email_templates SET Is_Active = 1, Delete_Status = 0 WHERE Template_ID = ?`,
+                        [staffTemplates[0].Template_ID]
+                    );
+                }
+            } catch (sErr) {
+                console.warn('[DB-INIT] Warning verifying Assigned Staff template:', sErr.message);
+            }
+
 
         // 4. Ensure Get_Batch_Mail_Report stored procedure is up-to-date with date filtering and exact sending events
         try {

@@ -15,6 +15,7 @@ export class DialogBox_Component implements OnInit {
   lottieOptions: Object;
 
   message: any;
+  subMessage: string = '';
   showNo: string;
   show: boolean | undefined;
   Heading: string;
@@ -30,6 +31,7 @@ export class DialogBox_Component implements OnInit {
         loop: false
       };
     this.message = data.Message;
+    this.subMessage = data.SubMessage || data.subMessage || '';
     this.showNo = data.Type;
     this.showNo= this.showNo.toString();
      

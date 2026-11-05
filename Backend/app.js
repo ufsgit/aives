@@ -76,7 +76,14 @@ initialChat(io); // Pass the server to the socket module
 // Set up view engine
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
-app.use(cors());
+const corsOptions = {
+  origin: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'token', 'Student_Id', 'student_id'],
+  credentials: true
+};
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Middleware
 app.use(logger('dev'));
@@ -164,8 +171,8 @@ process.on('SyntaxError', (reason, promise) => {
 
 
 // Start server
-server.listen(port, () => {
-  console.log(`Server started on port: ${port}`);
+server.listen(port, '0.0.0.0', () => {
+  console.log(`Server started on 0.0.0.0:${port} (accepting local and external network connections)`);
 });
 
 function generateToken() {

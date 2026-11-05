@@ -6,50 +6,86 @@ const { verifyLeadToken } = require('../helpers/lead-welcome-helper');
 /**
  * Helper to update student remark and followup in CRM when a response is received
  */
-async function updateStudentCRMRecord(studentId, choice, comments = '') {
-    if (!studentId || studentId <= 0) return;
+async function updateStudentCRMRecord(studentId, email, choice, comments = '') {
     try {
-        const responseSummary = `[LEAD RESPONSE: ${choice.toUpperCase()}]${comments ? ` Note: ${comments}` : ''}`;
+        const isInterested = choice.toLowerCase().includes('interest') && !choice.toLowerCase().includes('not');
+        const statusId = isInterested ? 20 : 17; // 20 = 'Interested', 17 = 'Not interested' in followup_status
+        const statusName = isInterested ? 'Interested' : 'Not interested';
+        const responseSummary = `[LEAD RESPONSE: ${statusName.toUpperCase()}]${comments ? ` Note: ${comments}` : ''}`;
+        const cleanEmail = (email || '').trim().toLowerCase();
 
-        // 1. Update Remark in student table
-        await db.promise().query(
-            `UPDATE student 
-             SET Remark = CASE 
-                 WHEN Remark IS NULL OR TRIM(Remark) = '' THEN ? 
-                 ELSE CONCAT(?, '\n', Remark) 
-             END 
-             WHERE Student_ID = ?`,
-            [responseSummary, responseSummary, studentId]
-        );
+        // 1. Update Remark, Status_Id, Status_Name, Priority in student table for this student ID
+        if (studentId > 0) {
+            await db.promise().query(
+                `UPDATE student 
+                 SET Status_Id = ?,
+                     Status_Name = ?,
+                     Priority = ?,
+                     Remark = CASE 
+                         WHEN Remark IS NULL OR TRIM(Remark) = '' THEN ? 
+                         ELSE CONCAT(?, '\n', Remark) 
+                     END 
+                 WHERE Student_ID = ?`,
+                [statusId, statusName, statusName, responseSummary, responseSummary, studentId]
+            );
+        }
+
+        // Also update any matching lead records with the same email so status stays in sync
+        if (cleanEmail) {
+            await db.promise().query(
+                `UPDATE student 
+                 SET Status_Id = ?,
+                     Status_Name = ?,
+                     Priority = ?,
+                     Remark = CASE 
+                         WHEN Remark IS NULL OR TRIM(Remark) = '' THEN ? 
+                         ELSE CONCAT(?, '\n', Remark) 
+                     END 
+                 WHERE LOWER(TRIM(Email)) = ? AND (Delete_Status = 0 OR Delete_Status IS NULL)`,
+                [statusId, statusName, statusName, responseSummary, responseSummary, cleanEmail]
+            );
+        }
 
         // 2. Fetch latest followup info if exists to inherit branch/staff
-        const [followups] = await db.promise().query(
-            `SELECT Follow_Up_ID, Branch_ID, Branch_Name, Department_ID, Department_Name, Assigned_Staff_ID, Assigned_Staff_Name 
-             FROM student_followup 
-             WHERE Student_ID = ? AND (Delete_Status = 0 OR Delete_Status IS NULL) 
-             ORDER BY Follow_Up_ID DESC LIMIT 1`,
-            [studentId]
-        );
+        let targetStudentId = studentId;
+        if (!targetStudentId && cleanEmail) {
+            const [sRows] = await db.promise().query(
+                `SELECT Student_ID FROM student WHERE LOWER(TRIM(Email)) = ? AND (Delete_Status = 0 OR Delete_Status IS NULL) ORDER BY Student_ID DESC LIMIT 1`,
+                [cleanEmail]
+            );
+            if (sRows.length > 0) targetStudentId = sRows[0].Student_ID;
+        }
 
-        const latestFu = followups.length > 0 ? followups[0] : {};
-        const statusName = choice === 'Interested' ? 'Interested' : 'Not Interested';
+        if (targetStudentId > 0) {
+            const [followups] = await db.promise().query(
+                `SELECT Follow_Up_ID, Branch_ID, Branch_Name, Department_ID, Department_Name, Assigned_Staff_ID, Assigned_Staff_Name 
+                 FROM student_followup 
+                 WHERE Student_ID = ? AND (Delete_Status = 0 OR Delete_Status IS NULL) 
+                 ORDER BY Follow_Up_ID DESC LIMIT 1`,
+                [targetStudentId]
+            );
 
-        await db.promise().query(
-            `INSERT INTO student_followup 
-             (Student_ID, Branch_ID, Branch_Name, Department_ID, Department_Name, Assigned_Staff_ID, Assigned_Staff_Name, Follow_Up_Status_ID, Follow_Up_Status_Name, Next_Follow_Up_Date, Remark, Created_Date, Created_By, Delete_Status) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, 11, ?, NULL, ?, NOW(), 0, 0)`,
-            [
-                studentId,
-                latestFu.Branch_ID || 0,
-                latestFu.Branch_Name || '',
-                latestFu.Department_ID || 0,
-                latestFu.Department_Name || '',
-                latestFu.Assigned_Staff_ID || null,
-                latestFu.Assigned_Staff_Name || '',
-                statusName,
-                `Lead submitted response: ${choice}${comments ? ` (${comments})` : ''}`
-            ]
-        );
+            const latestFu = followups.length > 0 ? followups[0] : {};
+
+            // 3. Insert student_followup with the actual matching status ID (20 or 17)
+            await db.promise().query(
+                `INSERT INTO student_followup 
+                 (Student_ID, Branch_ID, Branch_Name, Department_ID, Department_Name, Assigned_Staff_ID, Assigned_Staff_Name, Follow_Up_Status_ID, Follow_Up_Status_Name, Next_Follow_Up_Date, Remark, Created_Date, Created_By, Delete_Status) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, NOW(), 0, 0)`,
+                [
+                    targetStudentId,
+                    latestFu.Branch_ID || 0,
+                    latestFu.Branch_Name || '',
+                    latestFu.Department_ID || 0,
+                    latestFu.Department_Name || '',
+                    latestFu.Assigned_Staff_ID || null,
+                    latestFu.Assigned_Staff_Name || '',
+                    statusId,
+                    statusName,
+                    `Lead submitted response: ${statusName}${comments ? ` (${comments})` : ''}`
+                ]
+            );
+        }
     } catch (err) {
         console.warn('[LEAD RESPONSE] Warning updating CRM followup:', err.message);
     }
@@ -66,21 +102,42 @@ async function saveLeadResponseRecord({ studentId, email, name, phone, choice, c
         payload: rawPayload
     });
 
-    // Check if response already exists
-    const [existing] = await db.promise().query(
-        `SELECT Response_ID FROM lead_response 
-         WHERE Student_ID = ? AND (Delete_Status = 0 OR Delete_Status IS NULL) 
-         LIMIT 1`,
-        [studentId]
-    );
+    const cleanEmail = (email || '').trim().toLowerCase();
 
-    if (existing.length > 0) {
+    // Check if response already exists specifically for this studentId
+    let existing = [];
+    if (studentId > 0) {
+        [existing] = await db.promise().query(
+            `SELECT Response_ID FROM lead_response 
+             WHERE Student_ID = ? AND (Delete_Status = 0 OR Delete_Status IS NULL) 
+             ORDER BY Response_ID DESC LIMIT 1`,
+            [studentId]
+        );
+    } else if (cleanEmail) {
+        [existing] = await db.promise().query(
+            `SELECT Response_ID FROM lead_response 
+             WHERE LOWER(TRIM(Email)) = ? AND (Student_ID IS NULL OR Student_ID = 0)
+               AND (Delete_Status = 0 OR Delete_Status IS NULL) 
+             ORDER BY Response_ID DESC LIMIT 1`,
+            [cleanEmail]
+        );
+    }
+
+    if (existing && existing.length > 0) {
         const responseId = existing[0].Response_ID;
         await db.promise().query(
             `UPDATE lead_response 
-             SET Response_Choice = ?, Interested_Course = ?, Comments = ?, Raw_Response = ?, Submitted_At = NOW() 
+             SET Student_ID = CASE WHEN ? > 0 THEN ? ELSE Student_ID END,
+                 Email = CASE WHEN ? != '' THEN ? ELSE Email END,
+                 Full_Name = CASE WHEN ? != '' THEN ? ELSE Full_Name END,
+                 Phone_Number = CASE WHEN ? != '' THEN ? ELSE Phone_Number END,
+                 Response_Choice = ?, 
+                 Interested_Course = ?, 
+                 Comments = ?, 
+                 Raw_Response = ?, 
+                 Submitted_At = NOW() 
              WHERE Response_ID = ?`,
-            [choice, choice, comments || null, rawResponseJson, responseId]
+            [studentId || 0, studentId || 0, cleanEmail, cleanEmail, name || '', name || '', phone || '', phone || '', choice, choice, comments || null, rawResponseJson, responseId]
         );
         return responseId;
     } else {
@@ -88,7 +145,7 @@ async function saveLeadResponseRecord({ studentId, email, name, phone, choice, c
             `INSERT INTO lead_response 
              (Student_ID, Email, Full_Name, Phone_Number, Response_Choice, Interested_Course, Comments, Raw_Response, Submitted_At) 
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-            [studentId, email, name, phone, choice, choice, comments || null, rawResponseJson]
+            [studentId || 0, cleanEmail, name || '', phone || '', choice, choice, comments || null, rawResponseJson]
         );
         return result.insertId;
     }
@@ -102,53 +159,73 @@ router.get('/', async (req, res) => {
     try {
         const studentId = parseInt(req.query.id || req.query.studentId || 0);
         const email = (req.query.email || '').trim();
+        const passedName = (req.query.name || req.query.leadName || '').trim();
         const token = (req.query.token || '').trim();
         const rawChoice = (req.query.choice || '').trim();
 
-        // 1. Fetch Student Details if ID provided
+        // 1. Fetch Student Details safely with strict identity verification
+        // Match priority:
+        // A. Match by email (the owner of the email who received it - gold standard)
+        // B. If studentId provided, ensure it belongs to the EXACT same email address
+        // C. NEVER allow a mismatched studentId to pull another person's record!
         let student = null;
         let existingResponse = null;
 
-        if (studentId > 0) {
-            const [students] = await db.promise().query(
-                `SELECT Student_ID, First_Name, Last_Name, Email, Phone_Number, Country_Code 
-                 FROM student 
-                 WHERE Student_ID = ? AND (Delete_Status = 0 OR Delete_Status IS NULL) 
-                 LIMIT 1`,
-                [studentId]
-            );
-
-            if (students.length > 0) {
-                student = students[0];
-            }
-
-            const [responses] = await db.promise().query(
-                `SELECT * FROM lead_response 
-                 WHERE Student_ID = ? AND (Delete_Status = 0 OR Delete_Status IS NULL) 
-                 ORDER BY Submitted_At DESC LIMIT 1`,
-                [studentId]
-            );
-            if (responses.length > 0) {
-                existingResponse = responses[0];
-            }
-        } else if (email) {
-            // Find by email if ID not present
-            const [students] = await db.promise().query(
+        if (email) {
+            const [byEmail] = await db.promise().query(
                 `SELECT Student_ID, First_Name, Last_Name, Email, Phone_Number, Country_Code 
                  FROM student 
                  WHERE LOWER(TRIM(Email)) = LOWER(TRIM(?)) AND (Delete_Status = 0 OR Delete_Status IS NULL) 
                  ORDER BY Student_ID DESC LIMIT 1`,
                 [email]
             );
-            if (students.length > 0) {
-                student = students[0];
+            if (byEmail.length > 0) {
+                student = byEmail[0];
             }
         }
 
-        const studentEmail = student?.Email || email;
-        const studentName = student ? `${student.First_Name || ''} ${student.Last_Name || ''}`.trim() : '';
+        // Only use studentId fallback if NO email was passed or if it matches the email record
+        if (!student && studentId > 0 && !email) {
+            const [byId] = await db.promise().query(
+                `SELECT Student_ID, First_Name, Last_Name, Email, Phone_Number, Country_Code 
+                 FROM student 
+                 WHERE Student_ID = ? AND (Delete_Status = 0 OR Delete_Status IS NULL) 
+                 LIMIT 1`,
+                [studentId]
+            );
+            if (byId.length > 0) {
+                student = byId[0];
+            }
+        }
+
+        const effectiveStudentId = student?.Student_ID || (email ? 0 : studentId);
+        const studentEmail = email || student?.Email || '';
+        const studentName = (student ? `${student.First_Name || ''} ${student.Last_Name || ''}`.trim() : '') || passedName || 'Valued Lead';
         const studentPhone = student ? `${student.Country_Code || '+91'} ${student.Phone_Number || ''}`.trim() : '';
-        const effectiveStudentId = student?.Student_ID || studentId;
+
+        // Check if existing response exists specifically for this student
+        if (effectiveStudentId > 0) {
+            const [responses] = await db.promise().query(
+                `SELECT * FROM lead_response 
+                 WHERE Student_ID = ? AND (Delete_Status = 0 OR Delete_Status IS NULL) 
+                 ORDER BY Submitted_At DESC LIMIT 1`,
+                [effectiveStudentId]
+            );
+            if (responses.length > 0) {
+                existingResponse = responses[0];
+            }
+        } else if (studentEmail) {
+            const [responses] = await db.promise().query(
+                `SELECT * FROM lead_response 
+                 WHERE LOWER(TRIM(Email)) = LOWER(TRIM(?)) AND (Student_ID IS NULL OR Student_ID = 0)
+                   AND (Delete_Status = 0 OR Delete_Status IS NULL) 
+                 ORDER BY Submitted_At DESC LIMIT 1`,
+                [studentEmail]
+            );
+            if (responses.length > 0) {
+                existingResponse = responses[0];
+            }
+        }
 
         // CASE A: 1-Click Action from Email (choice query param is present)
         if (rawChoice) {
@@ -167,7 +244,7 @@ router.get('/', async (req, res) => {
                     rawPayload: { query: req.query, ip: req.ip, userAgent: req.headers['user-agent'] }
                 });
 
-                await updateStudentCRMRecord(effectiveStudentId, choice);
+                await updateStudentCRMRecord(effectiveStudentId, studentEmail, choice);
             }
 
             // Render mobile-first instant confirmation page
@@ -191,7 +268,7 @@ router.get('/', async (req, res) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Response Form - Trackbox</title>
+    <title>Enquiry Verification - Aives Australia's TESTPREP</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -378,8 +455,8 @@ router.get('/', async (req, res) => {
 <body>
     <div class="container">
         <div class="header">
-            <h1>Trackbox Education</h1>
-            <p>Welcome, ${studentName || 'Student'}! Let us know your interest below.</p>
+            <h1>Aives Australia's TESTPREP</h1>
+            <p>Welcome, ${studentName || 'Student'}! Please verify your PTE training enquiry below.</p>
         </div>
 
         <div class="form-body">
@@ -416,23 +493,23 @@ router.get('/', async (req, res) => {
                 <input type="hidden" name="token" value="${token}" />
 
                 <div class="question-title">
-                    Are you interested in our coaching programs? <span style="color: #ef4444;">*</span>
+                    Are you interested in our PTE Academic Training Programme? <span style="color: #ef4444;">*</span>
                 </div>
 
                 <div class="choice-group">
                     <label class="choice-card ${isCurrentInterested ? 'selected-interested' : ''}" id="card-interested">
                         <input type="radio" name="choice" value="Interested" required ${isCurrentInterested ? 'checked' : ''} onchange="onChoiceChange('Interested')">
                         <div class="choice-label">
-                            👍 Yes, I am Interested
-                            <span class="choice-desc">I want to learn more about your courses, batches, and fees.</span>
+                            ✓ Yes, I Am Interested – Verify My Enquiry
+                            <span class="choice-desc">I want to confirm my enquiry and speak with the Student Admissions Team.</span>
                         </div>
                     </label>
 
                     <label class="choice-card ${isCurrentNotInterested ? 'selected-not' : ''}" id="card-not-interested">
                         <input type="radio" name="choice" value="Not Interested" required ${isCurrentNotInterested ? 'checked' : ''} onchange="onChoiceChange('Not Interested')">
                         <div class="choice-label">
-                            👎 No, Not Interested
-                            <span class="choice-desc">I do not wish to join at this time.</span>
+                            ✕ No, Not Interested
+                            <span class="choice-desc">I do not wish to proceed with PTE training at this time.</span>
                         </div>
                     </label>
                 </div>
@@ -443,13 +520,13 @@ router.get('/', async (req, res) => {
                 </div>
 
                 <button type="submit" class="btn-submit" id="submitBtn">
-                    Submit Response
+                    ✓ Verify My Enquiry
                 </button>
             </form>
         </div>
 
         <div class="footer">
-            &copy; ${new Date().getFullYear()} Trackbox Education. All rights reserved.
+            &copy; ${new Date().getFullYear()} Aives Australia's TESTPREP. All rights reserved.
         </div>
     </div>
 
@@ -490,7 +567,7 @@ function renderConfirmationHtml({ name, choice, studentId, email, token }) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Response Received - Trackbox</title>
+    <title>Enquiry Verified - Aives Australia's TESTPREP</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -608,7 +685,7 @@ function renderConfirmationHtml({ name, choice, studentId, email, token }) {
 
         <p>
             ${isInterested 
-                ? 'We are delighted to know you are interested! Our course counselor will get in touch with you shortly to share course schedules and guidance.' 
+                ? 'Thank you for verifying your enquiry! Our TESTPREP Student Admissions Team will contact you shortly regarding course schedules, target scores, and batch options.' 
                 : 'Your response has been noted. We appreciate your time and will not disturb you with further promotional messages.'}
         </p>
 
@@ -628,7 +705,7 @@ function renderConfirmationHtml({ name, choice, studentId, email, token }) {
         </div>
 
         <div>
-            <a href="/lead-response?id=${studentId}&email=${encodeURIComponent(email || '')}&token=${token}" class="btn-change">
+            <a href="/lead-response?email=${encodeURIComponent(email || '')}&name=${encodeURIComponent(name || '')}&token=${token}" class="btn-change">
                 Change response or update answers
             </a>
         </div>
@@ -658,40 +735,59 @@ router.post('/', async (req, res) => {
 
         console.log('[LEAD RESPONSE POST] Received:', { studentId, email, choice, comments });
 
-        let resolvedStudentId = studentId;
-
-        // If studentId missing, find student by email
-        if (resolvedStudentId <= 0 && email) {
-            const [matchedStudents] = await db.promise().query(
-                `SELECT Student_ID, First_Name, Last_Name, Phone_Number FROM student 
+        // Resolve student safely with strict email verification:
+        let student = null;
+        if (email) {
+            const [byEmail] = await db.promise().query(
+                `SELECT Student_ID, First_Name, Last_Name, Email, Phone_Number, Country_Code 
+                 FROM student 
                  WHERE LOWER(TRIM(Email)) = LOWER(TRIM(?)) AND (Delete_Status = 0 OR Delete_Status IS NULL) 
                  ORDER BY Student_ID DESC LIMIT 1`,
                 [email]
             );
-            if (matchedStudents.length > 0) {
-                resolvedStudentId = matchedStudents[0].Student_ID;
+            if (byEmail.length > 0) {
+                student = byEmail[0];
             }
         }
 
-        if (resolvedStudentId <= 0 && !email) {
+        // Only fallback to studentId if NO email was provided
+        if (!student && studentId > 0 && !email) {
+            const [byId] = await db.promise().query(
+                `SELECT Student_ID, First_Name, Last_Name, Email, Phone_Number, Country_Code 
+                 FROM student 
+                 WHERE Student_ID = ? AND (Delete_Status = 0 OR Delete_Status IS NULL) 
+                 LIMIT 1`,
+                [studentId]
+            );
+            if (byId.length > 0) {
+                student = byId[0];
+            }
+        }
+
+        const resolvedStudentId = student?.Student_ID || (email ? 0 : studentId);
+        const studentEmail = email || student?.Email || '';
+        const studentName = (student ? `${student.First_Name || ''} ${student.Last_Name || ''}`.trim() : '') || name || 'Valued Lead';
+        const studentPhone = phone || (student ? `${student.Country_Code || '+91'} ${student.Phone_Number || ''}`.trim() : '');
+
+        if (resolvedStudentId <= 0 && !studentEmail) {
             return res.status(400).send('<h3>Unable to associate response: Missing Student ID and Email.</h3>');
         }
 
         // Save into lead_response
         const responseId = await saveLeadResponseRecord({
             studentId: resolvedStudentId,
-            email: email,
-            name: name,
-            phone: phone,
+            email: studentEmail,
+            name: studentName,
+            phone: studentPhone,
             choice: choice,
             comments: comments,
             rawPayload: { body: req.body, headers: req.headers }
         });
 
         // Update CRM
-        await updateStudentCRMRecord(resolvedStudentId, choice, comments);
+        await updateStudentCRMRecord(resolvedStudentId, studentEmail, choice, comments);
 
-        console.log(`[LEAD RESPONSE POST] ✅ Response saved (ID ${responseId}) for Student ${resolvedStudentId}: ${choice}`);
+        console.log(`[LEAD RESPONSE POST] ✅ Response saved (ID ${responseId}) for Student ${resolvedStudentId} (${studentEmail}): ${choice}`);
 
         // Return JSON if XHR/JSON request
         if (req.xhr || req.headers.accept?.includes('application/json')) {
@@ -705,10 +801,10 @@ router.post('/', async (req, res) => {
 
         // Return mobile confirmation page
         res.send(renderConfirmationHtml({
-            name: name,
+            name: studentName,
             choice: choice,
             studentId: resolvedStudentId,
-            email: email,
+            email: studentEmail,
             token: token
         }));
 
@@ -729,18 +825,38 @@ router.get('/details/:studentId', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Invalid Student ID' });
         }
 
+        // 1. Fetch response specifically submitted for this Student_ID
         const [rows] = await db.promise().query(
             `SELECT * FROM lead_response 
              WHERE Student_ID = ? AND (Delete_Status = 0 OR Delete_Status IS NULL) 
-             ORDER BY Submitted_At DESC LIMIT 1`,
+             ORDER BY Submitted_At DESC, Response_ID DESC 
+             LIMIT 1`,
             [studentId]
         );
 
-        if (rows.length === 0) {
+        if (rows.length > 0) {
+            return res.json({ success: true, hasResponded: true, data: rows[0] });
+        }
+
+        // 2. Fallback: match by email ONLY if response has no student_id assigned
+        const [fallbackRows] = await db.promise().query(
+            `SELECT lr.* 
+             FROM lead_response lr 
+             INNER JOIN student s ON s.Student_ID = ?
+             WHERE (lr.Student_ID IS NULL OR lr.Student_ID = 0)
+               AND s.Email IS NOT NULL AND TRIM(s.Email) != ''
+               AND LOWER(TRIM(lr.Email)) = LOWER(TRIM(s.Email))
+               AND (lr.Delete_Status = 0 OR lr.Delete_Status IS NULL)
+             ORDER BY lr.Submitted_At DESC, lr.Response_ID DESC 
+             LIMIT 1`,
+            [studentId]
+        );
+
+        if (fallbackRows.length === 0) {
             return res.json({ success: true, hasResponded: false, data: null });
         }
 
-        res.json({ success: true, hasResponded: true, data: rows[0] });
+        res.json({ success: true, hasResponded: true, data: fallbackRows[0] });
     } catch (e) {
         console.error('Error fetching lead response details:', e);
         res.status(500).json({ success: false, message: 'Failed to fetch response details', error: e.message });

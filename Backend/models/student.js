@@ -476,13 +476,111 @@ var student = {
     return results;
   },
   Get_Lead_Response: async function (studentId) {
+    if (!studentId || studentId <= 0) return null;
+
+    // 1. Fetch response specifically recorded for this Student_ID
     const [rows] = await db.promise().query(
       `SELECT * FROM lead_response 
        WHERE Student_ID = ? AND (Delete_Status = 0 OR Delete_Status IS NULL) 
-       ORDER BY Submitted_At DESC LIMIT 1`,
+       ORDER BY Submitted_At DESC, Response_ID DESC 
+       LIMIT 1`,
       [studentId]
     );
-    return rows[0] || null;
+    if (rows && rows.length > 0) {
+      return rows[0];
+    }
+
+    // 2. Check public API endpoint in case response was submitted via mobile phone
+    try {
+      const publicApiUrl = (process.env.APP_URL || 'https://aiveseduapi.ufstech.co.in').trim().replace(/\/$/, '');
+      if (publicApiUrl && !publicApiUrl.includes('localhost') && !publicApiUrl.includes('127.0.0.1')) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+        const res = await fetch(`${publicApiUrl}/lead-response/details/${studentId}`, {
+          signal: controller.signal,
+          headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0 (CRM-Sync)' }
+        });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          const body = await res.json();
+          if (body?.success && body?.hasResponded && body?.data) {
+            const rData = body.data;
+            const choice = (rData.Response_Choice || rData.Interested_Course || 'Interested').trim();
+            const isNotInterested = choice.toLowerCase().includes('not');
+            const statusId = isNotInterested ? 17 : 20;
+            const statusName = isNotInterested ? 'Not interested' : 'Interested';
+
+            // Sync into local lead_response table
+            await db.promise().query(
+              `INSERT INTO lead_response 
+               (Student_ID, Email, Full_Name, Phone_Number, Response_Choice, Interested_Course, Comments, Raw_Response, Submitted_At)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+               ON DUPLICATE KEY UPDATE 
+                 Response_Choice = VALUES(Response_Choice), 
+                 Interested_Course = VALUES(Interested_Course), 
+                 Comments = VALUES(Comments), 
+                 Submitted_At = VALUES(Submitted_At)`,
+              [
+                studentId,
+                rData.Email || '',
+                rData.Full_Name || '',
+                rData.Phone_Number || '',
+                choice,
+                choice,
+                rData.Comments || null,
+                JSON.stringify(rData.Raw_Response || {}),
+                rData.Submitted_At ? new Date(rData.Submitted_At) : new Date()
+              ]
+            );
+
+            // Sync into student CRM record
+            await db.promise().query(
+              `UPDATE student 
+               SET Status_Id = ?, Status_Name = ?, Priority = ? 
+               WHERE Student_ID = ?`,
+              [statusId, statusName, statusName, studentId]
+            );
+
+            return rData;
+          }
+        }
+      }
+    } catch (syncErr) {
+      // Gracefully continue to local fallback if public API sync times out or is unreachable
+    }
+
+    // 3. Fallback: match by email in local database
+    const [fallbackRows] = await db.promise().query(
+      `SELECT lr.* 
+       FROM lead_response lr 
+       INNER JOIN student s ON s.Student_ID = ?
+       WHERE (lr.Student_ID IS NULL OR lr.Student_ID = 0 OR lr.Student_ID = ?)
+         AND s.Email IS NOT NULL AND TRIM(s.Email) != ''
+         AND LOWER(TRIM(lr.Email)) = LOWER(TRIM(s.Email))
+         AND (lr.Delete_Status = 0 OR lr.Delete_Status IS NULL)
+       ORDER BY lr.Submitted_At DESC, lr.Response_ID DESC 
+       LIMIT 1`,
+      [studentId, studentId]
+    );
+    if (fallbackRows && fallbackRows.length > 0) {
+      const resp = fallbackRows[0];
+      db.promise().query(
+        "UPDATE lead_response SET Student_ID = ? WHERE Response_ID = ? AND (Student_ID IS NULL OR Student_ID = 0)",
+        [studentId, resp.Response_ID]
+      ).catch(() => {});
+      const choice = (resp.Response_Choice || resp.Interested_Course || '').trim();
+      if (choice) {
+        const isNotInterested = choice.toLowerCase().includes('not');
+        const statusId = isNotInterested ? 17 : 20;
+        const statusName = isNotInterested ? 'Not interested' : 'Interested';
+        db.promise().query(
+          "UPDATE student SET Status_Id = ?, Status_Name = ?, Priority = ? WHERE Student_ID = ?",
+          [statusId, statusName, statusName, studentId]
+        ).catch(() => {});
+      }
+      return resp;
+    }
+    return null;
   },
   Get_Registration_Report: async function (
     student_Name_,

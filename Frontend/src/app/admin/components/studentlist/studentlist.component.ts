@@ -146,9 +146,11 @@ export class StudentlistComponent {
   Discount_: any = 0;
   isLoadingHistory: boolean = false;
   feeTypes = ['OneTime', 'TwoTime', 'ThreeTime', 'FourTime'];
-  currencies = ['INR', 'AUD', 'USD', 'EUR', 'GBP'];
+  currencies = ['INR', 'AUD', 'USD', 'EUR', 'GBP','AED'];
   form: FormGroup;
   emailTemplates: any[] = [];
+  sentRegistrationKeys: Set<string> = new Set<string>();
+  sentStaffRegistrationKeys: Set<string> = new Set<string>();
   selectedTemplateId: number | null = null;
   isPayingFeeForSave: boolean = false;
   isRegistrationFeeFlow: boolean = false;
@@ -549,11 +551,25 @@ export class StudentlistComponent {
     }
 
     this.isSendingEmail = true;
-    const email = this.student_Form.get('Email')?.value;
-    const studentName = this.student_Form.get('First_Name')?.value;
-    
+    const email = (this.student_Form.get('Email')?.value || '').trim();
+    const firstName = (this.student_Form.get('First_Name')?.value || '').trim();
+    const lastName = (this.student_Form.get('Last_Name')?.value || '').trim();
+    const fullName = ((firstName + ' ' + lastName).trim()) || firstName || 'Student';
+    const studentId = Number(this.student_Form.get('Student_ID')?.value || this.followUps?.Student_ID || 0);
+    const rollNo = this.student_Form.get('Roll_No')?.value || '';
+    const courseId = Number(this.student_Course?.get('Course_ID')?.value || this.feesForm?.get('Course_ID')?.value || 0);
+    const courseName = this.allCourse.find(c => c.Course_ID === courseId)?.Course_Name || '';
+
     const payload = {
-      students: [{ Email: email, First_Name: studentName }],
+      students: [{
+        Student_ID: studentId,
+        First_Name: firstName,
+        Last_Name: lastName,
+        Name: fullName,
+        Email: email,
+        Roll_No: rollNo,
+        Course_Name: courseName
+      }],
       subject: this.emailSubject,
       body: this.emailBody,
       templateId: this.selectedTemplateId
@@ -1748,9 +1764,15 @@ doc.text(
       tap(() => {
         if (Number(Save_status[0].Student_ID) > 0) {
           if (!this.isRegistrationFeeFlow) {
+            const studentEmail = (this.student_Form.get('Email')?.value || '').trim();
+            const subMsg = studentEmail ? 'Lead welcome mail sent successfully' : '';
             this.dialogBox.open(DialogBox_Component, {
               panelClass: 'Dialogbox-Class',
-              data: { Message: 'Saved', Type: 'false' },
+              data: {
+                Message: 'Saved',
+                SubMessage: subMsg,
+                Type: 'false'
+              },
             });
           }
           if (studentId) {
@@ -1909,15 +1931,16 @@ doc.text(
 
     const studentId = Number(this.student_Form.get('Student_ID')?.value || this.followUps?.Student_ID || 0);
 
-    // When editing an existing student, clicking the Save button should only update/save the student details.
-    // Do not show or trigger the Payment section/pop-up during Edit Student mode.
-    const isExistingRegisteredStudent = this.mode !== 'add' && (!!this.followUps?.Roll_No || !!this.followUps?.Is_Registered || (studentId > 0 && !this.isRegistering && !this.registration_Status));
+    // A student registration flow occurs ONLY when the Register checkbox is selected
+    // and the student was not already registered previously.
+    const isRegisterCheckboxSelected = !!(this.isRegistering || this.registration_Status);
+    const wasAlreadyRegistered = !!(this.followUps?.Roll_No || this.followUps?.Is_Registered);
 
-    // A student registration flow occurs when registering a new student or converting a lead to a registered student
-    const isNewRegistration = !isExistingRegisteredStudent && (this.mode === 'add' || this.isRegistering || this.registration_Status);
+    const isNewRegistration = isRegisterCheckboxSelected && !wasAlreadyRegistered;
 
     if (!isNewRegistration) {
-      // Edit student or lead update: only save details without triggering fee flow
+      // Lead creation/update (without registration) or editing an already registered student:
+      // only save details without triggering fee flow or registration emails
       this.proceedWithStudentSave(false);
       return;
     }
@@ -2052,6 +2075,7 @@ doc.text(
       ...this.student_Form.value,
       isRegistering: isRegisteringFlag,
       isRegistered: isRegisteringFlag,
+      Is_Registered: isRegisteringFlag,
       Address: isRegisteringFlag ? this.student_Form.value.Address : (this.student_Form.value.District || this.student_Form.value.Address),
       ...followUpData,
       ...this.student_Course.value, // Merge course details like Slot_Id, Course_ID, Batch_ID
@@ -2099,7 +2123,7 @@ doc.text(
       // Do NOT send during student registration conversion — that has its own registration email.
       const isNewLeadCreation = !studentPayload.Student_ID || Number(studentPayload.Student_ID) === 0;
       if (isNewLeadCreation && !isRegistrationFlow) {
-        this.sendSelectedEmail(studentPayload.Email, studentPayload.First_Name, courseName);
+        // Lead Welcome Email is sent automatically by the backend Save_student route
       }
 
       if (!isRegistrationFlow) {
@@ -2165,7 +2189,19 @@ doc.text(
                 console.error('Error generating print receipt:', printErr);
               }
             } else {
-              console.log('No pending fee found for registered student.');
+              console.log('No pending fee found for registered student, sending registration emails without receipt PDF.');
+              this.registeredStudentInfo = {
+                ...studentPayload,
+                Student_ID: savedStudentId,
+                Roll_No: rollNumber,
+                Course_Name: this.allCourse.find(c => c.Course_ID === courseId)?.Course_Name || ''
+              };
+              try {
+                const studentData = this.registeredStudentInfo || this.student_Form.value;
+                this.sendRegistrationEmailWithReceipt(studentData, null, '');
+              } catch (emailErr) {
+                console.error('Error sending registration emails:', emailErr);
+              }
             }
 
             const completionResult = this.savedRegistrationResult || [{ Student_ID: savedStudentId, RollNumber: rollNumber }];
@@ -2174,7 +2210,7 @@ doc.text(
             this.dialogBox.open(DialogBox_Component, {
               panelClass: 'Dialogbox-Class',
               data: {
-                Message: 'Student registration completed successfully and registration email sent!',
+                Message: 'Student registration completed successfully and registration confirmation emails sent!',
                 Type: 'false',
                 Heading: 'SUCCESS',
               },
@@ -2894,10 +2930,11 @@ doc.text(
   }
 
   getCurrencySymbol(currencyStr: string, forPdf: boolean = false): string {
-    const currency = (currencyStr || 'INR').toUpperCase();
-    
-    if (currency === 'INR') return '₹';
-    if (currency === 'EUR' || currency === 'EURO') return '€';
+    const currency = (currencyStr || 'INR').toUpperCase().trim();
+
+    if (currency === 'AED') return 'AED';
+    if (currency === 'INR') return forPdf ? 'Rs.' : '₹';
+    if (currency === 'EUR' || currency === 'EURO') return forPdf ? 'EUR' : '€';
     if (currency === 'USD') return '$';
     if (currency === 'GBP') return '£';
     if (currency === 'AUD') return 'A$';
@@ -3017,32 +3054,111 @@ doc.text(
   }
 
   sendRegistrationEmailWithReceipt(student: any, feeData: any, base64Pdf: string): void {
-    const studentEmail = student?.Email || this.student_Form.get('Email')?.value;
+    const studentIdVal = Number(student?.Student_ID || this.student_Form.get('Student_ID')?.value || 0);
+    const rollNoVal = student?.Roll_No || feeData?.RollNumber || this.student_Form.get('Roll_No')?.value || '';
+    const studentEmail = (student?.Email || this.student_Form.get('Email')?.value || '').trim();
+
     if (!studentEmail) {
-      console.warn('Student has no email address. Cannot send registration email.');
-      this.dialogBox.open(DialogBox_Component, {
-        panelClass: 'Dialogbox-Class',
-        data: {
-          Message: 'Fee paid and receipt generated, but student has no email address to send registration email.',
-          Type: '3',
-        },
-      });
+      console.warn('[sendRegistrationEmailWithReceipt] No student email provided. Skipping email dispatch.');
       return;
     }
 
-    const studentName = ((student?.First_Name || '') + ' ' + (student?.Last_Name || '')).trim() || 'Student';
-    const courseName = feeData?.Course_Name || student?.Course_Name || '';
-    const rollNo = student?.Roll_No || feeData?.RollNumber || '';
+    const studentName = ((student?.First_Name || this.student_Form.get('First_Name')?.value || '') + ' ' + (student?.Last_Name || this.student_Form.get('Last_Name')?.value || '')).trim() || 'Student';
+    const courseId = Number(this.student_Course?.get('Course_ID')?.value || this.feesForm?.get('Course_ID')?.value || student?.Course_ID || 0);
+    const batchId = Number(this.student_Course?.get('Batch_ID')?.value || student?.Batch_ID || 0);
+    const courseName = feeData?.Course_Name || student?.Course_Name || this.allCourse.find(c => c.Course_ID === courseId)?.Course_Name || '';
+    const rollNo = rollNoVal;
+
     let pAmount = Number(feeData?.Paid_Amount || 0);
     if (pAmount === 0) {
       pAmount = Number(feeData?.tempPaidAmount || feeData?.Amount || feeData?.Total_Amount || 0);
     }
     const paidAmount = pAmount.toFixed(2);
     const transactionId = feeData?.Transaction_ID || feeData?.Transaction_Id || '-';
-
     const currencySymbol = this.getCurrencySymbol(feeData?.Currency || student?.Currency || this.feesForm?.get('Currency')?.value || 'INR', true);
 
-    const placeholders = {
+    const today = new Date();
+    const formattedToday = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+    const admissionDateRaw = student?.Admission_Date || this.student_Form.get('Admission_Date')?.value;
+    let formattedStartDate = formattedToday;
+    if (admissionDateRaw) {
+      const d = new Date(admissionDateRaw);
+      if (!isNaN(d.getTime())) {
+        formattedStartDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+      }
+    } else if (this.batchDetails?.Commencing_Date) {
+      const d = new Date(this.batchDetails.Commencing_Date);
+      if (!isNaN(d.getTime())) {
+        formattedStartDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+      }
+    }
+
+    const durationText = student?.Course_Duration || (feeData?.DurationInMonths ? (typeof feeData.DurationInMonths === 'number' ? `${feeData.DurationInMonths} Month(s)` : feeData.DurationInMonths) : '1 Month');
+    const trainingMode = student?.Training_Mode || student?.Branch_Name || 'Online';
+
+    let batchTimeStr = '10:00 AM - 11:15 AM';
+    if (this.batchDetails && this.batchDetails.Start_Time && this.batchDetails.End_Time) {
+      batchTimeStr = `${this.batchDetails.Start_Time} - ${this.batchDetails.End_Time}`;
+    } else if (student?.Batch_Time) {
+      batchTimeStr = student.Batch_Time;
+    } else if (batchId > 0 && Array.isArray(this.batch_Data)) {
+      const matchedBatch = this.batch_Data.find((b: any) => Number(b.Batch_ID) === batchId);
+      if (matchedBatch && matchedBatch.Start_Time && matchedBatch.End_Time) {
+        batchTimeStr = `${matchedBatch.Start_Time} - ${matchedBatch.End_Time}`;
+      }
+    }
+    const timeZoneStr = student?.Time_Zone || 'IST';
+    const sessionDurationStr = student?.Session_Duration || '1 hour 15 minutes per session';
+
+    // 1. Identify assigned staff / trainer dynamically from slot, batch, or follow-up
+    const selectedSlotId = Number(
+      this.student_Course.get('Slot_Id')?.value ||
+      student?.Slot_Id ||
+      this.registeredStudentInfo?.Slot_Id ||
+      0
+    );
+
+    let assignedStaffId = Number(
+      student?.Assigned_Staff_ID ||
+      student?.To_User_Id ||
+      this.student_Form.get('Assigned_Staff_ID')?.value ||
+      0
+    );
+    if (!assignedStaffId && this.Search_staff && Number(this.Search_staff.User_ID) > 0) {
+      assignedStaffId = Number(this.Search_staff.User_ID);
+    }
+
+    let assignedStaff: any = null;
+
+    // Check tutorsList for the selected slot
+    if (selectedSlotId > 0 && this.tutorsList && this.tutorsList.length > 0) {
+      const matchedTutor = this.tutorsList.find((t: any) => Number(t.Slot_Id) === selectedSlotId);
+      if (matchedTutor) {
+        assignedStaff = matchedTutor;
+        assignedStaffId = Number(matchedTutor.Teacher_ID || matchedTutor.User_ID || assignedStaffId || 0);
+      }
+    }
+
+    // Check staffData for assignedStaffId
+    if (!assignedStaff && assignedStaffId > 0 && this.staffData && this.staffData.length > 0) {
+      assignedStaff = this.staffData.find((s: any) => Number(s.User_ID) === assignedStaffId);
+    }
+
+    // Check tutorsList default if only 1 tutor exists
+    if (!assignedStaff && this.tutorsList && this.tutorsList.length > 0) {
+      assignedStaff = this.tutorsList[0];
+      if (assignedStaff) {
+        assignedStaffId = Number(assignedStaff.Teacher_ID || assignedStaff.User_ID || assignedStaffId || 0);
+      }
+    }
+
+    let staffEmail = (assignedStaff?.Email || assignedStaff?.user_email || assignedStaff?.User_Email || '').trim();
+    let staffName = ((assignedStaff?.First_Name || assignedStaff?.Teacher_Name || '') + ' ' + (assignedStaff?.Last_Name || '')).trim() || student?.Assigned_Staff_Name || this.Search_staff?.First_Name || 'Assigned Trainer';
+    let staffPhone = assignedStaff?.PhoneNumber || assignedStaff?.MobileNo || '';
+    let trainerContact = staffPhone ? `${staffPhone} | ${staffEmail}` : (staffEmail || '');
+
+    // Shared Placeholders
+    const studentPlaceholders: Record<string, string> = {
       'Student Name': studentName,
       'Student_Name': studentName,
       'First_Name': student?.First_Name || studentName,
@@ -3050,69 +3166,205 @@ doc.text(
       'Lead Name': studentName,
       'Course Name': courseName,
       'Course_Name': courseName,
+      'Programme': courseName || 'PTE Academic Training',
       'Roll Number': rollNo,
       'Roll_No': rollNo,
+      'CRM ID': rollNo || String(studentIdVal),
+      'Student ID': rollNo || String(studentIdVal),
+      'Course Duration': durationText,
+      'Duration': durationText,
+      'Training Mode': trainingMode,
+      'Online/Classroom': trainingMode,
+      'Date': formattedToday,
+      'Enrolment Date': formattedToday,
+      'Start Date': formattedStartDate,
+      'Course Commencement': formattedStartDate,
+      'Daily Training Time': batchTimeStr,
+      'Start Time – End Time': batchTimeStr,
+      'Start Time - End Time': batchTimeStr,
+      'Time Zone': timeZoneStr,
+      'Training Duration': sessionDurationStr,
+      'Session Duration': sessionDurationStr,
+      'First Class Date': formattedStartDate,
+      'Time and Time Zone': `${batchTimeStr} (${timeZoneStr})`,
+      'Trainer Name': staffName,
+      'Assigned Trainer': staffName,
+      'Trainer Contact Details': trainerContact,
       'Payment Amount': `${currencySymbol} ${paidAmount}`,
       'Amount': `${currencySymbol} ${paidAmount}`,
       'Transaction ID': transactionId,
     };
 
-    const fileName = `Payment_Receipt_${(student?.First_Name || 'Student').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-    const attachments = [
-      {
-        name: fileName,
-        content: base64Pdf
-      }
-    ];
-
-    const executeSend = (templateId: number) => {
-      this.isLoading = true;
-      this.emailTemplateService.sendTemplateEmail(templateId, studentEmail, placeholders, attachments).subscribe({
-        next: (res) => {
-          this.isLoading = false;
-          console.log('Registration email sent successfully with receipt attachment:', res);
-          this.dialogBox.open(DialogBox_Component, {
-            panelClass: 'Dialogbox-Class',
-            data: {
-              Message: 'Student registered, fee paid, receipt generated, and registration email sent successfully!',
-              Type: 'false',
-              Heading: 'SUCCESS'
-            },
-          });
-        },
-        error: (err) => {
-          this.isLoading = false;
-          console.error('Error sending registration email:', err);
-          this.dialogBox.open(DialogBox_Component, {
-            panelClass: 'Dialogbox-Class',
-            data: {
-              Message: 'Fee paid and receipt generated, but failed to send registration email.',
-              Type: '3'
-            },
-          });
-        }
-      });
+    const staffPlaceholders: Record<string, string> = {
+      ...studentPlaceholders,
+      'Staff Name': staffName,
+      'Staff Email': staffEmail,
+      'Staff Phone': staffPhone,
     };
 
-    const cachedTemplate = (this.emailTemplates || []).find((t: any) =>
-      (t.Template_Name && t.Template_Name.trim().toLowerCase().includes('welcome mail with receipt'))
-    );
+    const isTemplateActive = (t: any) => t && (t.Is_Active === 1 || t.Is_Active === '1' || t.Is_Active === true);
 
-    if (cachedTemplate && cachedTemplate.Template_ID) {
-      executeSend(cachedTemplate.Template_ID);
-    } else {
-      this.emailTemplateService.searchTemplates('Welcome mail with receipt').subscribe({
-        next: (templates: any[]) => {
-          const match = (templates || []).find((t: any) =>
-            (t.Template_Name && t.Template_Name.trim().toLowerCase().includes('welcome mail with receipt'))
-          );
-          const templateId = match?.Template_ID || 19;
-          executeSend(templateId);
-        },
-        error: () => {
-          executeSend(19);
+    // =========================================================================
+    // 1. Send Registration Confirmation Email to Student (with Receipt PDF)
+    // =========================================================================
+    if (studentEmail) {
+      const studentDedupeKey = studentIdVal > 0 ? `reg_student_${studentIdVal}` : `reg_student_${rollNoVal}_${studentEmail}`;
+      if (!this.sentRegistrationKeys.has(studentDedupeKey)) {
+        this.sentRegistrationKeys.add(studentDedupeKey);
+
+        const fileName = `Payment_Receipt_${(student?.First_Name || 'Student').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+        const attachments = base64Pdf ? [{ name: fileName, content: base64Pdf }] : [];
+
+        const executeSendStudent = (templateId: number) => {
+          this.emailTemplateService.sendTemplateEmail(templateId, studentEmail, studentPlaceholders, attachments, studentIdVal).subscribe({
+            next: (res) => console.log('Student registration confirmation email sent successfully:', res),
+            error: (err) => console.error('Error sending student registration confirmation email:', err)
+          });
+        };
+
+        const cachedStudentTemplate = (this.emailTemplates || []).find((t: any) =>
+          t.Template_Name && t.Template_Name.trim().toLowerCase().includes('welcome mail with receipt') && isTemplateActive(t)
+        );
+
+        if (cachedStudentTemplate && cachedStudentTemplate.Template_ID) {
+          executeSendStudent(cachedStudentTemplate.Template_ID);
+        } else {
+          this.emailTemplateService.searchTemplates('Welcome mail with receipt').subscribe({
+            next: (templates: any[]) => {
+              const match = (templates || []).find((t: any) =>
+                t.Template_Name && t.Template_Name.trim().toLowerCase().includes('welcome mail with receipt') && isTemplateActive(t)
+              );
+              executeSendStudent(match?.Template_ID || 19);
+            },
+            error: () => executeSendStudent(19)
+          });
         }
+      } else {
+        console.log(`[sendRegistrationEmailWithReceipt] Duplicate student email prevented: ${studentDedupeKey}`);
+      }
+    } else {
+      console.warn('Student has no email address. Skipping student registration email.');
+    }
+
+    // =========================================================================
+    // 2. Send Assigned Staff Email to Student's Registered Email Address
+    // =========================================================================
+    const dispatchAssignedStaffEmail = (placeholders: Record<string, string>) => {
+      if (!studentEmail) {
+        console.warn('Student has no email address. Skipping assigned staff email.');
+        return;
+      }
+
+      const staffDedupeKey = studentIdVal > 0 ? `assigned_staff_${studentIdVal}` : `assigned_staff_${rollNoVal}_${studentEmail}`;
+      if (this.sentStaffRegistrationKeys.has(staffDedupeKey)) {
+        console.log(`[sendRegistrationEmailWithReceipt] Duplicate assigned staff email to student prevented: ${staffDedupeKey}`);
+        return;
+      }
+      this.sentStaffRegistrationKeys.add(staffDedupeKey);
+
+      const executeSendStaff = (templateId: number) => {
+        this.emailTemplateService.sendTemplateEmail(templateId, studentEmail, placeholders, [], studentIdVal).subscribe({
+          next: (res) => console.log('Assigned staff email sent successfully to student:', studentEmail, res),
+          error: (err) => console.error('Error sending assigned staff email to student:', studentEmail, err)
+        });
+      };
+
+      const cachedStaffTemplate = (this.emailTemplates || []).find((t: any) =>
+        t.Template_Name && t.Template_Name.trim().toLowerCase().includes('assigned staff') && isTemplateActive(t)
+      );
+
+      if (cachedStaffTemplate && cachedStaffTemplate.Template_ID) {
+        executeSendStaff(cachedStaffTemplate.Template_ID);
+      } else {
+        this.emailTemplateService.searchTemplates('Assigned Staff').subscribe({
+          next: (templates: any[]) => {
+            const match = (templates || []).find((t: any) =>
+              t.Template_Name && t.Template_Name.trim().toLowerCase().includes('assigned staff') && isTemplateActive(t)
+            );
+            executeSendStaff(match?.Template_ID || 23);
+          },
+          error: () => executeSendStaff(23)
+        });
+      }
+    };
+
+    // If trainer name/contact is already known in memory, dispatch immediately
+    if (staffName && staffName !== 'Assigned Trainer') {
+      dispatchAssignedStaffEmail(staffPlaceholders);
+    } else if (assignedStaffId > 0) {
+      // Look up staff details from staffData or database user service
+      const foundInStaffData = (this.staffData || []).find((s: any) => Number(s.User_ID) === assignedStaffId);
+      if (foundInStaffData && (foundInStaffData.Email || foundInStaffData.user_email)) {
+        const email = (foundInStaffData.Email || foundInStaffData.user_email).trim();
+        const name = ((foundInStaffData.First_Name || '') + ' ' + (foundInStaffData.Last_Name || '')).trim() || staffName;
+        const phone = foundInStaffData.PhoneNumber || staffPhone;
+        const contact = phone ? `${phone} | ${email}` : email;
+        const updatedPlaceholders = {
+          ...staffPlaceholders,
+          'Trainer Name': name,
+          'Assigned Trainer': name,
+          'Trainer Contact Details': contact,
+          'Staff Name': name,
+          'Staff Email': email,
+          'Staff Phone': phone,
+        };
+        dispatchAssignedStaffEmail(updatedPlaceholders);
+      } else {
+        this.user.Get_user(assignedStaffId).subscribe({
+          next: (userRes: any) => {
+            const userObj = Array.isArray(userRes?.[0]) ? userRes[0][0] : (Array.isArray(userRes) ? userRes[0] : userRes);
+            if (userObj && (userObj.Email || userObj.user_email)) {
+              const email = (userObj.Email || userObj.user_email || '').trim();
+              const name = ((userObj.First_Name || '') + ' ' + (userObj.Last_Name || '')).trim() || staffName;
+              const phone = userObj.PhoneNumber || staffPhone;
+              const contact = phone ? `${phone} | ${email}` : email;
+              const updatedPlaceholders = {
+                ...staffPlaceholders,
+                'Trainer Name': name,
+                'Assigned Trainer': name,
+                'Trainer Contact Details': contact,
+                'Staff Name': name,
+                'Staff Email': email,
+                'Staff Phone': phone,
+              };
+              dispatchAssignedStaffEmail(updatedPlaceholders);
+            } else {
+              dispatchAssignedStaffEmail(staffPlaceholders);
+            }
+          },
+          error: () => dispatchAssignedStaffEmail(staffPlaceholders)
+        });
+      }
+    } else if (courseId > 0 && batchId > 0) {
+      // Look up assigned tutor from Course & Batch in backend
+      this.course_Service_.Get_Teachers_By_Course_And_Batch(courseId, batchId).subscribe({
+        next: (tutors: any[]) => {
+          const tutor = (tutors && tutors.length > 0)
+            ? (tutors.find((t: any) => Number(t.Slot_Id) === selectedSlotId) || tutors[0])
+            : null;
+          if (tutor && (tutor.Email || tutor.user_email || tutor.Teacher_Name)) {
+            const email = (tutor.Email || tutor.user_email || '').trim();
+            const name = tutor.Teacher_Name || ((tutor.First_Name || '') + ' ' + (tutor.Last_Name || '')).trim() || staffName;
+            const phone = tutor.PhoneNumber || staffPhone;
+            const contact = phone ? `${phone} | ${email}` : email;
+            const updatedPlaceholders = {
+              ...staffPlaceholders,
+              'Trainer Name': name,
+              'Assigned Trainer': name,
+              'Trainer Contact Details': contact,
+              'Staff Name': name,
+              'Staff Email': email,
+              'Staff Phone': phone,
+            };
+            dispatchAssignedStaffEmail(updatedPlaceholders);
+          } else {
+            dispatchAssignedStaffEmail(staffPlaceholders);
+          }
+        },
+        error: () => dispatchAssignedStaffEmail(staffPlaceholders)
       });
+    } else {
+      dispatchAssignedStaffEmail(staffPlaceholders);
     }
   }
 

@@ -54,7 +54,10 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
+let firebaseAuthDisabled = false;
+
 const sendNotif = async (token, title, body, data) => {
+  if (firebaseAuthDisabled) return null;
   try {
     if (!token || typeof token !== 'string') {
       throw new Error('Invalid FCM token provided');
@@ -98,6 +101,7 @@ const unsubscribeFromTopic = async (token, topic) => {
 
 
 const sendNotifToTopic = async (topic, title, body, data, retries = 3, delayMs = 1000, pushType = "alert") => {
+  if (firebaseAuthDisabled) return null;
   const sendWithRetry = async (attempt = 1) => {
     try {
       const message = {
@@ -145,14 +149,23 @@ const sendNotifToTopic = async (topic, title, body, data, retries = 3, delayMs =
       console.log(`✅ Notification sent successfully to topic: ${topic}`, response);
       return response; 
     } catch (error) {
+      const isAuthError = error.errorInfo?.code === 'app/invalid-credential' || error.message?.includes('invalid_grant');
+      if (isAuthError) {
+        if (!firebaseAuthDisabled) {
+          firebaseAuthDisabled = true;
+          console.warn(`⚠️ [Firebase FCM] Notification disabled for this session: Invalid credentials or clock skew. (Project: ${serviceAccount.project_id || 'unknown'})`);
+        }
+        return null;
+      }
+
       if (attempt < retries) {
         console.warn(`⚠️ Retry attempt ${attempt} for topic ${topic}. Error: ${error.message}`);
         await new Promise((resolve) => setTimeout(resolve, delayMs * attempt));
         return sendWithRetry(attempt + 1);
       }
 
-      console.error(`❌ Failed to send notification to topic ${topic} after ${retries} attempts:`, error);
-      throw error;
+      console.error(`❌ Failed to send notification to topic ${topic}${attempt > 1 ? ` after ${attempt} attempts` : ''}: ${error.message}`);
+      return null;
     }
   };  
 

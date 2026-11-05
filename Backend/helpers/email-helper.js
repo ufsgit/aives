@@ -60,7 +60,7 @@ function getBrevoConfig(fromEmail = null, fromName = null) {
     }
 
     // Default / Main Brevo Account (Admin cs.mgr@testprepinenglish.com, Trainer 1 trainer1@testprepinenglish.com, etc.)
-    const apiKey = (process.env.BREVO_API_KEY || '').trim().replace(/^['\"]|['\"]$/g, '');
+    const apiKey = (process.env.BREVO_API_KEY || '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').trim().replace(/^['\"]|['\"]$/g, '');
     const defaultSenderName = (process.env.BREVO_SENDER_NAME || 'Test Prep').trim().replace(/^['\"]|['\"]$/g, '');
 
     // Verified senders in the Main Brevo Account: trainer1@testprepinenglish.com and cs.mgr@testprepinenglish.com
@@ -203,7 +203,7 @@ const sendEmail = async (to, subject, html, fromEmail = null, fromName = null, a
                         </div>
                         <div class="email-footer">
                             <p>&copy; ${year} Aives Australia Test Prep. All rights reserved.</p>
-                            <p>You can reply directly to this email or tap the response buttons above.</p>
+                            <p>You can reply directly to this email.</p>
                         </div>
                     </div>
                 </body>

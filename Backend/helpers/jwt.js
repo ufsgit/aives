@@ -25,7 +25,7 @@ function jwtMiddleware() {
     return async (req, res, next) => {
         try {
             // Public routes bypass JWT verification
-            const publicRoutes = ['/Login', '/webhook', '/lead-response', '/public', '/favicon.ico'];
+            const publicRoutes = ['/Login', '/webhook', '/lead-response', '/public', '/favicon.ico', '/EmailTemplate/Test_Brevo_Connection'];
             if (publicRoutes.some(route => req.path.startsWith(route)) || req.path === '/') {
                 return next();
             }
