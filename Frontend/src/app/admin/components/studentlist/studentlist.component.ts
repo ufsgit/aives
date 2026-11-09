@@ -149,8 +149,10 @@ export class StudentlistComponent {
   currencies = ['INR', 'AUD', 'USD', 'EUR', 'GBP','AED'];
   form: FormGroup;
   emailTemplates: any[] = [];
-  sentRegistrationKeys: Set<string> = new Set<string>();
-  sentStaffRegistrationKeys: Set<string> = new Set<string>();
+  private static sentRegistrationKeysGlobal: Set<string> = new Set<string>();
+  private static sentStaffRegistrationKeysGlobal: Set<string> = new Set<string>();
+  sentRegistrationKeys: Set<string> = StudentlistComponent.sentRegistrationKeysGlobal;
+  sentStaffRegistrationKeys: Set<string> = StudentlistComponent.sentStaffRegistrationKeysGlobal;
   selectedTemplateId: number | null = null;
   isPayingFeeForSave: boolean = false;
   isRegistrationFeeFlow: boolean = false;
@@ -3096,19 +3098,67 @@ doc.text(
     const durationText = student?.Course_Duration || (feeData?.DurationInMonths ? (typeof feeData.DurationInMonths === 'number' ? `${feeData.DurationInMonths} Month(s)` : feeData.DurationInMonths) : '1 Month');
     const trainingMode = student?.Training_Mode || student?.Branch_Name || 'Online';
 
-    let batchTimeStr = '10:00 AM - 11:15 AM';
-    if (this.batchDetails && this.batchDetails.Start_Time && this.batchDetails.End_Time) {
-      batchTimeStr = `${this.batchDetails.Start_Time} - ${this.batchDetails.End_Time}`;
-    } else if (student?.Batch_Time) {
-      batchTimeStr = student.Batch_Time;
-    } else if (batchId > 0 && Array.isArray(this.batch_Data)) {
+    const formatTime12 = (t: string) => {
+      if (!t) return '';
+      if (/am|pm/i.test(t)) return t.trim();
+      const parts = t.split(':');
+      if (parts.length >= 2) {
+        const h = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10);
+        if (!isNaN(h) && !isNaN(m)) {
+          const period = h < 12 ? 'AM' : 'PM';
+          let h12 = h % 12;
+          if (h12 === 0) h12 = 12;
+          return `${String(h12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${period}`;
+        }
+      }
+      return t.trim();
+    };
+
+    const calcDuration = (start: string, end: string) => {
+      if (!start || !end) return '';
+      const toMin = (t: string) => {
+        const isPm = /pm/i.test(t);
+        const isAm = /am/i.test(t);
+        const parts = t.replace(/[a-zA-Z]/g, '').trim().split(':');
+        if (parts.length >= 2) {
+          let h = parseInt(parts[0], 10);
+          const m = parseInt(parts[1], 10);
+          if (isPm && h < 12) h += 12;
+          if (isAm && h === 12) h = 0;
+          return h * 60 + m;
+        }
+        return null;
+      };
+      const sm = toMin(start);
+      const em = toMin(end);
+      if (sm !== null && em !== null) {
+        let diff = em - sm;
+        if (diff < 0) diff += 24 * 60;
+        const h = Math.floor(diff / 60);
+        const m = diff % 60;
+        const parts: string[] = [];
+        if (h > 0) parts.push(`${h} ${h === 1 ? 'Hour' : 'Hours'}`);
+        if (m > 0) parts.push(`${m} ${m === 1 ? 'Minute' : 'Minutes'}`);
+        if (parts.length > 0) return parts.join(' ');
+      }
+      return '';
+    };
+
+    let rawStart = this.batchDetails?.Start_Time || '';
+    let rawEnd = this.batchDetails?.End_Time || '';
+    if ((!rawStart || !rawEnd) && batchId > 0 && Array.isArray(this.batch_Data)) {
       const matchedBatch = this.batch_Data.find((b: any) => Number(b.Batch_ID) === batchId);
-      if (matchedBatch && matchedBatch.Start_Time && matchedBatch.End_Time) {
-        batchTimeStr = `${matchedBatch.Start_Time} - ${matchedBatch.End_Time}`;
+      if (matchedBatch) {
+        rawStart = matchedBatch.Start_Time || '';
+        rawEnd = matchedBatch.End_Time || '';
       }
     }
+    const formattedStart = formatTime12(rawStart) || '10:00 AM';
+    const formattedEnd = formatTime12(rawEnd) || '11:15 AM';
+    const batchTimeStr = `${formattedStart} – ${formattedEnd}`;
     const timeZoneStr = student?.Time_Zone || 'IST';
-    const sessionDurationStr = student?.Session_Duration || '1 hour 15 minutes per session';
+    const sessionDurationStr = calcDuration(rawStart, rawEnd) || student?.Session_Duration || '1 Hour 15 Minutes';
 
     // 1. Identify assigned staff / trainer dynamically from slot, batch, or follow-up
     const selectedSlotId = Number(
@@ -3170,21 +3220,30 @@ doc.text(
       'Roll Number': rollNo,
       'Roll_No': rollNo,
       'CRM ID': rollNo || String(studentIdVal),
+      'CRM_ID': rollNo || String(studentIdVal),
       'Student ID': rollNo || String(studentIdVal),
+      'Admission Number': rollNo || String(studentIdVal),
+      'Admission_Number': rollNo || String(studentIdVal),
       'Course Duration': durationText,
-      'Duration': durationText,
+      'Duration': sessionDurationStr || durationText,
+      'Training Duration': sessionDurationStr,
+      'Session Duration': sessionDurationStr,
       'Training Mode': trainingMode,
+      'Training_Mode': trainingMode,
       'Online/Classroom': trainingMode,
-      'Date': formattedToday,
-      'Enrolment Date': formattedToday,
+      'Online / Classroom': trainingMode,
+      'Date': formattedStartDate,
+      'Enrolment Date': formattedStartDate,
+      'Enrolment_Date': formattedStartDate,
+      'Enrollment Date': formattedStartDate,
+      'Enrollment_Date': formattedStartDate,
+      'Registration Date': formattedStartDate,
       'Start Date': formattedStartDate,
       'Course Commencement': formattedStartDate,
       'Daily Training Time': batchTimeStr,
       'Start Time – End Time': batchTimeStr,
       'Start Time - End Time': batchTimeStr,
       'Time Zone': timeZoneStr,
-      'Training Duration': sessionDurationStr,
-      'Session Duration': sessionDurationStr,
       'First Class Date': formattedStartDate,
       'Time and Time Zone': `${batchTimeStr} (${timeZoneStr})`,
       'Trainer Name': staffName,
@@ -3209,8 +3268,8 @@ doc.text(
     // =========================================================================
     if (studentEmail) {
       const studentDedupeKey = studentIdVal > 0 ? `reg_student_${studentIdVal}` : `reg_student_${rollNoVal}_${studentEmail}`;
-      if (!this.sentRegistrationKeys.has(studentDedupeKey)) {
-        this.sentRegistrationKeys.add(studentDedupeKey);
+      if (!StudentlistComponent.sentRegistrationKeysGlobal.has(studentDedupeKey)) {
+        StudentlistComponent.sentRegistrationKeysGlobal.add(studentDedupeKey);
 
         const fileName = `Payment_Receipt_${(student?.First_Name || 'Student').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
         const attachments = base64Pdf ? [{ name: fileName, content: base64Pdf }] : [];
@@ -3247,39 +3306,40 @@ doc.text(
     }
 
     // =========================================================================
-    // 2. Send Assigned Staff Email to Student's Registered Email Address
+    // 2. Send Assigned Staff Email to the Registered Student's Email Address
     // =========================================================================
     const dispatchAssignedStaffEmail = (placeholders: Record<string, string>) => {
-      if (!studentEmail) {
-        console.warn('Student has no email address. Skipping assigned staff email.');
+      const targetStudentEmail = (studentEmail || '').trim();
+      if (!targetStudentEmail) {
+        console.log('[sendRegistrationEmailWithReceipt] No student email configured. Skipping assigned staff email dispatch.');
         return;
       }
 
-      const staffDedupeKey = studentIdVal > 0 ? `assigned_staff_${studentIdVal}` : `assigned_staff_${rollNoVal}_${studentEmail}`;
-      if (this.sentStaffRegistrationKeys.has(staffDedupeKey)) {
-        console.log(`[sendRegistrationEmailWithReceipt] Duplicate assigned staff email to student prevented: ${staffDedupeKey}`);
+      const staffDedupeKey = studentIdVal > 0 ? `assigned_staff_${studentIdVal}` : `assigned_staff_${rollNoVal}_${targetStudentEmail}`;
+      if (StudentlistComponent.sentStaffRegistrationKeysGlobal.has(staffDedupeKey)) {
+        console.log(`[sendRegistrationEmailWithReceipt] Duplicate assigned staff email prevented: ${staffDedupeKey}`);
         return;
       }
-      this.sentStaffRegistrationKeys.add(staffDedupeKey);
+      StudentlistComponent.sentStaffRegistrationKeysGlobal.add(staffDedupeKey);
 
       const executeSendStaff = (templateId: number) => {
-        this.emailTemplateService.sendTemplateEmail(templateId, studentEmail, placeholders, [], studentIdVal).subscribe({
-          next: (res) => console.log('Assigned staff email sent successfully to student:', studentEmail, res),
-          error: (err) => console.error('Error sending assigned staff email to student:', studentEmail, err)
+        this.emailTemplateService.sendTemplateEmail(templateId, targetStudentEmail, placeholders, [], studentIdVal).subscribe({
+          next: (res) => console.log('Assigned staff email sent successfully to student:', targetStudentEmail, res),
+          error: (err) => console.error('Error sending assigned staff email to student:', targetStudentEmail, err)
         });
       };
 
       const cachedStaffTemplate = (this.emailTemplates || []).find((t: any) =>
-        t.Template_Name && t.Template_Name.trim().toLowerCase().includes('assigned staff') && isTemplateActive(t)
+        t.Template_Name && (t.Template_Name.trim().toLowerCase().includes('student registration') || t.Template_Name.trim().toLowerCase().includes('assigned staff')) && isTemplateActive(t)
       );
 
       if (cachedStaffTemplate && cachedStaffTemplate.Template_ID) {
         executeSendStaff(cachedStaffTemplate.Template_ID);
       } else {
-        this.emailTemplateService.searchTemplates('Assigned Staff').subscribe({
+        this.emailTemplateService.searchTemplates('Student Registration').subscribe({
           next: (templates: any[]) => {
             const match = (templates || []).find((t: any) =>
-              t.Template_Name && t.Template_Name.trim().toLowerCase().includes('assigned staff') && isTemplateActive(t)
+              t.Template_Name && (t.Template_Name.trim().toLowerCase().includes('student registration') || t.Template_Name.trim().toLowerCase().includes('assigned staff')) && isTemplateActive(t)
             );
             executeSendStaff(match?.Template_ID || 23);
           },

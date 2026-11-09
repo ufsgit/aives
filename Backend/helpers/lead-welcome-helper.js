@@ -259,8 +259,8 @@ async function sendLeadWelcomeEmail({ studentId, name, email, phone, req = null,
         if (!template) {
             console.log(`[LEAD WELCOME] Database template not found or inactive. Using built-in PTE template for Student ${studentId}.`);
             template = {
-                Subject: "Take the Next Step Towards Your PTE Goal | Aives Australia's TESTPREP",
-                Body: "Dear [First Name],\n\nGreetings from Aives Australia's TESTPREP!\n\nWe noticed that you recently expressed interest in our PTE Academic Training Programme but have not yet taken the next step towards enrolment.\n\nBefore you decide, we want to share something important.\n\nAre You Preparing for a Test, or Preparing for Your Future?\nFor many candidates, achieving the required PTE score is not simply about passing an English language examination.\n\nIt could be an important step towards:\n\nAustralian permanent residency or skilled migration.\n\nProfessional registration in Australia.\n\nHigher education and career opportunities.\n\nMeeting English language requirements for your future plans.\n\nYour PTE score may be one of the important requirements standing between you and your next opportunity.\n\nThat is why choosing the right preparation programme matters.\n\nWhat Makes Aives Australia's TESTPREP Different?\nUnlike conventional language coaching programmes, Aives Australia's TESTPREP is developed under the guidance of qualified Australian immigration law professionals with years of practical experience in migration-related English language requirements and candidate preparation.\n\nWe understand that different candidates have different objectives, target scores, and challenges.\n\nOur approach brings together:\n\n1. Professional IELTS/PTE Training\nQualified trainers help you understand the examination format, task requirements, scoring criteria, and practical techniques.\n\n2. Practical Mock Tests & Individual Feedback\nMock examinations and trainer feedback help identify your strengths, weaknesses, and areas requiring further practice.\n\n3. NLP-Based Mindset Preparation\nOur NLP Master Trainers introduce supplementary techniques focused on confidence, concentration, and mental preparation for examination conditions.\n\n4. A Structured Learning Journey\nWe combine trainer-led sessions, regular practice, performance monitoring, and individual guidance to support your progress.\n\nA Question Worth Asking Yourself\nIf you have already attempted PTE Academic without achieving your desired score, have you identified what needs to change before your next attempt?\n\nAnd if this is your first attempt, wouldn't it be better to begin with a structured preparation strategy rather than relying on trial and error?\n\nAt TESTPREP, we encourage students to understand their challenges before investing further time and effort in examination preparation.\n\nLet's Understand Your PTE Goal\nWe would be pleased to discuss your current preparation level, target score, and examination timeline before recommending a suitable training option.\n\n[YES, I WOULD LIKE TO DISCUSS MY PTE TRAINING OPTIONS]\n\nOur Student Admissions Team will contact you to understand your requirements and explain how our programme works.\n\nOne Final Thought\n\nA successful PTE preparation journey is not measured merely by the number of classes attended. It is built through the right guidance, consistent practice, meaningful feedback, and the ability to apply what you have learned.\n\nYour goal deserves more than ordinary preparation.\n\nWe look forward to helping you take the next step.\n\nWarm regards,\n\nStudent Admissions Team\nAives Australia's TESTPREP\n[Official Email] | [Contact Number]",
+                Subject: "Verify Your PTE Academic Enquiry | Aives Australia's TESTPREP",
+                Body: "Dear [First Name],\n\nGreetings from Aives Australia's TESTPREP!\n\nThank you for expressing your interest in our PTE Academic Training Programme.\n\nWe have received your enquiry and would like to confirm your genuine interest before connecting you with our Student Admissions Team.\n\nWhy Choose Aives Australia's TESTPREP?\nOur programme is developed under the guidance of qualified Australian immigration law professionals with 20 years of practical experience in understanding English language testing requirements for Australian migration, professional registration, and education pathways.\n\nOur distinctive training approach combines:\n\n• Qualified IELTS/PTE Trainers: Professional training focused on examination techniques, language proficiency, and scoring requirements.\n\n• Expert Guidance & Practical Feedback: Training informed by years of practical experience with English language test preparation, candidate performance, and individual feedback.\n\n• NLP Master Trainers: Additional mindset preparation focusing on confidence, concentration, and examination readiness.\n\n• Practical Mock Tests: Structured mock examinations, performance assessments, and constructive feedback to identify areas requiring improvement.\n\n• Goal-Oriented Training: Preparation aligned with your target PTE score and individual learning needs.\n\nPlease Verify Your Interest\nTo ensure that we provide personalised assistance to genuine prospective students, we kindly request you to verify your enquiry.\n\n[YES, I AM INTERESTED – VERIFY MY ENQUIRY]\n\nBy confirming your interest, you authorise our TESTPREP Student Admissions Team to contact you regarding suitable PTE training options.\n\nOnce verified, our team will be pleased to assist you with the next steps.\n\nDidn't Submit This Enquiry?\n\nIf you did not register an enquiry with us, you may safely disregard this email.\n\nWe look forward to supporting your PTE preparation journey.\n\nWarm regards,\n\nStudent Admissions Team\nAives Australia's TESTPREP\n[Official Email] | [Contact Number]",
                 Template_ID: null
             };
         }
@@ -310,7 +310,15 @@ async function sendLeadWelcomeEmail({ studentId, name, email, phone, req = null,
         const responseButtonsHtml = `
             <div style="margin: 20px 0; font-size: 14px; line-height: 1.8;">
                 <p style="margin: 0 0 6px 0;">
-                    👉 <a href="${interestedUrl}" target="_blank" style="color: #003366; font-weight: 700; text-decoration: underline;">Yes, I would like to discuss my PTE training options</a>
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 18px 0 10px 0;">
+                        <tr>
+                            <td align="left" style="border-radius: 6px; background-color: #003366;">
+                                <a href="${interestedUrl}" target="_blank" style="display: inline-block; padding: 14px 28px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #003366; letter-spacing: 0.5px;">
+                                    YES, I AM INTERESTED – VERIFY MY ENQUIRY
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
                 </p>
                 <p style="margin: 0; font-size: 13px; color: #64748b;">
                     <a href="${notInterestedUrl}" target="_blank" style="color: #64748b; text-decoration: underline;">Not Interested / Didn't submit this enquiry</a>
@@ -474,12 +482,20 @@ function buildLeadResponseBlock({ studentId, email, name = '', buttonLabel = '',
     const interestedUrl = `${baseUrl}/lead-response?email=${encodeURIComponent(cleanEmail)}&name=${encodeURIComponent(cleanName)}&token=${token}&choice=Interested`;
     const notInterestedUrl = `${baseUrl}/lead-response?email=${encodeURIComponent(cleanEmail)}&name=${encodeURIComponent(cleanName)}&token=${token}&choice=Not+Interested`;
     const responseFormUrl = `${baseUrl}/lead-response?email=${encodeURIComponent(cleanEmail)}&name=${encodeURIComponent(cleanName)}&token=${token}`;
-    const label = buttonLabel || '✓ YES, I WOULD LIKE TO DISCUSS MY PTE TRAINING OPTIONS';
+    const label = buttonLabel || 'YES, I AM INTERESTED – VERIFY MY ENQUIRY';
 
     const buttonsHtml = `
         <div style="margin: 20px 0; font-size: 14px; line-height: 1.8;">
             <p style="margin: 0 0 6px 0;">
-                👉 <a href="${interestedUrl}" target="_blank" style="color: #003366; font-weight: 700; text-decoration: underline;">Yes, I would like to discuss my PTE training options</a>
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 18px 0 10px 0;">
+                        <tr>
+                            <td align="left" style="border-radius: 6px; background-color: #003366;">
+                                <a href="${interestedUrl}" target="_blank" style="display: inline-block; padding: 14px 28px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #003366; letter-spacing: 0.5px;">
+                                    ${label}
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
             </p>
             <p style="margin: 0; font-size: 13px; color: #64748b;">
                 <a href="${notInterestedUrl}" target="_blank" style="color: #64748b; text-decoration: underline;">Not Interested / Didn't submit this enquiry</a>

@@ -80,7 +80,7 @@ router.get('/Test_Brevo_Connection', async (req, res) => {
         res.json({
             status: !accountError ? 'CONNECTED' : 'FAILED',
             apiKeyConfigured: !!config.apiKey,
-            apiKeyPrefix: config.apiKey ? config.apiKey.substring(0, 12) + '...' : 'none',
+            apiKeyConfigured: !!config.apiKey,
             accountType: config.accountType,
             senderEmail: config.senderEmail,
             senderName: config.senderName,
@@ -97,6 +97,9 @@ router.get('/Test_Brevo_Connection', async (req, res) => {
 const emailLog = require('../models/email_log');
 const db = require('../config/dbconnection');
 const { buildLeadResponseBlock, getOfficialContactInfo } = require('../helpers/lead-welcome-helper');
+const { isRegistrationLocked } = require('../helpers/registration-email-helper');
+
+const templateSendLocks = new Map();
 
 router.post('/Send_Email_With_Template', async (req, res) => {
     try {
@@ -105,6 +108,24 @@ router.post('/Send_Email_With_Template', async (req, res) => {
         const effectiveSenderName = Sender_Name || req.userName || null;
         console.log('Send_Email_With_Template request:', { Template_ID, To_Email, Placeholders, effectiveSenderEmail, effectiveSenderName, hasAttachments: !!(Attachments && Attachments.length), Student_ID });
         
+        // Synchronous In-Memory Lock to prevent concurrent duplicate API triggers
+        const cleanTmplId = Number(Template_ID) || 0;
+        const cleanStudentId = Number(Student_ID) || 0;
+        const lockKey = `${cleanTmplId}_${cleanStudentId || (To_Email || '').toLowerCase().trim()}`;
+        const now = Date.now();
+
+        if (templateSendLocks.has(lockKey) && (now - templateSendLocks.get(lockKey) < 120000)) {
+            console.log(`[Send_Email_With_Template] Duplicate prevented by in-memory lock: Template ${cleanTmplId} to ${cleanStudentId || To_Email}`);
+            return res.json({ success: true, skipped: true, duplicatePrevented: true, message: 'Email already sent recently.' });
+        }
+        templateSendLocks.set(lockKey, now);
+
+        // If this is a registration or assigned staff template and the backend registration lock is active, skip duplicate
+        if (cleanStudentId > 0 && isRegistrationLocked(cleanStudentId) && (cleanTmplId === 19 || cleanTmplId === 23)) {
+            console.log(`[Send_Email_With_Template] Duplicate prevented: Registration emails already processed by backend for Student ${cleanStudentId} (Template ${cleanTmplId}).`);
+            return res.json({ success: true, skipped: true, duplicatePrevented: true, message: 'Registration email already sent by backend.' });
+        }
+
         // 1. Get the template with robust fallbacks for registration & assigned staff emails
         let template = null;
         try {
@@ -243,12 +264,12 @@ Aives Australia's TESTPREP
                      WHERE (LOWER(TRIM(Email_Address)) = LOWER(TRIM(?)) OR (Student_ID = ? AND ? > 0))
                        AND Template_ID = ? 
                        AND Status = 'Success' 
-                       AND Sent_At >= NOW() - INTERVAL 2 MINUTE 
+                       AND Sent_At >= NOW() - INTERVAL 10 MINUTE 
                      LIMIT 1`,
                     [To_Email, Student_ID || 0, Student_ID || 0, Template_ID]
                 );
                 if (recentLogs && recentLogs.length > 0) {
-                    console.log(`[Send_Email_With_Template] Duplicate email prevented: Template ${Template_ID} already sent to ${To_Email} (Student: ${Student_ID}) within last 2 minutes.`);
+                    console.log(`[Send_Email_With_Template] Duplicate email prevented: Template ${Template_ID} already sent to ${To_Email} (Student: ${Student_ID}) within last 10 minutes.`);
                     return res.json({ success: true, skipped: true, duplicatePrevented: true, message: 'Email already sent recently.' });
                 }
             } catch (dedupeErr) {
@@ -280,33 +301,161 @@ Aives Australia's TESTPREP
             }
         }
 
+        // Check if registration emails were already dispatched or in progress for this student/email
+        const isRegTemplate = (cleanTmplId === 19 || cleanTmplId === 23) ||
+            (template && template.Template_Name && (
+                template.Template_Name.toLowerCase().includes('welcome mail with receipt') ||
+                template.Template_Name.toLowerCase().includes('registration completed') ||
+                template.Template_Name.toLowerCase().includes('student registration') ||
+                template.Template_Name.toLowerCase().includes('assigned staff')
+            ));
+
+        if (isRegTemplate) {
+            const checkStudentId = effectiveStudentId || cleanStudentId;
+            if (isRegistrationLocked(checkStudentId, To_Email)) {
+                console.log(`[Send_Email_With_Template] Duplicate registration email prevented for Student ${checkStudentId} (${To_Email}) - Template ${cleanTmplId} (${template?.Template_Name || ''}). Already sent by backend.`);
+                return res.json({ success: true, skipped: true, duplicatePrevented: true, message: 'Registration email already dispatched.' });
+            }
+        }
+
         // 1b. Fetch Official Contact Info (Email & Phone)
         const contactInfo = await getOfficialContactInfo();
         const officialEmail = effectiveSenderEmail || contactInfo.email;
         const contactNumber = contactInfo.phone;
         const firstName = studentName ? studentName.split(' ')[0] : 'Student';
 
-        // 2. Replace placeholders if any
-        if (Placeholders) {
-            Placeholders['Official Email'] = Placeholders['Official Email'] || officialEmail;
-            Placeholders['Official_Email'] = Placeholders['Official_Email'] || officialEmail;
-            Placeholders['Contact Number'] = Placeholders['Contact Number'] || contactNumber;
-            Placeholders['Contact_Number'] = Placeholders['Contact_Number'] || contactNumber;
-            Placeholders['Contact'] = Placeholders['Contact'] || contactNumber;
-            Placeholders['Phone'] = Placeholders['Phone'] || contactNumber;
-            Placeholders['First Name'] = Placeholders['First Name'] || firstName;
-            Placeholders['First_Name'] = Placeholders['First_Name'] || firstName;
-            Placeholders['Student Name'] = Placeholders['Student Name'] || studentName || 'Student';
-            Placeholders['Student_Name'] = Placeholders['Student_Name'] || studentName || 'Student';
+        // 1c. Resolve Student Enrolment Details dynamically from database
+        let admissionNo = (Placeholders && (Placeholders['Student ID'] || Placeholders['CRM ID'] || Placeholders['CRM_ID'] || Placeholders['Admission Number'] || Placeholders['Roll Number'] || Placeholders['Roll_No'])) || '';
+        let courseName = (Placeholders && (Placeholders['Programme'] || Placeholders['Course Name'] || Placeholders['Course_Name'])) || '';
+        let dynamicTrainingTime = (Placeholders && (Placeholders['Daily Training Time'] || Placeholders['Start Time \u2013 End Time'] || Placeholders['Start Time - End Time'])) || '';
+        let dynamicDuration = (Placeholders && (Placeholders['Duration'] || Placeholders['Session Duration'] || Placeholders['Training Duration'] || Placeholders['Course Duration'])) || '';
+        let trainingMode = (Placeholders && (Placeholders['Training Mode'] || Placeholders['Training_Mode'] || Placeholders['Online/Classroom'] || Placeholders['Online / Classroom'])) || '';
+        let enrolmentDateFormatted = (Placeholders && (Placeholders['Enrolment Date'] || Placeholders['Enrollment Date'] || Placeholders['Registration Date'] || Placeholders['Date'])) || '';
 
-            Object.keys(Placeholders).forEach(key => {
-                const escapedKey = key.replace(/[.*+?^$${}()|[\]\\]/g, '\\$&');
-                const regex = new RegExp(`\\[${escapedKey}\\]`, 'gi');
-                const replacementValue = Placeholders[key] !== undefined && Placeholders[key] !== null ? String(Placeholders[key]) : '';
-                if (body) body = body.replace(regex, () => replacementValue);
-                if (subject) subject = subject.replace(regex, () => replacementValue);
-            });
+        if (effectiveStudentId > 0) {
+            try {
+                const [sDetails] = await db.promise().query(
+                    `SELECT s.Roll_No, s.Roll_No_Character, s.Branch_Id, s.Branch_Name, s.Admission_Date, s.Registered_On,
+                            b.Branch_Name as Db_Branch_Name
+                     FROM student s
+                     LEFT JOIN branches b ON s.Branch_Id = b.Branch_Id
+                     WHERE s.Student_ID = ? LIMIT 1`,
+                    [effectiveStudentId]
+                );
+                if (sDetails && sDetails.length > 0) {
+                    const sRow = sDetails[0];
+                    const adm = sRow.Roll_No_Character || sRow.Roll_No;
+                    if (adm) admissionNo = adm;
+
+                    if (!trainingMode) {
+                        const rawBranch = sRow.Db_Branch_Name || sRow.Branch_Name || '';
+                        if (/classroom|offline|in-person|campus/i.test(rawBranch)) {
+                            trainingMode = 'Classroom';
+                        } else if (/online/i.test(rawBranch)) {
+                            trainingMode = 'Online';
+                        } else if (rawBranch) {
+                            trainingMode = rawBranch;
+                        }
+                    }
+
+                    if (!enrolmentDateFormatted) {
+                        const rawDate = sRow.Registered_On || sRow.Admission_Date;
+                        if (rawDate) {
+                            const ed = new Date(rawDate);
+                            if (!isNaN(ed.getTime())) {
+                                enrolmentDateFormatted = `${String(ed.getDate()).padStart(2, '0')}/${String(ed.getMonth() + 1).padStart(2, '0')}/${ed.getFullYear()}`;
+                            }
+                        }
+                    }
+                }
+            } catch (e) {}
+
+            try {
+                const [scInfo] = await db.promise().query(
+                    `SELECT sc.Course_ID, sc.Enrollment_Date, c.Course_Name, tts.start_time, tts.end_time 
+                     FROM student_course sc 
+                     LEFT JOIN course c ON sc.Course_ID = c.Course_ID
+                     LEFT JOIN teacher_time_slot tts ON sc.Slot_Id = tts.Slot_Id AND IFNULL(tts.Delete_Status, 0) = 0
+                     WHERE sc.Student_ID = ? AND (sc.Delete_Status = 0 OR sc.Delete_Status IS NULL)
+                     ORDER BY sc.StudentCourse_ID DESC LIMIT 1`,
+                    [effectiveStudentId]
+                );
+                if (scInfo && scInfo.length > 0) {
+                    if (!courseName && scInfo[0].Course_Name) courseName = scInfo[0].Course_Name.trim();
+                    if (!enrolmentDateFormatted && scInfo[0].Enrollment_Date) {
+                        const ed = new Date(scInfo[0].Enrollment_Date);
+                        if (!isNaN(ed.getTime())) {
+                            enrolmentDateFormatted = `${String(ed.getDate()).padStart(2, '0')}/${String(ed.getMonth() + 1).padStart(2, '0')}/${ed.getFullYear()}`;
+                        }
+                    }
+                    if ((!dynamicTrainingTime || !dynamicDuration) && scInfo[0].start_time && scInfo[0].end_time) {
+                        const st = formatTime12h(scInfo[0].start_time);
+                        const et = formatTime12h(scInfo[0].end_time);
+                        if (!dynamicTrainingTime) dynamicTrainingTime = `${st} \u2013 ${et}`;
+                        if (!dynamicDuration) dynamicDuration = calculateDurationString(scInfo[0].start_time, scInfo[0].end_time);
+                    }
+                }
+            } catch (e) {}
         }
+        if (!admissionNo && effectiveStudentId > 0) admissionNo = String(effectiveStudentId);
+        if (!courseName) courseName = 'PTE Academic Training';
+        if (!trainingMode) trainingMode = 'Online';
+        if (!dynamicTrainingTime) dynamicTrainingTime = '10:00 AM \u2013 11:15 AM';
+        if (!dynamicDuration) dynamicDuration = '1 Hour 15 Minutes';
+        if (!enrolmentDateFormatted) {
+            const today = new Date();
+            enrolmentDateFormatted = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+        }
+
+        // 2. Replace placeholders if any
+        if (!Placeholders) Placeholders = {};
+        Placeholders['Official Email'] = Placeholders['Official Email'] || officialEmail;
+        Placeholders['Official_Email'] = Placeholders['Official_Email'] || officialEmail;
+        Placeholders['Contact Number'] = Placeholders['Contact Number'] || contactNumber;
+        Placeholders['Contact_Number'] = Placeholders['Contact_Number'] || contactNumber;
+        Placeholders['Contact'] = Placeholders['Contact'] || contactNumber;
+        Placeholders['Phone'] = Placeholders['Phone'] || contactNumber;
+        Placeholders['First Name'] = Placeholders['First Name'] || firstName;
+        Placeholders['First_Name'] = Placeholders['First_Name'] || firstName;
+        Placeholders['Student Name'] = Placeholders['Student Name'] || studentName || 'Student';
+        Placeholders['Student_Name'] = Placeholders['Student_Name'] || studentName || 'Student';
+        Placeholders['Student ID'] = Placeholders['Student ID'] || admissionNo;
+        Placeholders['Student_ID'] = Placeholders['Student_ID'] || admissionNo;
+        Placeholders['CRM ID'] = Placeholders['CRM ID'] || admissionNo;
+        Placeholders['CRM_ID'] = Placeholders['CRM_ID'] || admissionNo;
+        Placeholders['Admission Number'] = Placeholders['Admission Number'] || admissionNo;
+        Placeholders['Admission_Number'] = Placeholders['Admission_Number'] || admissionNo;
+        Placeholders['Roll Number'] = Placeholders['Roll Number'] || admissionNo;
+        Placeholders['Roll_No'] = Placeholders['Roll_No'] || admissionNo;
+        Placeholders['Programme'] = Placeholders['Programme'] || courseName;
+        Placeholders['Course Name'] = Placeholders['Course Name'] || courseName;
+        Placeholders['Course_Name'] = Placeholders['Course_Name'] || courseName;
+        Placeholders['Duration'] = Placeholders['Duration'] || dynamicDuration;
+        Placeholders['Training Duration'] = Placeholders['Training Duration'] || dynamicDuration;
+        Placeholders['Session Duration'] = Placeholders['Session Duration'] || dynamicDuration;
+        Placeholders['Course Duration'] = Placeholders['Course Duration'] || dynamicDuration;
+        Placeholders['Training Mode'] = Placeholders['Training Mode'] || trainingMode;
+        Placeholders['Training_Mode'] = Placeholders['Training_Mode'] || trainingMode;
+        Placeholders['Online/Classroom'] = Placeholders['Online/Classroom'] || trainingMode;
+        Placeholders['Online / Classroom'] = Placeholders['Online / Classroom'] || trainingMode;
+        Placeholders['Date'] = Placeholders['Date'] || enrolmentDateFormatted;
+        Placeholders['Enrolment Date'] = Placeholders['Enrolment Date'] || enrolmentDateFormatted;
+        Placeholders['Enrolment_Date'] = Placeholders['Enrolment_Date'] || enrolmentDateFormatted;
+        Placeholders['Enrollment Date'] = Placeholders['Enrollment Date'] || enrolmentDateFormatted;
+        Placeholders['Enrollment_Date'] = Placeholders['Enrollment_Date'] || enrolmentDateFormatted;
+        Placeholders['Registration Date'] = Placeholders['Registration Date'] || enrolmentDateFormatted;
+        Placeholders['Registration_Date'] = Placeholders['Registration_Date'] || enrolmentDateFormatted;
+        Placeholders['Daily Training Time'] = Placeholders['Daily Training Time'] || dynamicTrainingTime;
+        Placeholders['Start Time \u2013 End Time'] = Placeholders['Start Time \u2013 End Time'] || dynamicTrainingTime;
+        Placeholders['Start Time - End Time'] = Placeholders['Start Time - End Time'] || dynamicTrainingTime;
+
+        Object.keys(Placeholders).forEach(key => {
+            const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`\\[${escapedKey}\\]`, 'gi');
+            const replacementValue = Placeholders[key] !== undefined && Placeholders[key] !== null ? String(Placeholders[key]) : '';
+            if (body) body = body.replace(regex, () => replacementValue);
+            if (subject) subject = subject.replace(regex, () => replacementValue);
+        });
 
         // Direct fallback regex replacement for standard placeholders if not caught above
         if (body) {
@@ -317,7 +466,23 @@ Aives Australia's TESTPREP
                 .replace(/\[Name\]/gi, studentName || 'Student')
                 .replace(/\[Email\]/gi, To_Email || '')
                 .replace(/\[Official[\s_]*(?:Email|Mail)(?:[\s_]*Address)?\]/gi, officialEmail)
-                .replace(/\[(?:Official[\s_]*)?(?:Contact|Phone|Mobile)(?:[\s_]*(?:Number|No))?\]/gi, contactNumber);
+                .replace(/\[(?:Official[\s_]*)?(?:Contact|Phone|Mobile)(?:[\s_]*(?:Number|No))?\]/gi, contactNumber)
+                .replace(/\[Student[\s_]*ID\]/gi, admissionNo)
+                .replace(/\[CRM[\s_]*ID\]/gi, admissionNo)
+                .replace(/\[Programme\]/gi, courseName)
+                .replace(/\[Course[\s_]*Name\]/gi, courseName)
+                .replace(/\[Duration\]/gi, dynamicDuration)
+                .replace(/\[Online\s*[\/\\]\s*Classroom\]/gi, trainingMode)
+                .replace(/\[Training[\s_]*Mode\]/gi, trainingMode)
+                .replace(/\[Date\]/gi, enrolmentDateFormatted)
+                .replace(/\[Enrolment[\s_]*Date\]/gi, enrolmentDateFormatted)
+                .replace(/\[Enrollment[\s_]*Date\]/gi, enrolmentDateFormatted)
+                .replace(/\[Registration[\s_]*Date\]/gi, enrolmentDateFormatted)
+                .replace(/\[Admission[\s_]*(?:Number|No)\]/gi, admissionNo)
+                .replace(/\[Roll[\s_]*(?:Number|No)\]/gi, admissionNo)
+                .replace(/\[Start[\s_]*Time[\s\u2013\-—]+End[\s_]*Time\]/gi, dynamicTrainingTime)
+                .replace(/\[Daily[\s_]*Training[\s_]*Time\]/gi, dynamicTrainingTime)
+                .replace(/\[(?:Session|Training|Course)[\s_]*Duration\]/gi, dynamicDuration);
         }
         if (subject) {
             subject = subject
@@ -327,7 +492,23 @@ Aives Australia's TESTPREP
                 .replace(/\[Name\]/gi, studentName || 'Student')
                 .replace(/\[Email\]/gi, To_Email || '')
                 .replace(/\[Official[\s_]*(?:Email|Mail)(?:[\s_]*Address)?\]/gi, officialEmail)
-                .replace(/\[(?:Official[\s_]*)?(?:Contact|Phone|Mobile)(?:[\s_]*(?:Number|No))?\]/gi, contactNumber);
+                .replace(/\[(?:Official[\s_]*)?(?:Contact|Phone|Mobile)(?:[\s_]*(?:Number|No))?\]/gi, contactNumber)
+                .replace(/\[Student[\s_]*ID\]/gi, admissionNo)
+                .replace(/\[CRM[\s_]*ID\]/gi, admissionNo)
+                .replace(/\[Programme\]/gi, courseName)
+                .replace(/\[Course[\s_]*Name\]/gi, courseName)
+                .replace(/\[Duration\]/gi, dynamicDuration)
+                .replace(/\[Online\s*[\/\\]\s*Classroom\]/gi, trainingMode)
+                .replace(/\[Training[\s_]*Mode\]/gi, trainingMode)
+                .replace(/\[Date\]/gi, enrolmentDateFormatted)
+                .replace(/\[Enrolment[\s_]*Date\]/gi, enrolmentDateFormatted)
+                .replace(/\[Enrollment[\s_]*Date\]/gi, enrolmentDateFormatted)
+                .replace(/\[Registration[\s_]*Date\]/gi, enrolmentDateFormatted)
+                .replace(/\[Admission[\s_]*(?:Number|No)\]/gi, admissionNo)
+                .replace(/\[Roll[\s_]*(?:Number|No)\]/gi, admissionNo)
+                .replace(/\[Start[\s_]*Time[\s\u2013\-—]+End[\s_]*Time\]/gi, dynamicTrainingTime)
+                .replace(/\[Daily[\s_]*Training[\s_]*Time\]/gi, dynamicTrainingTime)
+                .replace(/\[(?:Session|Training|Course)[\s_]*Duration\]/gi, dynamicDuration);
         }
 
         // 2b. If template contains verification buttons or lead-response links, ensure they are personalized for THIS student
@@ -416,7 +597,7 @@ Aives Australia's TESTPREP
                     req.body.Student_ID,
                     req.body.Template_ID || null,
                     req.body.To_Email,
-                    'Template Email',
+                    (typeof subject !== 'undefined' && subject ? subject : (typeof template !== 'undefined' && template?.Subject ? template.Subject : 'Template Email')),
                     null,
                     detailedError,
                     'Failed',

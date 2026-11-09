@@ -7,7 +7,7 @@ const https = require('https');
 const emailHelper = require('../helpers/email-helper');
 const emailLog = require('../models/email_log');
 const { sendLeadWelcomeEmail, buildLeadResponseBlock, getOfficialContactInfo } = require('../helpers/lead-welcome-helper');
-const { sendRegistrationConfirmationEmails } = require('../helpers/registration-email-helper');
+const { sendRegistrationConfirmationEmails, isRegistrationLocked } = require('../helpers/registration-email-helper');
 const db = require('../config/dbconnection');
 
 const brevoHttpsAgent = new https.Agent({
@@ -427,7 +427,12 @@ router.post('/Sync_Brevo_Opens', async (req, res, next) => {
                         });
                         break;
                     } catch (retryErr) {
-                        if (attempt < 3 && (!retryErr.response || retryErr.code === 'EPROTO' || retryErr.code === 'ECONNRESET')) {
+                        const errStatus = retryErr.response?.status;
+                        if (errStatus === 401 || errStatus === 403) {
+                            console.warn(`[Sync_Brevo_Opens] Brevo API authentication failed (status ${errStatus}). Aborting retries.`);
+                            throw retryErr;
+                        }
+                        if (attempt < 3 && (!retryErr.response || retryErr.code === 'EPROTO' || retryErr.code === 'ECONNRESET' || errStatus >= 500)) {
                             await new Promise(r => setTimeout(r, 500 * attempt));
                             continue;
                         }
@@ -474,7 +479,7 @@ router.post('/Sync_Brevo_Opens', async (req, res, next) => {
                     }
                 }
             } catch (keyErr) {
-                console.warn(`[Sync_Brevo_Opens] Note for API key ${apiKey.substring(0, 10)}...:`, keyErr.response?.data?.message || keyErr.message);
+                console.warn('[Sync_Brevo_Opens] Brevo sync note:', keyErr.response?.data?.message || keyErr.message);
             }
         }
 
@@ -708,8 +713,8 @@ router.post('/Buy_Course/', async (req, res, next) => {
             port: 587,
             secure: false, // true for 465, false for other ports
             auth: {
-                user: "7a9d83001@smtp-brevo.com", // generated brevo user
-                pass: "2bNEKDBCd7JytLIH", // generated brevo password
+                user: process.env.BREVO_SMTP_USER || "",
+                pass: process.env.BREVO_SMTP_PASS || "",
             },
             tls: {
                 rejectUnauthorized: true
@@ -772,7 +777,8 @@ router.post('/enroleCourseFromAdmin/', async (req, res, next) => {
         const courseIdVal = req.body.Course_ID;
         const batchIdVal = req.body.Batch_ID;
         const slotIdVal = req.body.Slot_Id;
-        if (courseStudentId && (courseIdVal || batchIdVal)) {
+        // Only trigger registration emails if not already handled by Save_student registration flow
+        if (courseStudentId && (courseIdVal || batchIdVal) && !isRegistrationLocked(courseStudentId)) {
             sendRegistrationConfirmationEmails({
                 studentId: courseStudentId,
                 courseId: courseIdVal,
@@ -780,6 +786,8 @@ router.post('/enroleCourseFromAdmin/', async (req, res, next) => {
                 slotId: slotIdVal,
                 req
             }).catch(err => console.error('[enroleCourseFromAdmin] Registration emails error:', err));
+        } else if (courseStudentId && isRegistrationLocked(courseStudentId)) {
+            console.log(`[enroleCourseFromAdmin] Registration emails already sent for Student ${courseStudentId}. Skipping duplicate trigger.`);
         }
         //console.log('rows: ', rows);
 
@@ -788,8 +796,8 @@ router.post('/enroleCourseFromAdmin/', async (req, res, next) => {
             port: 587,
             secure: false, // true for 465, false for other ports
             auth: {
-                user: "7a9d83001@smtp-brevo.com", // generated brevo user
-                pass: "2bNEKDBCd7JytLIH", // generated brevo password
+                user: process.env.BREVO_SMTP_USER || "",
+                pass: process.env.BREVO_SMTP_PASS || "",
             },
             tls: {
                 rejectUnauthorized: true

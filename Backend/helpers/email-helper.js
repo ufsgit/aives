@@ -60,7 +60,7 @@ function getBrevoConfig(fromEmail = null, fromName = null) {
     }
 
     // Default / Main Brevo Account (Admin cs.mgr@testprepinenglish.com, Trainer 1 trainer1@testprepinenglish.com, etc.)
-    const apiKey = (process.env.BREVO_API_KEY || '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').trim().replace(/^['\"]|['\"]$/g, '');
+    const apiKey = (process.env.BREVO_API_KEY || '').trim().replace(/^['\"]|['\"]$/g, '');
     const defaultSenderName = (process.env.BREVO_SENDER_NAME || 'Test Prep').trim().replace(/^['\"]|['\"]$/g, '');
 
     // Verified senders in the Main Brevo Account: trainer1@testprepinenglish.com and cs.mgr@testprepinenglish.com
@@ -106,7 +106,7 @@ const sendEmail = async (to, subject, html, fromEmail = null, fromName = null, a
             accountType: brevoConfig.accountType,
             accountEmail: brevoConfig.accountEmail,
             apiKeyFound: !!apiKey,
-            apiKeyPrefix: apiKey ? apiKey.substring(0, 10) + '...' : 'none',
+            apiKeyConfigured: !!apiKey,
             originalFrom: fromEmail,
             usingDefault: !fromEmail,
             hasAttachments: !!(attachments && attachments.length)
@@ -281,7 +281,13 @@ const sendEmail = async (to, subject, html, fromEmail = null, fromName = null, a
                 });
                 break;
             } catch (err) {
-                if (attempt < 3 && (!err.response || err.code === 'EPROTO' || err.code === 'ECONNRESET')) {
+                const errStatus = err.response ? err.response.status : null;
+                const errMsg = err.response?.data?.message || err.message;
+                if (errStatus === 401 || errStatus === 403) {
+                    console.error(`[Brevo Auth Error] Authentication failed (status ${errStatus}): ${errMsg}. Halting retries. Please verify BREVO_API_KEY in .env and Brevo account permissions.`);
+                    throw err;
+                }
+                if (attempt < 3 && (!err.response || err.code === 'EPROTO' || err.code === 'ECONNRESET' || errStatus >= 500)) {
                     console.warn(`Transient SSL/network error sending email (attempt ${attempt}/3). Retrying...`, err.message);
                     await new Promise(r => setTimeout(r, 600 * attempt));
                     continue;

@@ -58,79 +58,49 @@ async function initializeDatabase() {
                 LIMIT 1
             `);
 
-            const latestTemplateSubject = "Take the Next Step Towards Your PTE Goal | Aives Australia's TESTPREP";
+            const latestTemplateSubject = "Verify Your PTE Academic Enquiry | Aives Australia's TESTPREP";
             const latestTemplateBody = `Dear [First Name],
-
 Greetings from Aives Australia's TESTPREP!
 
-We noticed that you recently expressed interest in our PTE Academic Training Programme but have not yet taken the next step towards enrolment.
+Thank you for expressing your interest in our PTE Academic Training Programme.
 
-Before you decide, we want to share something important.
+We have received your enquiry and would like to confirm your genuine interest before connecting you with our Student Admissions Team.
 
-Are You Preparing for a Test, or Preparing for Your Future?
-For many candidates, achieving the required PTE score is not simply about passing an English language examination.
+Why Choose Aives Australia's TESTPREP?
+Our programme is developed under the guidance of qualified Australian immigration law professionals with 20 years of practical experience in understanding English language testing requirements for Australian migration, professional registration, and education pathways.
 
-It could be an important step towards:
+Our distinctive training approach combines:
 
-Australian permanent residency or skilled migration.
+• Qualified IELTS/PTE Trainers: Professional training focused on examination techniques, language proficiency, and scoring requirements.
 
-Professional registration in Australia.
+• Expert Guidance & Practical Feedback: Training informed by years of practical experience with English language test preparation, candidate performance, and individual feedback.
 
-Higher education and career opportunities.
+• NLP Master Trainers: Additional mindset preparation focusing on confidence, concentration, and examination readiness.
 
-Meeting English language requirements for your future plans.
+• Practical Mock Tests: Structured mock examinations, performance assessments, and constructive feedback to identify areas requiring improvement.
 
-Your PTE score may be one of the important requirements standing between you and your next opportunity.
+• Goal-Oriented Training: Preparation aligned with your target PTE score and individual learning needs.
 
-That is why choosing the right preparation programme matters.
+Please Verify Your Interest
+To ensure that we provide personalised assistance to genuine prospective students, we kindly request you to verify your enquiry.
 
-What Makes Aives Australia's TESTPREP Different?
-Unlike conventional language coaching programmes, Aives Australia's TESTPREP is developed under the guidance of qualified Australian immigration law professionals with years of practical experience in migration-related English language requirements and candidate preparation.
+[YES, I AM INTERESTED – VERIFY MY ENQUIRY]
 
-We understand that different candidates have different objectives, target scores, and challenges.
+By confirming your interest, you authorise our TESTPREP Student Admissions Team to contact you regarding suitable PTE training options.
 
-Our approach brings together:
+Once verified, our team will be pleased to assist you with the next steps.
 
-1. Professional IELTS/PTE Training
-Qualified trainers help you understand the examination format, task requirements, scoring criteria, and practical techniques.
+Didn't Submit This Enquiry?
 
-2. Practical Mock Tests & Individual Feedback
-Mock examinations and trainer feedback help identify your strengths, weaknesses, and areas requiring further practice.
+If you did not register an enquiry with us, you may safely disregard this email.
 
-3. NLP-Based Mindset Preparation
-Our NLP Master Trainers introduce supplementary techniques focused on confidence, concentration, and mental preparation for examination conditions.
-
-4. A Structured Learning Journey
-We combine trainer-led sessions, regular practice, performance monitoring, and individual guidance to support your progress.
-
-A Question Worth Asking Yourself
-If you have already attempted PTE Academic without achieving your desired score, have you identified what needs to change before your next attempt?
-
-And if this is your first attempt, wouldn't it be better to begin with a structured preparation strategy rather than relying on trial and error?
-
-At TESTPREP, we encourage students to understand their challenges before investing further time and effort in examination preparation.
-
-Let's Understand Your PTE Goal
-We would be pleased to discuss your current preparation level, target score, and examination timeline before recommending a suitable training option.
-
-[YES, I WOULD LIKE TO DISCUSS MY PTE TRAINING OPTIONS]
-
-Our Student Admissions Team will contact you to understand your requirements and explain how our programme works.
-
-One Final Thought
-
-A successful PTE preparation journey is not measured merely by the number of classes attended. It is built through the right guidance, consistent practice, meaningful feedback, and the ability to apply what you have learned.
-
-Your goal deserves more than ordinary preparation.
-
-We look forward to helping you take the next step.
+We look forward to supporting your PTE preparation journey.
 
 Warm regards,
 
 Student Admissions Team
 Aives Australia's TESTPREP
 [Official Email] | [Contact Number]`;
-
             if (templates.length === 0) {
                 await db.promise().query(`
                     INSERT INTO email_templates (
@@ -218,29 +188,34 @@ Aives Australia's TESTPREP
                 console.warn('[DB-INIT] Warning verifying Welcome mail with receipt template:', rErr.message);
             }
 
-            // 3c. Ensure Assigned Staff Template exists
+            // 3c. Ensure Assigned Staff & Training Details Template exists
             try {
                 const [staffTemplates] = await db.promise().query(
                     `SELECT Template_ID FROM email_templates 
-                     WHERE (Template_Name LIKE '%assigned staff%' OR Template_Name LIKE '%assigned trainer%') 
+                     WHERE (Template_ID = 23 OR Template_Name LIKE '%Student Registration%' OR Template_Name LIKE '%assigned staff%' OR Template_Name LIKE '%assigned trainer%') 
                        AND (Delete_Status = 0 OR Delete_Status IS NULL) LIMIT 1`
                 );
-                const staffSubject = "Trainer Allocation & Class Schedule – [Course Name] | Aives Australia's TESTPREP";
+                const staffSubject = "Student Registration & Training Details – [Student Name]";
                 const staffBody = `Dear [First Name],
 
 Greetings from Aives Australia's TESTPREP!
 
-We are pleased to inform you that your trainer has been allocated for the [Course Name] programme.
+I am delighted to introduce myself as your assigned PTE Academic Trainer.
+I will be conducting your training sessions over the next 20 live sessions helping you understand the PTE Academic examination, develop effective techniques, and improve your performance through structured learning and regular practice.
 
-Trainer & Class Details:
+Your Training Details
+• Student Name: [Student Name]
+• Student ID: [Student ID]
 • Assigned Trainer: [Trainer Name]
-• Trainer Contact: [Trainer Contact Details]
-• Batch Time: [Daily Training Time] ([Time Zone])
-• First Class Date: [Start Date]
+• Course Commencement: [Course Commencement]
+• Daily Training Time: [Daily Training Time]
+• Time Zone: [Time Zone]
+• Training Duration: [Training Duration]
 
-Your trainer will guide you throughout the training journey, conduct practice sessions, provide individual feedback, and assist you in achieving your required examination score.
+Your Zoom Classroom Access
+Class link will be shared to you prior to class, Use the same link everyday.
 
-Please be ready for your first session at the scheduled batch time. If you need any assistance, feel free to contact us at [Official Email] or [Contact Number].
+If you have any questions prior to class commencement, please feel free to reach out to us at [Official Email] or [Contact Number].
 
 Warm regards,
 
@@ -252,19 +227,20 @@ Aives Australia's TESTPREP
                     await db.promise().query(
                         `INSERT INTO email_templates (
                             Template_ID, Template_Name, Subject, Body, Category, Status, Created_Date, Delete_Status, Is_Active
-                        ) VALUES (23, 'Assigned Staff', ?, ?, 'Staff Assignment', 'Active', NOW(), 0, 1)
-                        ON DUPLICATE KEY UPDATE Template_Name = 'Assigned Staff', Subject = VALUES(Subject), Body = VALUES(Body), Is_Active = 1, Delete_Status = 0`,
+                        ) VALUES (23, 'Student Registration & Training Details', ?, ?, 'Registration', 'Active', NOW(), 0, 1)
+                        ON DUPLICATE KEY UPDATE Template_Name = 'Student Registration & Training Details', Subject = VALUES(Subject), Body = VALUES(Body), Is_Active = 1, Delete_Status = 0`,
                         [staffSubject, staffBody]
                     );
-                    console.log('[DB-INIT] Seeded "Assigned Staff" email template.');
+                    console.log('[DB-INIT] Seeded "Student Registration & Training Details" email template.');
                 } else {
                     await db.promise().query(
-                        `UPDATE email_templates SET Is_Active = 1, Delete_Status = 0 WHERE Template_ID = ?`,
-                        [staffTemplates[0].Template_ID]
+                        `UPDATE email_templates SET Subject = ?, Body = ?, Is_Active = 1, Delete_Status = 0 WHERE Template_ID = ?`,
+                        [staffSubject, staffBody, staffTemplates[0].Template_ID]
                     );
+                    console.log('[DB-INIT] Verified and updated "Student Registration & Training Details" email template.');
                 }
             } catch (sErr) {
-                console.warn('[DB-INIT] Warning verifying Assigned Staff template:', sErr.message);
+                console.warn('[DB-INIT] Warning verifying Assigned Staff / Registration template:', sErr.message);
             }
 
 
