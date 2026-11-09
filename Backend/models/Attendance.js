@@ -8,7 +8,7 @@ const Attendance = {
       markedBy,
     ]);
   },
-  Get_Attendance_History: async function (courseId = 0, batchId = 0, fromDate = '', toDate = '', staffId = 0, page = 1, pageSize = 10) {
+  Get_Attendance_History: async function (courseId = 0, batchId = 0, fromDate = '', toDate = '', staffId = 0, page = 1, pageSize = 10, allowedCourseIds = null) {
     const pageNum = parseInt(page) || 1;
     const pageSizeNum = parseInt(pageSize) || 10;
     const offset = Math.max(0, (pageNum - 1) * pageSizeNum);
@@ -18,7 +18,24 @@ const Attendance = {
     let whereConditions = [];
     let queryParams = [];
 
-    if (courseIdNum > 0) {
+    // Role-based course restriction:
+    if (allowedCourseIds !== null) {
+      if (!Array.isArray(allowedCourseIds) || allowedCourseIds.length === 0) {
+        // Staff has no assigned courses -> return 0 records immediately
+        return [[{ total_count: 0 }], []];
+      }
+      if (courseIdNum > 0) {
+        if (!allowedCourseIds.includes(courseIdNum)) {
+          // Staff requested a course not assigned to them -> return 0 records immediately
+          return [[{ total_count: 0 }], []];
+        }
+        whereConditions.push('am.Course_ID = ?');
+        queryParams.push(courseIdNum);
+      } else {
+        whereConditions.push(`am.Course_ID IN (${allowedCourseIds.map(() => '?').join(',')})`);
+        queryParams.push(...allowedCourseIds);
+      }
+    } else if (courseIdNum > 0) {
       whereConditions.push('am.Course_ID = ?');
       queryParams.push(courseIdNum);
     }

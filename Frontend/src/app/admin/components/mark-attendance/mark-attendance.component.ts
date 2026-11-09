@@ -68,16 +68,22 @@ export class MarkAttendanceComponent implements OnInit {
   isSavingAttendance: boolean = false;
   isLoadingStudents: boolean = false;
 
-  staffId = parseInt(localStorage.getItem('User_Id') || '0');
+  staffId = parseInt(localStorage.getItem('User_Id') || localStorage.getItem('User_ID') || '0');
+  userType = localStorage.getItem('User_Type');
+  isAdmin: boolean = false;
 
   ngOnInit() {
+    this.staffId = parseInt(localStorage.getItem('User_Id') || localStorage.getItem('User_ID') || '0');
+    const userEmail = String(localStorage.getItem('Email') || '').toLowerCase();
+    this.isAdmin = this.staffId === 1 || userEmail === 'admin_user@g.com' || userEmail === 'cs.mgr@testprepinenglish.com';
     this.loadCourses();
   }
 
   loadCourses() {
-    this.courseService.get_course_names().subscribe({
+    const targetStaffId = this.isAdmin ? 0 : this.staffId;
+    this.attendanceService.getAttendanceCourses(targetStaffId).subscribe({
       next: (res: any) => {
-        this.courseList = res?.[0] || [];
+        this.courseList = res?.data || (Array.isArray(res) ? res : res?.[0]) || [];
       },
       error: (err) => console.error('Error loading courses', err)
     });
@@ -91,9 +97,10 @@ export class MarkAttendanceComponent implements OnInit {
     );
 
     if (selectedCourseObj) {
-      this.courseService.get_course_Batches(selectedCourseObj.Course_ID).subscribe({
+      const targetStaffId = this.isAdmin ? 0 : this.staffId;
+      this.attendanceService.getAttendanceBatches(selectedCourseObj.Course_ID, targetStaffId).subscribe({
         next: (res: any) => {
-          this.batchList = res || [];
+          this.batchList = res?.data || (Array.isArray(res) ? res : []) || [];
           this.selectedBatch.setValue('');
           this.studentList = [];
           this.attendanceStatuses.clear();
@@ -185,6 +192,14 @@ export class MarkAttendanceComponent implements OnInit {
       c.Course_Name?.trim().toLowerCase() === this.selectedCourse.value?.trim().toLowerCase()
     );
 
+    if (!this.isAdmin && selectedCourseObj) {
+      const isAllowed = this.courseList.some(c => c.Course_ID === selectedCourseObj.Course_ID);
+      if (!isAllowed) {
+        Swal.fire('Error', 'You are not assigned to mark attendance for this course.', 'error');
+        return;
+      }
+    }
+
     const rawDate: any = this.attendanceDate.value;
     let dateStr: string;
     if (rawDate instanceof Date) {
@@ -259,7 +274,8 @@ export class MarkAttendanceComponent implements OnInit {
           error: (err) => {
             this.isSavingAttendance = false;
             console.error('Save Attendance Error:', err);
-            Swal.fire('Error', 'Failed to save attendance.', 'error');
+            const msg = err.error?.message || 'Failed to save attendance.';
+            Swal.fire('Error', msg, 'error');
           }
         });
       }
@@ -350,8 +366,9 @@ export class MarkAttendanceComponent implements OnInit {
 
     const courseId = selectedCourseObj ? selectedCourseObj.Course_ID : 0;
     const batchId = selectedBatchObj ? selectedBatchObj.Batch_ID : 0;
+    const targetStaffId = this.isAdmin ? 0 : this.staffId;
 
-    this.attendanceService.getAttendanceHistory(courseId, batchId, '', '', 1, 500).subscribe({
+    this.attendanceService.getAttendanceHistory(courseId, batchId, '', '', 1, 500, targetStaffId).subscribe({
       next: (res: any) => {
         const history = res?.data || [];
         let totalSessions = history.length;

@@ -1007,6 +1007,7 @@
                 @if(student_Course.get('Course_ID')?.value){
 
                 <!-- Batch Selection -->
+                <!-- Batch Selection (Column 2) -->
                 <div class="space-y-2">
                     <label for="batch-id" class="block text-sm font-medium text-gray-700">
                         Batch <span class="text-red-700">*</span>
@@ -1025,16 +1026,49 @@
                         class="text-red-500 text-xs">
                         Batch is required.
                     </div>
+
+                    <!-- Compact Batch Info (Nested inside Batch column so grid alignment is preserved) -->
+                    <div *ngIf="student_Course.get('Batch_ID')?.value && batchDetails" 
+                        class="p-2 bg-blue-50/70 border border-blue-200/80 rounded-md text-[11px] text-blue-900 space-y-1 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-500 font-medium">Daily Time:</span>
+                            <span class="font-semibold text-blue-900">{{ getBatchTimeStr() }} (IST)</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-500 font-medium">Duration:</span>
+                            <span class="font-semibold text-blue-900">{{ getBatchDurationStr() }}</span>
+                        </div>
+                        <div *ngIf="batchDetails.Start_Date" class="flex items-center justify-between text-slate-500 text-[10px] border-t border-blue-100 pt-0.5">
+                            <span>Dates:</span>
+                            <span>{{ batchDetails.Start_Date | date:'mediumDate' }} - {{ (batchDetails.End_Date | date:'mediumDate') || 'Ongoing' }}</span>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Assigned Tutor (Column 3) -->
                 <div class="space-y-2">
-                    <label for="tutor-id" class="block text-sm font-medium text-gray-700">
-                        Assigned Tutor
-                    </label>
+                    <div class="flex items-center justify-between">
+                        <label for="tutor-id" class="block text-sm font-medium text-gray-700">
+                            Assigned Tutor
+                        </label>
+                        <span *ngIf="getSelectedTutorInfo()" class="text-xs">
+                            <span *ngIf="getSelectedTutorInfo()?.Availability_Status === 'Available'" 
+                                  class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-800">
+                                ● Available
+                            </span>
+                            <span *ngIf="getSelectedTutorInfo()?.Availability_Status === 'Busy'" 
+                                  class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800">
+                                ⚠ Busy
+                            </span>
+                        </span>
+                    </div>
                     <select id="tutor-id" formControlName="Slot_Id"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary truncate">
                         <option [ngValue]="null" disabled>Select Tutor</option>
                         <option *ngFor="let tutor of tutorsList" [ngValue]="tutor.Slot_Id">
-                            {{ tutor.Teacher_Name }}
+                            {{ tutor.Teacher_Name }} 
+                            {{ tutor.start_time ? '(' + tutor.start_time + ' - ' + tutor.end_time + ')' : '' }}
+                            - [{{ tutor.Availability_Status || 'Available' }}]
                         </option>
                     </select>
                 </div>

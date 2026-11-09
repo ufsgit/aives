@@ -30,7 +30,7 @@
       <div class="flex-1">
         <div class="relative">
           <select [formControl]="selectedCourse" (change)="onCourseChange()" class="w-full">
-            <option value=""> Select Course</option>
+            <option value="">{{ !isAdmin && courseList.length === 0 ? 'No courses assigned' : 'Select Course' }}</option>
             <option *ngFor="let course of courseList" [value]="course.Course_Name">
               {{ course.Course_Name }}
             </option>
@@ -71,7 +71,10 @@
     <!-- Empty State -->
     <div *ngIf="!isLoadingStudents && studentList.length === 0" class="empty-state">
       <mat-icon class="empty-icon">group_off</mat-icon>
-      <p>Select a Course and Batch to view students</p>
+      <p *ngIf="!isAdmin && courseList.length === 0" class="text-amber-600 font-semibold">
+        No courses have been assigned to your account. Please contact an administrator.
+      </p>
+      <p *ngIf="isAdmin || courseList.length > 0">Select a Course and Batch to view students</p>
     </div>
 
     <!-- Table -->

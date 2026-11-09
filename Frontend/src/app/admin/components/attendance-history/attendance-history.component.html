@@ -20,7 +20,7 @@
         <div class="relative">
           <select [formControl]="selectedCourse" (change)="onCourseChange()"
             class="w-full appearance-none bg-white border-2 border-gray-300 rounded-md py-1.5 pl-4 pr-10 focus:outline-none focus:border-sky-500 focus:ring focus:ring-sky-200 focus:ring-opacity-50 transition duration-300">
-            <option value="">All Courses</option>
+            <option value="">{{ !isAdmin && courseList.length === 0 ? 'No courses assigned' : 'All Courses' }}</option>
             <option *ngFor="let course of courseList" [value]="course.Course_Name">
               {{ course.Course_Name }}
             </option>

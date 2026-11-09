@@ -2700,6 +2700,55 @@ doc.text(
     console.log('this.batchDetails: ', this.batchDetails);
   this.feesForm.patchValue({ Installment_information_ID: 'OneTime' });
   }
+  getBatchTimeStr(): string {
+    if (this.batchDetails && this.batchDetails.Start_Time && this.batchDetails.End_Time) {
+      return `${this.batchDetails.Start_Time} - ${this.batchDetails.End_Time}`;
+    }
+    const selectedSlotId = Number(this.student_Course?.get('Slot_Id')?.value || 0);
+    if (selectedSlotId > 0 && this.tutorsList?.length) {
+      const tutor = this.tutorsList.find((t: any) => Number(t.Slot_Id) === selectedSlotId);
+      if (tutor && tutor.start_time && tutor.end_time) {
+        return `${tutor.start_time} - ${tutor.end_time}`;
+      }
+    }
+    return '10:00 AM - 11:15 AM';
+  }
+
+  getBatchDurationStr(): string {
+    if (this.batchDetails?.Start_Date && this.batchDetails?.End_Date) {
+      const start = new Date(this.batchDetails.Start_Date);
+      const end = new Date(this.batchDetails.End_Date);
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end > start) {
+        const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        const months = Math.round(diffDays / 30);
+        if (months >= 1) {
+          return `${months} Month${months > 1 ? 's' : ''}`;
+        }
+        const weeks = Math.round(diffDays / 7);
+        return weeks >= 1 ? `${weeks} Week${weeks > 1 ? 's' : ''}` : `${diffDays} Days`;
+      }
+    }
+    const courseId = Number(this.student_Course?.get('Course_ID')?.value || 0);
+    if (courseId > 0 && this.allCourse?.length) {
+      const course = this.allCourse.find((c: any) => Number(c.Course_ID) === courseId);
+      if (course?.Validity && Number(course.Validity) > 0) {
+        const v = Number(course.Validity);
+        if (v >= 30) return `${Math.round(v / 30)} Month(s)`;
+        if (v === 1) return '1 Month';
+        return `${v} Days`;
+      }
+    }
+    return '20 Live Sessions';
+  }
+
+  getSelectedTutorInfo(): any {
+    const slotId = Number(this.student_Course?.get('Slot_Id')?.value || 0);
+    if (slotId > 0 && this.tutorsList?.length) {
+      return this.tutorsList.find((t: any) => Number(t.Slot_Id) === slotId);
+    }
+    return null;
+  }
+
   getStudentContactNumber(): string {
     const countryCode = String(this.student_Form.get('Country_Code')?.value ?? '').trim();
     const phoneNumber = String(this.student_Form.get('Phone_Number')?.value ?? '').trim();
@@ -3217,6 +3266,7 @@ doc.text(
       'Course Name': courseName,
       'Course_Name': courseName,
       'Programme': courseName || 'PTE Academic Training',
+      'Program': courseName || 'PTE Academic Training',
       'Roll Number': rollNo,
       'Roll_No': rollNo,
       'CRM ID': rollNo || String(studentIdVal),
@@ -3226,7 +3276,7 @@ doc.text(
       'Admission_Number': rollNo || String(studentIdVal),
       'Course Duration': durationText,
       'Duration': sessionDurationStr || durationText,
-      'Training Duration': sessionDurationStr,
+      'Training Duration': sessionDurationStr || durationText || '20 Live Sessions',
       'Session Duration': sessionDurationStr,
       'Training Mode': trainingMode,
       'Training_Mode': trainingMode,

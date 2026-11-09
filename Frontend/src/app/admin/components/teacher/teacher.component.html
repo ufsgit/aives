@@ -371,38 +371,35 @@
                   </button>
                   }
                 </div>
-                <div class="editable-dial-example flex flex-col gap-4 p-4" style="display: none;">
+                <div class="editable-dial-example grid grid-cols-2 gap-4 p-3 bg-gray-50 rounded-lg my-3 border border-gray-200">
                   <!-- Start Time Input -->
                   <div class="relative">
-                    <label for="start-time" class="block text-sm font-medium text-gray-700 mb-2">
-                      Start Time
+                    <label for="start-time" class="block text-xs font-medium text-gray-700 mb-1">
+                      Start Time <span class="text-red-500">*</span>
                     </label>
                     <input id="start-time" placeholder="Start Time" formControlName="start_time" aria-label="Start Time"
                       [ngxTimepicker]="editableDial" readonly
-                      class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400" />
+                      class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 bg-white cursor-pointer" />
                     <ngx-material-timepicker #editableDial></ngx-material-timepicker>
                     @if (timeSlot.get('start_time')?.invalid && (timeSlot.get('start_time')?.touched || submitted)) {
-                    <p class="text-red-500 text-sm mt-1">Start time is required</p>
+                    <p class="text-red-500 text-xs mt-1">Start time is required</p>
                     }
                   </div>
 
                   <!-- End Time Input -->
                   <div class="relative">
-                    <label for="end-time" class="block text-sm font-medium text-gray-700 mb-2">
-                      End Time
+                    <label for="end-time" class="block text-xs font-medium text-gray-700 mb-1">
+                      End Time <span class="text-red-500">*</span>
                     </label>
                     <input id="end-time" placeholder="End Time" formControlName="end_time" aria-label="End Time"
                       [ngxTimepicker]="editableDial2" readonly
-                      class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400" />
+                      class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 bg-white cursor-pointer" />
                     <ngx-material-timepicker #editableDial2></ngx-material-timepicker>
                     @if (timeSlot.get('end_time')?.invalid && (timeSlot.get('end_time')?.touched || submitted)) {
-                    <p class="text-red-500 text-sm mt-1">End time is required</p>
+                    <p class="text-red-500 text-xs mt-1">End time is required</p>
                     }
                   </div>
                 </div>
-
-
-
 
                 <!-- Live Class Toggle -->
                 <div class="mb-4" style="display: none;">
@@ -433,8 +430,9 @@
               </div>
 
               }
-              <button type="button" (click)="addTimeSlot(courseIndex)" class="text-green-500 hover:text-green-700"
-                [disabled]="courseGroup.get('Delete_Status')?.value === 1" style="display: none;">
+              <button type="button" (click)="addTimeSlot(courseIndex)" 
+                class="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-md transition-colors cursor-pointer border border-blue-200"
+                [disabled]="courseGroup.get('Delete_Status')?.value === 1">
                 + Add Time Slot
               </button>
             </div>

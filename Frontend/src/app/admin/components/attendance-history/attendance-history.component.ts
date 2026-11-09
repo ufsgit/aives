@@ -77,6 +77,10 @@ export class AttendanceHistoryComponent implements OnInit {
   historyList: any[] = [];
   isLoadingHistory: boolean = false;
 
+  staffId = parseInt(localStorage.getItem('User_Id') || localStorage.getItem('User_ID') || '0');
+  userType = localStorage.getItem('User_Type');
+  isAdmin: boolean = false;
+
   // Graph Modal Properties
   showAttendanceGraphModal: boolean = false;
   isLoadingGraphData: boolean = false;
@@ -157,8 +161,9 @@ export class AttendanceHistoryComponent implements OnInit {
 
     const fromDateStr = this.fromDate.value ? new Date(this.fromDate.value).toISOString().split('T')[0] : '';
     const toDateStr = this.toDate.value ? new Date(this.toDate.value).toISOString().split('T')[0] : '';
+    const targetStaffId = this.isAdmin ? 0 : this.staffId;
 
-    this.attendanceService.getAttendanceHistory(courseId, batchId, fromDateStr, toDateStr, 1, 500).subscribe({
+    this.attendanceService.getAttendanceHistory(courseId, batchId, fromDateStr, toDateStr, 1, 500, targetStaffId).subscribe({
       next: (res: any) => {
         const history = res?.data || [];
         let totalSessions = history.length;
@@ -226,14 +231,18 @@ export class AttendanceHistoryComponent implements OnInit {
 
 
   ngOnInit() {
+    this.staffId = parseInt(localStorage.getItem('User_Id') || localStorage.getItem('User_ID') || '0');
+    const userEmail = String(localStorage.getItem('Email') || '').toLowerCase();
+    this.isAdmin = this.staffId === 1 || userEmail === 'admin_user@g.com' || userEmail === 'cs.mgr@testprepinenglish.com';
     this.loadCourses();
     this.fetchHistory();
   }
 
   loadCourses() {
-    this.courseService.get_course_names().subscribe({
+    const targetStaffId = this.isAdmin ? 0 : this.staffId;
+    this.attendanceService.getAttendanceCourses(targetStaffId).subscribe({
       next: (res: any) => {
-        this.courseList = res?.[0] || [];
+        this.courseList = res?.data || (Array.isArray(res) ? res : res?.[0]) || [];
       },
       error: (err) => console.error('Error loading courses', err)
     });
@@ -246,9 +255,10 @@ export class AttendanceHistoryComponent implements OnInit {
     );
 
     if (selectedCourseObj) {
-      this.courseService.get_course_Batches(selectedCourseObj.Course_ID).subscribe({
+      const targetStaffId = this.isAdmin ? 0 : this.staffId;
+      this.attendanceService.getAttendanceBatches(selectedCourseObj.Course_ID, targetStaffId).subscribe({
         next: (res: any) => {
-          this.batchList = res || [];
+          this.batchList = res?.data || (Array.isArray(res) ? res : []) || [];
           this.selectedBatch.setValue('');
           this.fetchHistory();
         },
@@ -279,8 +289,9 @@ export class AttendanceHistoryComponent implements OnInit {
 
     const fromDateStr = this.fromDate.value ? new Date(this.fromDate.value).toISOString().split('T')[0] : '';
     const toDateStr = this.toDate.value ? new Date(this.toDate.value).toISOString().split('T')[0] : '';
+    const targetStaffId = this.isAdmin ? 0 : this.staffId;
 
-    this.attendanceService.getAttendanceHistory(courseId, batchId, fromDateStr, toDateStr, this.currentPage, this.pageSize).subscribe({
+    this.attendanceService.getAttendanceHistory(courseId, batchId, fromDateStr, toDateStr, this.currentPage, this.pageSize, targetStaffId).subscribe({
       next: (res: any) => {
         if (res.success && res.data) {
           this.historyList = res.data;
@@ -332,12 +343,14 @@ export class AttendanceHistoryComponent implements OnInit {
     this.isLoadingHistory = true;
     // record.Attendance_Date is now a YYYY-MM-DD string from the DB
     const dateStr = record.Attendance_Date;
+    const targetStaffId = this.isAdmin ? 0 : this.staffId;
     
-    // Use the new dedicated session details API
+    // Use the dedicated session details API with RBAC support
     this.attendanceService.getAttendanceDetailsBySession(
       record.Course_ID || 0,
       record.Batch_ID || 0,
-      dateStr
+      dateStr,
+      targetStaffId
     ).subscribe({
       next: (res: any) => {
         this.isLoadingHistory = false;
@@ -411,10 +424,12 @@ export class AttendanceHistoryComponent implements OnInit {
     }).then((result) => {
       if (result.isConfirmed) {
         this.isLoadingHistory = true;
+        const targetStaffId = this.isAdmin ? 0 : this.staffId;
         this.attendanceService.deleteAttendance(
           record.Course_ID || 0,
           record.Batch_ID || 0,
-          dateStr
+          dateStr,
+          targetStaffId
         ).subscribe({
           next: (res: any) => {
             this.isLoadingHistory = false;

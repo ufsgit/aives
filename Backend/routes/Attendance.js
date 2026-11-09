@@ -7,12 +7,174 @@ const db = require('../config/dbconnection');
 const emailHelper = require('../helpers/email-helper');
 const emailLog = require('../models/email_log');
 
+// Helper to check if a user is an admin
+async function checkIsAdmin(userId, userTypeId, userEmail) {
+    if (parseInt(userId) === 1) return true;
+    if (userEmail && (userEmail.toLowerCase() === 'admin_user@g.com' || userEmail.toLowerCase() === 'cs.mgr@testprepinenglish.com')) return true;
+    if (userId) {
+        try {
+            const [rows] = await db.promise().query('SELECT User_ID, User_Type_Id, Email FROM users WHERE User_ID = ?', [userId]);
+            if (rows && rows.length > 0) {
+                const u = rows[0];
+                if (u.User_ID === 1 || (u.Email && (u.Email.toLowerCase() === 'admin_user@g.com' || u.Email.toLowerCase() === 'cs.mgr@testprepinenglish.com'))) {
+                    return true;
+                }
+            }
+        } catch (err) {
+            console.error('[checkIsAdmin] Error checking admin status:', err.message);
+        }
+    }
+    return false;
+}
+
+// Helper to get all courses assigned to a staff member
+async function getStaffAssignedCourses(staffId) {
+    if (!staffId) return [];
+    try {
+        const [rows] = await db.promise().query(
+            `SELECT DISTINCT c.Course_ID, c.Course_Name
+             FROM course_teacher ct
+             JOIN course c ON ct.Course_ID = c.Course_ID
+             WHERE ct.Teacher_ID = ? 
+               AND IFNULL(ct.Delete_Status, 0) = 0 
+               AND IFNULL(c.Delete_Status, 0) = 0
+             ORDER BY c.Course_Name ASC`,
+            [staffId]
+        );
+        return rows || [];
+    } catch (err) {
+        console.error('[getStaffAssignedCourses] Error:', err.message);
+        return [];
+    }
+}
+
+// Helper to get assigned course IDs for a staff member
+async function getStaffAssignedCourseIds(staffId) {
+    const courses = await getStaffAssignedCourses(staffId);
+    return courses.map(c => c.Course_ID);
+}
+
+// Helper to get batches assigned to a staff member for a specific course
+async function getStaffAssignedBatches(staffId, courseId) {
+    if (!staffId || !courseId) return [];
+    try {
+        // 1. Check if specific batches are assigned in teacher_time_slot
+        const [batchRows] = await db.promise().query(
+            `SELECT DISTINCT cb.Batch_ID, cb.Batch_Name, cb.Course_ID, cb.Start_Date, cb.End_Date
+             FROM teacher_time_slot tts
+             JOIN course_teacher ct ON tts.CourseTeacher_ID = ct.CourseTeacher_ID
+             JOIN course_batch cb ON tts.batch_id = cb.Batch_ID
+             WHERE ct.Teacher_ID = ? 
+               AND ct.Course_ID = ?
+               AND IFNULL(tts.Delete_Status, 0) = 0
+               AND IFNULL(ct.Delete_Status, 0) = 0
+               AND IFNULL(cb.Delete_Status, 0) = 0
+             ORDER BY cb.Batch_Name ASC`,
+            [staffId, courseId]
+        );
+        if (batchRows && batchRows.length > 0) {
+            return batchRows;
+        }
+
+        // 2. Fallback: if assigned to the course in course_teacher, allow all active batches of that course
+        const [courseCheck] = await db.promise().query(
+            `SELECT 1 FROM course_teacher WHERE Teacher_ID = ? AND Course_ID = ? AND IFNULL(Delete_Status, 0) = 0 LIMIT 1`,
+            [staffId, courseId]
+        );
+        if (courseCheck && courseCheck.length > 0) {
+            const [allBatches] = await db.promise().query(
+                `SELECT Batch_ID, Batch_Name, Course_ID, Start_Date, End_Date
+                 FROM course_batch
+                 WHERE Course_ID = ? AND IFNULL(Delete_Status, 0) = 0
+                 ORDER BY Batch_Name ASC`,
+                [courseId]
+            );
+            return allBatches || [];
+        }
+        return [];
+    } catch (err) {
+        console.error('[getStaffAssignedBatches] Error:', err.message);
+        return [];
+    }
+}
+
+router.get('/Get_Attendance_Courses', async (req, res) => {
+    try {
+        const queryStaffId = parseInt(req.query.staffId) || 0;
+        const currentUserId = req.userId || queryStaffId;
+        const isAdmin = await checkIsAdmin(currentUserId, req.userTypeId, req.userEmail);
+
+        if (isAdmin && !queryStaffId) {
+            const [allCourses] = await db.promise().query(
+                `SELECT Course_ID, Course_Name 
+                 FROM course 
+                 WHERE Delete_Status = 0 
+                 ORDER BY Course_Name ASC`
+            );
+            return res.json({ success: true, data: allCourses || [] });
+        }
+
+        const targetStaffId = queryStaffId > 0 ? queryStaffId : currentUserId;
+        const assignedCourses = await getStaffAssignedCourses(targetStaffId);
+        return res.json({ success: true, data: assignedCourses || [] });
+    } catch (error) {
+        console.error('Get_Attendance_Courses Error:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch attendance courses', error: error.message });
+    }
+});
+
+router.get('/Get_Attendance_Batches', async (req, res) => {
+    try {
+        const courseId = parseInt(req.query.courseId) || 0;
+        const queryStaffId = parseInt(req.query.staffId) || 0;
+        const currentUserId = req.userId || queryStaffId;
+
+        if (!courseId) {
+            return res.json({ success: true, data: [] });
+        }
+
+        const isAdmin = await checkIsAdmin(currentUserId, req.userTypeId, req.userEmail);
+
+        if (isAdmin && !queryStaffId) {
+            const [batches] = await db.promise().query(
+                `SELECT Batch_ID, Batch_Name, Course_ID, Start_Date, End_Date 
+                 FROM course_batch 
+                 WHERE Course_ID = ? AND Delete_Status = 0 
+                 ORDER BY Batch_Name ASC`,
+                [courseId]
+            );
+            return res.json({ success: true, data: batches || [] });
+        }
+
+        const targetStaffId = queryStaffId > 0 ? queryStaffId : currentUserId;
+        const batches = await getStaffAssignedBatches(targetStaffId, courseId);
+        return res.json({ success: true, data: batches || [] });
+    } catch (error) {
+        console.error('Get_Attendance_Batches Error:', error);
+        res.status(500).json({ success: false, message: 'Failed to fetch attendance batches', error: error.message });
+    }
+});
+
 router.post('/Save_Attendance', async (req, res) => {
     try {
         const { attendanceData, markedBy } = req.body;
 
-        if (!attendanceData || !Array.isArray(attendanceData)) {
+        if (!attendanceData || !Array.isArray(attendanceData) || attendanceData.length === 0) {
             return res.status(400).json({ success: false, message: 'Invalid attendance data.' });
+        }
+
+        const effectiveUserId = req.userId || markedBy || 0;
+        const isAdmin = await checkIsAdmin(effectiveUserId, req.userTypeId, req.userEmail);
+
+        if (!isAdmin) {
+            const assignedCourseIds = await getStaffAssignedCourseIds(effectiveUserId);
+            const targetCourseId = parseInt(attendanceData[0]?.Course_ID) || 0;
+            if (!targetCourseId || !assignedCourseIds.includes(targetCourseId)) {
+                return res.status(403).json({ 
+                    success: false, 
+                    message: 'Access denied: You are only allowed to mark attendance for courses assigned to you.' 
+                });
+            }
         }
 
         // 1. Save to Database
@@ -317,15 +479,24 @@ router.post('/Save_Attendance', async (req, res) => {
 
 router.get('/Get_Attendance_History', async (req, res) => {
     try {
-        const { courseId, batchId, fromDate, toDate, page, pageSize } = req.query;
+        const { courseId, batchId, fromDate, toDate, page, pageSize, staffId: queryStaffId } = req.query;
+        const currentUserId = req.userId || parseInt(queryStaffId) || 0;
+        const isAdmin = await checkIsAdmin(currentUserId, req.userTypeId, req.userEmail);
+
+        let allowedCourseIds = null;
+        if (!isAdmin) {
+            allowedCourseIds = await getStaffAssignedCourseIds(currentUserId);
+        }
+
         const results = await Attendance.Get_Attendance_History(
             parseInt(courseId) || 0,
             parseInt(batchId) || 0,
             fromDate || '',
             toDate || '',
-            req.userId || 0,
+            currentUserId,
             parseInt(page) || 1,
-            parseInt(pageSize) || 10
+            parseInt(pageSize) || 10,
+            allowedCourseIds
         );
         res.json({ 
             success: true, 
@@ -341,14 +512,27 @@ router.get('/Get_Attendance_History', async (req, res) => {
 
 router.get('/Get_Attendance_Summary_Report', async (req, res) => {
     try {
-        const { studentId, courseId, batchId, fromDate, toDate, teacherId, status } = req.query;
+        const { studentId, courseId, batchId, fromDate, toDate, teacherId, status, staffId: queryStaffId } = req.query;
+        const currentUserId = req.userId || parseInt(queryStaffId) || parseInt(teacherId) || 0;
+        const isAdmin = await checkIsAdmin(currentUserId, req.userTypeId, req.userEmail);
+        let effCourseId = parseInt(courseId) || 0;
+        let effTeacherId = parseInt(teacherId) || 0;
+
+        if (!isAdmin) {
+            effTeacherId = currentUserId;
+            const allowedCourseIds = await getStaffAssignedCourseIds(currentUserId);
+            if (effCourseId > 0 && !allowedCourseIds.includes(effCourseId)) {
+                return res.status(403).json({ success: false, message: 'Access denied: You are not authorized for this course.' });
+            }
+        }
+
         const results = await Attendance.Get_Attendance_Summary_Report(
             parseInt(studentId) || 0,
-            parseInt(courseId) || 0,
+            effCourseId,
             parseInt(batchId) || 0,
             fromDate || '',
             toDate || '',
-            parseInt(teacherId) || 0,
+            effTeacherId,
             status !== undefined ? parseInt(status) : -1
         );
         res.json({ 
@@ -364,8 +548,19 @@ router.get('/Get_Attendance_Summary_Report', async (req, res) => {
 
 router.post('/Delete_Attendance', async (req, res) => {
     try {
-        const { courseId, batchId, date } = req.body;
-        await Attendance.Delete_Attendance(courseId, batchId, date);
+        const { courseId, batchId, date, staffId: bodyStaffId } = req.body;
+        const currentUserId = req.userId || parseInt(bodyStaffId) || 0;
+        const isAdmin = await checkIsAdmin(currentUserId, req.userTypeId, req.userEmail);
+        const reqCourseId = parseInt(courseId) || 0;
+
+        if (!isAdmin) {
+            const allowedCourseIds = await getStaffAssignedCourseIds(currentUserId);
+            if (!allowedCourseIds.includes(reqCourseId)) {
+                return res.status(403).json({ success: false, message: 'Access denied: You are not authorized to delete attendance for this course.' });
+            }
+        }
+
+        await Attendance.Delete_Attendance(reqCourseId, batchId, date);
         res.json({ success: true, message: 'Attendance record deleted successfully.' });
     } catch (error) {
         console.error('Delete_Attendance Error:', error);
@@ -375,9 +570,20 @@ router.post('/Delete_Attendance', async (req, res) => {
 
 router.get('/Get_Attendance_Details_By_Session', async (req, res) => {
     try {
-        const { courseId, batchId, date } = req.query;
+        const { courseId, batchId, date, staffId: queryStaffId } = req.query;
+        const currentUserId = req.userId || parseInt(queryStaffId) || 0;
+        const isAdmin = await checkIsAdmin(currentUserId, req.userTypeId, req.userEmail);
+        const reqCourseId = parseInt(courseId) || 0;
+
+        if (!isAdmin) {
+            const allowedCourseIds = await getStaffAssignedCourseIds(currentUserId);
+            if (!allowedCourseIds.includes(reqCourseId)) {
+                return res.status(403).json({ success: false, message: 'Access denied: You are not authorized to view attendance for this course.' });
+            }
+        }
+
         const results = await Attendance.Get_Attendance_Details_By_Session(
-            parseInt(courseId) || 0,
+            reqCourseId,
             parseInt(batchId) || 0,
             date || ''
         );

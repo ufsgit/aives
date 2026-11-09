@@ -470,7 +470,10 @@ Aives Australia's TESTPREP
                 .replace(/\[Student[\s_]*ID\]/gi, admissionNo)
                 .replace(/\[CRM[\s_]*ID\]/gi, admissionNo)
                 .replace(/\[Programme\]/gi, courseName)
+                .replace(/\[Program\]/gi, courseName)
                 .replace(/\[Course[\s_]*Name\]/gi, courseName)
+                .replace(/Programme:\s*PTE Academic Training/gi, `Programme: ${courseName}`)
+                .replace(/Programme:\tPTE Academic Training/gi, `Programme:\t${courseName}`)
                 .replace(/\[Duration\]/gi, dynamicDuration)
                 .replace(/\[Online\s*[\/\\]\s*Classroom\]/gi, trainingMode)
                 .replace(/\[Training[\s_]*Mode\]/gi, trainingMode)
@@ -482,6 +485,7 @@ Aives Australia's TESTPREP
                 .replace(/\[Roll[\s_]*(?:Number|No)\]/gi, admissionNo)
                 .replace(/\[Start[\s_]*Time[\s\u2013\-—]+End[\s_]*Time\]/gi, dynamicTrainingTime)
                 .replace(/\[Daily[\s_]*Training[\s_]*Time\]/gi, dynamicTrainingTime)
+                .replace(/\[Time[\s_]*Zone\]/gi, 'IST')
                 .replace(/\[(?:Session|Training|Course)[\s_]*Duration\]/gi, dynamicDuration);
         }
         if (subject) {
@@ -496,7 +500,10 @@ Aives Australia's TESTPREP
                 .replace(/\[Student[\s_]*ID\]/gi, admissionNo)
                 .replace(/\[CRM[\s_]*ID\]/gi, admissionNo)
                 .replace(/\[Programme\]/gi, courseName)
+                .replace(/\[Program\]/gi, courseName)
                 .replace(/\[Course[\s_]*Name\]/gi, courseName)
+                .replace(/Programme:\s*PTE Academic Training/gi, `Programme: ${courseName}`)
+                .replace(/Programme:\tPTE Academic Training/gi, `Programme:\t${courseName}`)
                 .replace(/\[Duration\]/gi, dynamicDuration)
                 .replace(/\[Online\s*[\/\\]\s*Classroom\]/gi, trainingMode)
                 .replace(/\[Training[\s_]*Mode\]/gi, trainingMode)
@@ -508,6 +515,7 @@ Aives Australia's TESTPREP
                 .replace(/\[Roll[\s_]*(?:Number|No)\]/gi, admissionNo)
                 .replace(/\[Start[\s_]*Time[\s\u2013\-—]+End[\s_]*Time\]/gi, dynamicTrainingTime)
                 .replace(/\[Daily[\s_]*Training[\s_]*Time\]/gi, dynamicTrainingTime)
+                .replace(/\[Time[\s_]*Zone\]/gi, 'IST')
                 .replace(/\[(?:Session|Training|Course)[\s_]*Duration\]/gi, dynamicDuration);
         }
 

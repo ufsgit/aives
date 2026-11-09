@@ -82,6 +82,20 @@
  });
  router.get('/get_course_names/', async(req, res, next) => {
      try {
+         const staffId = parseInt(req.query.staffId || req.query.teacherId) || 0;
+         if (staffId > 0) {
+             const [rows] = await db.promise().query(
+                 `SELECT DISTINCT c.Course_ID, c.Course_Name
+                  FROM course_teacher ct
+                  JOIN course c ON ct.Course_ID = c.Course_ID
+                  WHERE ct.Teacher_ID = ? 
+                    AND IFNULL(ct.Delete_Status, 0) = 0 
+                    AND IFNULL(c.Delete_Status, 0) = 0
+                  ORDER BY c.Course_Name ASC`,
+                 [staffId]
+             );
+             return res.json([rows]);
+         }
          const rows = await course.get_course_names();
          res.json(rows);
      } catch (e) {
@@ -327,12 +341,28 @@ router.get('/Get_Teachers_By_Course_And_Batch', async (req, res, next) => {
         const { Course_Id, Batch_Id } = req.query;
         const db = require('../config/dbconnection');
         const query = `
-            SELECT u.User_ID as Teacher_ID, u.User_ID, u.Email, u.PhoneNumber, CONCAT(u.First_Name, ' ', u.Last_Name) as Teacher_Name, tts.Slot_Id
+            SELECT u.User_ID as Teacher_ID, u.User_ID, u.Email, u.PhoneNumber, 
+                   CONCAT(u.First_Name, ' ', u.Last_Name) as Teacher_Name, 
+                   tts.Slot_Id,
+                   TIME_FORMAT(tts.start_time, '%h:%i %p') AS start_time,
+                   TIME_FORMAT(tts.end_time, '%h:%i %p') AS end_time,
+                   CASE 
+                       WHEN tts.Slot_Id IS NULL THEN 'Available'
+                       WHEN COUNT(CASE WHEN s.Student_ID IS NOT NULL AND (sc.Expiry_Date IS NULL OR sc.Expiry_Date >= CURDATE()) THEN 1 END) > 0 THEN 'Busy'
+                       ELSE 'Available'
+                   END AS Availability_Status
             FROM course_teacher ct
             JOIN users u ON ct.Teacher_ID = u.User_ID
-            LEFT JOIN teacher_time_slot tts ON tts.CourseTeacher_ID = ct.CourseTeacher_ID AND tts.Delete_Status = 0 AND (tts.batch_id = ? OR tts.batch_id IS NULL)
-            WHERE ct.Course_ID = ? AND ct.Delete_Status = 0
-            GROUP BY u.User_ID, tts.Slot_Id
+            LEFT JOIN teacher_time_slot tts ON tts.CourseTeacher_ID = ct.CourseTeacher_ID 
+                 AND tts.Delete_Status = 0 
+                 AND (tts.batch_id = ? OR tts.batch_id IS NULL)
+            LEFT JOIN student_course sc ON tts.Slot_Id = sc.Slot_Id 
+                 AND sc.Course_ID = ct.Course_ID 
+                 AND (sc.Delete_Status = 0 OR sc.Delete_Status IS NULL)
+            LEFT JOIN student s ON sc.Student_ID = s.Student_ID 
+                 AND (s.Delete_Status = 0 OR s.Delete_Status IS NULL)
+            WHERE ct.Course_ID = ? AND ct.Delete_Status = 0 AND IFNULL(u.Delete_Status, 0) = 0
+            GROUP BY u.User_ID, tts.Slot_Id, tts.start_time, tts.end_time
         `;
         const [rows] = await db.promise().query(query, [Batch_Id, Course_Id]);
         res.json(rows);
@@ -360,6 +390,26 @@ router.get('/Get_Teachers_By_Course_And_Batch', async (req, res, next) => {
 });
  router.get('/get_course_Batches/:course_Id_?', async (req, res, next) => {
     try {
+        const courseId = parseInt(req.params.course_Id_) || 0;
+        const staffId = parseInt(req.query.staffId || req.query.teacherId) || 0;
+        if (courseId > 0 && staffId > 0) {
+            const [batchRows] = await db.promise().query(
+                `SELECT DISTINCT cb.*, cb.Batch_Name, cb.Course_ID
+                 FROM teacher_time_slot tts
+                 JOIN course_teacher ct ON tts.CourseTeacher_ID = ct.CourseTeacher_ID
+                 JOIN course_batch cb ON tts.batch_id = cb.Batch_ID
+                 WHERE ct.Teacher_ID = ? 
+                   AND ct.Course_ID = ?
+                   AND IFNULL(tts.Delete_Status, 0) = 0
+                   AND IFNULL(ct.Delete_Status, 0) = 0
+                   AND IFNULL(cb.Delete_Status, 0) = 0
+                 ORDER BY cb.Batch_Name ASC`,
+                [staffId, courseId]
+            );
+            if (batchRows && batchRows.length > 0) {
+                return res.json(batchRows);
+            }
+        }
         const rows = await course.get_course_Batches(req.params.course_Id_);
         res.json(rows);
     }
