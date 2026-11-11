@@ -964,7 +964,7 @@ Aives Australia's TESTPREP
             receiptSubject,
             receiptHtmlBody,
             officialEmail,
-            "Aives Australia's TESTPREP",
+            "TestPerp Aives",
             receiptAttachments.length > 0 ? receiptAttachments : null
         );
 
@@ -1026,7 +1026,7 @@ Aives Australia's TESTPREP
 
         // The Assigned Staff Email is delivered directly to the REGISTERED STUDENT'S EMAIL
         console.log(`[REGISTRATION EMAIL] Sending Assigned Staff Email (2 of 2) to Student: ${studentEmail} (Trainer: ${trainerName})...`);
-        const sendStaffRes = await emailHelper.sendEmail(studentEmail, staffSubject, staffHtmlBody, officialEmail, "Aives Australia's TESTPREP");
+        const sendStaffRes = await emailHelper.sendEmail(studentEmail, staffSubject, staffHtmlBody, officialEmail, "TestPerp Aives");
 
         await emailLog.Save_Email_Log(
             cleanStudentId,

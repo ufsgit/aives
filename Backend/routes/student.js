@@ -20,7 +20,7 @@ router.post('/Send_Bulk_Email', async (req, res, next) => {
     try {
         const { students, subject, body, templateId, Sender_Email, Sender_Name } = req.body;
         const effectiveSenderEmail = Sender_Email || req.userEmail || null;
-        const effectiveSenderName = Sender_Name || req.userName || null;
+        const effectiveSenderName = "TestPerp Aives";
         console.log('Send_Bulk_Email received for', students?.length, 'students', 'Sender:', effectiveSenderEmail);
 
         if (!students || students.length === 0) {

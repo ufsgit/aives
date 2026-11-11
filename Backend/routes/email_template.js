@@ -105,7 +105,7 @@ router.post('/Send_Email_With_Template', async (req, res) => {
     try {
         const { Template_ID, To_Email, Placeholders, Sender_Email, Sender_Name, Attachments, Student_ID } = req.body;
         const effectiveSenderEmail = Sender_Email || req.userEmail || null;
-        const effectiveSenderName = Sender_Name || req.userName || null;
+        const effectiveSenderName = "TestPerp Aives";
         console.log('Send_Email_With_Template request:', { Template_ID, To_Email, Placeholders, effectiveSenderEmail, effectiveSenderName, hasAttachments: !!(Attachments && Attachments.length), Student_ID });
         
         // Synchronous In-Memory Lock to prevent concurrent duplicate API triggers

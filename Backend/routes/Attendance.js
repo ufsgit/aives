@@ -433,7 +433,7 @@ router.post('/Save_Attendance', async (req, res) => {
                         subject,
                         htmlBody,
                         req.userEmail || null,
-                        req.userName || null
+                        "TestPerp Aives"
                     );
 
                     let messageId = null;

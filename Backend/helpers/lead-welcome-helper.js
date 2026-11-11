@@ -214,7 +214,7 @@ async function sendLeadWelcomeEmail({ studentId, name, email, phone, req = null,
             cleanName = 'Student';
         }
         let effectiveSenderEmail = senderEmail || (req && (req.userEmail || (req.body && req.body.Sender_Email))) || null;
-        let effectiveSenderName = senderName || (req && (req.userName || (req.body && req.body.Sender_Name))) || null;
+        let effectiveSenderName = "TestPerp Aives";
 
         if (effectiveSenderEmail && (effectiveSenderEmail.toLowerCase() === 'admin_user@g.com' || effectiveSenderEmail.toLowerCase() === 'admin_user')) {
             effectiveSenderEmail = 'cs.mgr@testprepinenglish.com';

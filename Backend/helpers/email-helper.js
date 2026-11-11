@@ -37,6 +37,9 @@ function getBrevoConfig(fromEmail = null, fromName = null) {
                        rawFrom === 'trainer2@testprepinenglish.com' ||
                        rawFrom === configuredTrainer2Email;
 
+    // Sender Name: Always display as "TestPerp Aives" consistently across all outgoing emails
+    const globalSenderName = (process.env.BREVO_SENDER_NAME || 'TestPerp Aives').trim().replace(/^['\"]|['\"]$/g, '') || 'TestPerp Aives';
+
     if (isTrainer2) {
         const apiKey = (
             process.env.BREVO_API_KEY_TRAINER2 ||
@@ -46,14 +49,11 @@ function getBrevoConfig(fromEmail = null, fromName = null) {
         ).trim().replace(/^['\"]|['\"]$/g, '');
 
         const senderEmail = (process.env.BREVO_SENDER_EMAIL_TRAINER2 || 'ufsdev123@gmail.com').trim().replace(/^['\"]|['\"]$/g, '').toLowerCase();
-        const senderName = (fromName && String(fromName).trim()) 
-            ? String(fromName).trim() 
-            : (process.env.BREVO_SENDER_NAME_TRAINER2 || 'Trainer 2').trim().replace(/^['\"]|['\"]$/g, '');
 
         return {
             apiKey: apiKey || (process.env.BREVO_API_KEY || '').trim().replace(/^['\"]|['\"]$/g, ''),
             senderEmail: senderEmail,
-            senderName: senderName,
+            senderName: globalSenderName,
             accountType: 'TRAINER2_DEDICATED',
             accountEmail: 'ufsdev123@gmail.com'
         };
@@ -61,18 +61,16 @@ function getBrevoConfig(fromEmail = null, fromName = null) {
 
     // Default / Main Brevo Account (Admin cs.mgr@testprepinenglish.com, Trainer 1 trainer1@testprepinenglish.com, etc.)
     const apiKey = (process.env.BREVO_API_KEY || '').trim().replace(/^['\"]|['\"]$/g, '');
-    const defaultSenderName = (process.env.BREVO_SENDER_NAME || 'Test Prep').trim().replace(/^['\"]|['\"]$/g, '');
 
     // Verified senders in the Main Brevo Account: trainer1@testprepinenglish.com and cs.mgr@testprepinenglish.com
     const isTrainer1 = rawFrom === 'trainer1@testprepinenglish.com';
     const isMainAdmin = rawFrom === defaultSenderEmail;
     const senderEmail = isTrainer1 ? 'trainer1@testprepinenglish.com' : defaultSenderEmail;
-    const senderName = (fromName && String(fromName).trim()) ? String(fromName).trim() : defaultSenderName;
 
     return {
         apiKey,
         senderEmail: senderEmail || defaultSenderEmail,
-        senderName: senderName,
+        senderName: globalSenderName,
         accountType: 'MAIN_ACCOUNT',
         accountEmail: defaultSenderEmail
     };
@@ -260,7 +258,7 @@ const sendEmail = async (to, subject, html, fromEmail = null, fromName = null, a
         } else {
             emailData.replyTo = {
                 email: normalizedReplyToEmail,
-                name: fromName || finalSenderName
+                name: finalSenderName
             };
         }
 
