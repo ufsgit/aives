@@ -2075,6 +2075,7 @@ doc.text(
     // If fee is already paid (or just paid), pass empty installments and fees IDs to avoid soft-deleting paid records
     const studentPayload = {
       ...this.student_Form.value,
+      Currency: this.feesForm?.get('Currency')?.value || 'AUD',
       isRegistering: isRegisteringFlag,
       isRegistered: isRegisteringFlag,
       Is_Registered: isRegisteringFlag,
@@ -2180,6 +2181,7 @@ doc.text(
                 ...studentPayload,
                 Student_ID: savedStudentId,
                 Roll_No: rollNumber,
+                Currency: this.feesForm?.get('Currency')?.value || 'AUD',
                 Course_Name: pendingFee.Course_Name || this.allCourse.find(c => c.Course_ID === courseId)?.Course_Name || ''
               };
 
@@ -2733,12 +2735,13 @@ doc.text(
       const course = this.allCourse.find((c: any) => Number(c.Course_ID) === courseId);
       if (course?.Validity && Number(course.Validity) > 0) {
         const v = Number(course.Validity);
-        if (v >= 30) return `${Math.round(v / 30)} Month(s)`;
+        if (v >= 28) return `${Math.round(v / 30)} Month${Math.round(v / 30) > 1 ? 's' : ''}`;
         if (v === 1) return '1 Month';
+        if (v > 1 && v <= 12) return `${v} Months`;
         return `${v} Days`;
       }
     }
-    return '20 Live Sessions';
+    return '1 Month';
   }
 
   getSelectedTutorInfo(): any {
@@ -3038,7 +3041,7 @@ doc.text(
       body: [
         [{ content: 'Student Name:', fontStyle: 'bold' }, studentName, { content: 'Payment Date:', fontStyle: 'bold' }, formattedPaymentDate],
         [{ content: 'Phone Number:', fontStyle: 'bold' }, phone, { content: 'Course:', fontStyle: 'bold' }, course],
-        [{ content: 'Roll No:', fontStyle: 'bold' }, student?.Roll_No || '-', { content: '', fontStyle: 'bold' }, '']
+        [{ content: 'Roll No:', fontStyle: 'bold' }, student?.Roll_No || student?.Roll_No_Character || student?.RollNumber || student?.Student_ID || '-', { content: '', fontStyle: 'bold' }, '']
       ]
     });
 
@@ -3047,13 +3050,25 @@ doc.text(
     // Payment Breakdown Table
     let pAmount = Number(feeData?.Paid_Amount || 0);
     if (pAmount === 0) {
-      pAmount = Number(feeData?.tempPaidAmount || feeData?.Amount || feeData?.Total_Amount || 0);
+      pAmount = Number(
+        feeData?.tempPaidAmount ||
+        feeData?.Amount ||
+        feeData?.Total_Amount ||
+        feeData?.Total_FeeAmount ||
+        feeData?.Fee_Amount ||
+        student?.Total_FeeAmount ||
+        student?.Fee_Amount ||
+        student?.Total_Amount ||
+        this.feesForm?.get('Fee_Amount')?.value ||
+        this.feesForm?.get('Total_FeeAmount')?.value ||
+        0
+      );
     }
     const paidAmount = pAmount;
     const fineAmount = Number(feeData?.Fine_Amount || 0);
     const totalAmount = paidAmount + fineAmount;
 
-    const currencySymbol = this.getCurrencySymbol(feeData?.Currency || student?.Currency || this.feesForm?.get('Currency')?.value || 'INR', true);
+    const currencySymbol = this.getCurrencySymbol(feeData?.Currency || student?.Currency || this.feesForm?.get('Currency')?.value || 'AUD', true);
 
     const tableBody: any[][] = [
       ['Fee Amount', `${currencySymbol} ${paidAmount.toFixed(2)}`]
@@ -3122,29 +3137,65 @@ doc.text(
 
     let pAmount = Number(feeData?.Paid_Amount || 0);
     if (pAmount === 0) {
-      pAmount = Number(feeData?.tempPaidAmount || feeData?.Amount || feeData?.Total_Amount || 0);
+      pAmount = Number(
+        feeData?.tempPaidAmount ||
+        feeData?.Amount ||
+        feeData?.Total_Amount ||
+        feeData?.Total_FeeAmount ||
+        feeData?.Fee_Amount ||
+        student?.Total_FeeAmount ||
+        student?.Fee_Amount ||
+        student?.Total_Amount ||
+        this.feesForm?.get('Fee_Amount')?.value ||
+        this.feesForm?.get('Total_FeeAmount')?.value ||
+        0
+      );
     }
     const paidAmount = pAmount.toFixed(2);
     const transactionId = feeData?.Transaction_ID || feeData?.Transaction_Id || '-';
-    const currencySymbol = this.getCurrencySymbol(feeData?.Currency || student?.Currency || this.feesForm?.get('Currency')?.value || 'INR', true);
+    const currencySymbol = this.getCurrencySymbol(feeData?.Currency || student?.Currency || this.feesForm?.get('Currency')?.value || 'AUD', true);
 
     const today = new Date();
     const formattedToday = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
-    const admissionDateRaw = student?.Admission_Date || this.student_Form.get('Admission_Date')?.value;
-    let formattedStartDate = formattedToday;
+    
+    // 1. Enrolment Date: MUST be student.Admission_Date (as requested by user)
+    const admissionDateRaw = student?.Admission_Date || this.student_Form.get('Admission_Date')?.value || student?.Registered_On;
+    let formattedEnrolmentDate = formattedToday;
     if (admissionDateRaw) {
       const d = new Date(admissionDateRaw);
       if (!isNaN(d.getTime())) {
-        formattedStartDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-      }
-    } else if (this.batchDetails?.Commencing_Date) {
-      const d = new Date(this.batchDetails.Commencing_Date);
-      if (!isNaN(d.getTime())) {
-        formattedStartDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+        formattedEnrolmentDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
       }
     }
 
-    const durationText = student?.Course_Duration || (feeData?.DurationInMonths ? (typeof feeData.DurationInMonths === 'number' ? `${feeData.DurationInMonths} Month(s)` : feeData.DurationInMonths) : '1 Month');
+    // 2. Course Commencement / Course Start Date: MUST be Course / Batch Start Date (as requested by user)
+    let batchStartDateRaw = this.batchDetails?.Start_Date || this.batchDetails?.Commencing_Date;
+    if (!batchStartDateRaw && batchId > 0 && Array.isArray(this.batch_Data)) {
+      const matchedBatch = this.batch_Data.find((b: any) => Number(b.Batch_ID) === batchId);
+      if (matchedBatch) {
+        batchStartDateRaw = matchedBatch.Start_Date || matchedBatch.Commencing_Date;
+      }
+    }
+    let formattedCourseStartDate = '';
+    if (batchStartDateRaw) {
+      const bd = new Date(batchStartDateRaw);
+      if (!isNaN(bd.getTime())) {
+        formattedCourseStartDate = `${String(bd.getDate()).padStart(2, '0')}/${String(bd.getMonth() + 1).padStart(2, '0')}/${bd.getFullYear()}`;
+      }
+    }
+    if (!formattedCourseStartDate) {
+      formattedCourseStartDate = formattedEnrolmentDate;
+    }
+
+    let durationText = '';
+    if (student?.Course_Duration && typeof student.Course_Duration === 'string' && !/hour|minute/i.test(student.Course_Duration)) {
+      durationText = student.Course_Duration.trim();
+    } else if (typeof feeData?.DurationInMonths === 'number' && feeData.DurationInMonths > 0) {
+      durationText = `${feeData.DurationInMonths} Month${feeData.DurationInMonths > 1 ? 's' : ''}`;
+    }
+    if (!durationText) {
+      durationText = this.getBatchDurationStr() || '1 Month';
+    }
     const trainingMode = student?.Training_Mode || student?.Branch_Name || 'Online';
 
     const formatTime12 = (t: string) => {
@@ -3275,26 +3326,29 @@ doc.text(
       'Admission Number': rollNo || String(studentIdVal),
       'Admission_Number': rollNo || String(studentIdVal),
       'Course Duration': durationText,
-      'Duration': sessionDurationStr || durationText,
-      'Training Duration': sessionDurationStr || durationText || '20 Live Sessions',
+      'Course_Duration': durationText,
+      'Duration': durationText,
+      'Training Duration': durationText,
       'Session Duration': sessionDurationStr,
+      'Class Duration': sessionDurationStr,
       'Training Mode': trainingMode,
       'Training_Mode': trainingMode,
       'Online/Classroom': trainingMode,
       'Online / Classroom': trainingMode,
-      'Date': formattedStartDate,
-      'Enrolment Date': formattedStartDate,
-      'Enrolment_Date': formattedStartDate,
-      'Enrollment Date': formattedStartDate,
-      'Enrollment_Date': formattedStartDate,
-      'Registration Date': formattedStartDate,
-      'Start Date': formattedStartDate,
-      'Course Commencement': formattedStartDate,
+      'Date': formattedEnrolmentDate,
+      'Enrolment Date': formattedEnrolmentDate,
+      'Enrolment_Date': formattedEnrolmentDate,
+      'Enrollment Date': formattedEnrolmentDate,
+      'Enrollment_Date': formattedEnrolmentDate,
+      'Registration Date': formattedEnrolmentDate,
+      'Registration_Date': formattedEnrolmentDate,
+      'Start Date': formattedCourseStartDate,
+      'Course Commencement': formattedCourseStartDate,
       'Daily Training Time': batchTimeStr,
       'Start Time – End Time': batchTimeStr,
       'Start Time - End Time': batchTimeStr,
       'Time Zone': timeZoneStr,
-      'First Class Date': formattedStartDate,
+      'First Class Date': formattedCourseStartDate,
       'Time and Time Zone': `${batchTimeStr} (${timeZoneStr})`,
       'Trainer Name': staffName,
       'Assigned Trainer': staffName,

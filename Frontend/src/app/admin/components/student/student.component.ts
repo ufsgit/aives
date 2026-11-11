@@ -534,6 +534,7 @@ export class StudentComponent implements OnInit {
         this.student_Details.Roll_No = event[0].RollNumber;
       }
     }
+    this.currentPage = 1;
     this.Search_student(); // Refresh student list data in background without clearing current form
     // Stay on student creation page (do not set this.view = 'list' or call this.pageLoad())
   }
@@ -1081,6 +1082,7 @@ onCancelEdit(): void {
   }
 
   pageLoad() {
+    this.currentPage = 1;
     this.Clr_student();
     this.Clr_student_Course();
     ;

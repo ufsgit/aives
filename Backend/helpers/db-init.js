@@ -589,7 +589,7 @@ Aives Australia's TESTPREP
                             )
                         )
                     GROUP BY s.Student_ID
-                    ORDER BY s.Roll_No DESC
+                    ORDER BY s.Student_ID DESC
                     LIMIT page_size OFFSET offset_value;
                 END;
             `);

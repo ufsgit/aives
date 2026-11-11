@@ -97,7 +97,7 @@ router.get('/Test_Brevo_Connection', async (req, res) => {
 const emailLog = require('../models/email_log');
 const db = require('../config/dbconnection');
 const { buildLeadResponseBlock, getOfficialContactInfo } = require('../helpers/lead-welcome-helper');
-const { isRegistrationLocked } = require('../helpers/registration-email-helper');
+const { isRegistrationLocked, formatCourseDuration, calculateDurationString, formatTime12h } = require('../helpers/registration-email-helper');
 
 const templateSendLocks = new Map();
 
@@ -328,7 +328,18 @@ Aives Australia's TESTPREP
         let admissionNo = (Placeholders && (Placeholders['Student ID'] || Placeholders['CRM ID'] || Placeholders['CRM_ID'] || Placeholders['Admission Number'] || Placeholders['Roll Number'] || Placeholders['Roll_No'])) || '';
         let courseName = (Placeholders && (Placeholders['Programme'] || Placeholders['Course Name'] || Placeholders['Course_Name'])) || '';
         let dynamicTrainingTime = (Placeholders && (Placeholders['Daily Training Time'] || Placeholders['Start Time \u2013 End Time'] || Placeholders['Start Time - End Time'])) || '';
-        let dynamicDuration = (Placeholders && (Placeholders['Duration'] || Placeholders['Session Duration'] || Placeholders['Training Duration'] || Placeholders['Course Duration'])) || '';
+        
+        let incomingCourseDuration = (Placeholders && (Placeholders['Course Duration'] || Placeholders['Course_Duration'])) || '';
+        if (!incomingCourseDuration && Placeholders && Placeholders['Duration'] && !/hour|minute/i.test(String(Placeholders['Duration']))) {
+            incomingCourseDuration = Placeholders['Duration'];
+        }
+        let incomingSessionDuration = (Placeholders && (Placeholders['Session Duration'] || Placeholders['Class Duration'])) || '';
+        if (!incomingSessionDuration && Placeholders && Placeholders['Duration'] && /hour|minute/i.test(String(Placeholders['Duration']))) {
+            incomingSessionDuration = Placeholders['Duration'];
+        }
+
+        let dynamicDuration = incomingCourseDuration;
+        let dynamicSessionDuration = incomingSessionDuration;
         let trainingMode = (Placeholders && (Placeholders['Training Mode'] || Placeholders['Training_Mode'] || Placeholders['Online/Classroom'] || Placeholders['Online / Classroom'])) || '';
         let enrolmentDateFormatted = (Placeholders && (Placeholders['Enrolment Date'] || Placeholders['Enrollment Date'] || Placeholders['Registration Date'] || Placeholders['Date'])) || '';
 
@@ -359,7 +370,7 @@ Aives Australia's TESTPREP
                     }
 
                     if (!enrolmentDateFormatted) {
-                        const rawDate = sRow.Registered_On || sRow.Admission_Date;
+                        const rawDate = sRow.Admission_Date || sRow.Registered_On;
                         if (rawDate) {
                             const ed = new Date(rawDate);
                             if (!isNaN(ed.getTime())) {
@@ -372,9 +383,13 @@ Aives Australia's TESTPREP
 
             try {
                 const [scInfo] = await db.promise().query(
-                    `SELECT sc.Course_ID, sc.Enrollment_Date, c.Course_Name, tts.start_time, tts.end_time 
+                    `SELECT sc.Course_ID, sc.Batch_ID, sc.Enrollment_Date, sc.Expiry_Date, 
+                            c.Course_Name, c.Validity,
+                            cb.Start_Date, cb.End_Date,
+                            tts.start_time, tts.end_time 
                      FROM student_course sc 
                      LEFT JOIN course c ON sc.Course_ID = c.Course_ID
+                     LEFT JOIN course_batch cb ON sc.Batch_ID = cb.Batch_ID
                      LEFT JOIN teacher_time_slot tts ON sc.Slot_Id = tts.Slot_Id AND IFNULL(tts.Delete_Status, 0) = 0
                      WHERE sc.Student_ID = ? AND (sc.Delete_Status = 0 OR sc.Delete_Status IS NULL)
                      ORDER BY sc.StudentCourse_ID DESC LIMIT 1`,
@@ -388,11 +403,18 @@ Aives Australia's TESTPREP
                             enrolmentDateFormatted = `${String(ed.getDate()).padStart(2, '0')}/${String(ed.getMonth() + 1).padStart(2, '0')}/${ed.getFullYear()}`;
                         }
                     }
-                    if ((!dynamicTrainingTime || !dynamicDuration) && scInfo[0].start_time && scInfo[0].end_time) {
+                    if ((!dynamicTrainingTime || !dynamicSessionDuration) && scInfo[0].start_time && scInfo[0].end_time) {
                         const st = formatTime12h(scInfo[0].start_time);
                         const et = formatTime12h(scInfo[0].end_time);
                         if (!dynamicTrainingTime) dynamicTrainingTime = `${st} \u2013 ${et}`;
-                        if (!dynamicDuration) dynamicDuration = calculateDurationString(scInfo[0].start_time, scInfo[0].end_time);
+                        if (!dynamicSessionDuration) dynamicSessionDuration = calculateDurationString(scInfo[0].start_time, scInfo[0].end_time);
+                    }
+                    if (!dynamicDuration) {
+                        dynamicDuration = formatCourseDuration({
+                            validity: scInfo[0].Validity,
+                            startDate: scInfo[0].Start_Date || scInfo[0].Enrollment_Date,
+                            endDate: scInfo[0].End_Date || scInfo[0].Expiry_Date
+                        });
                     }
                 }
             } catch (e) {}
@@ -401,10 +423,31 @@ Aives Australia's TESTPREP
         if (!courseName) courseName = 'PTE Academic Training';
         if (!trainingMode) trainingMode = 'Online';
         if (!dynamicTrainingTime) dynamicTrainingTime = '10:00 AM \u2013 11:15 AM';
-        if (!dynamicDuration) dynamicDuration = '1 Hour 15 Minutes';
+        if (!dynamicSessionDuration) dynamicSessionDuration = '1 Hour 15 Minutes';
+        if (!dynamicDuration) dynamicDuration = '1 Month';
         if (!enrolmentDateFormatted) {
             const today = new Date();
             enrolmentDateFormatted = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+        }
+
+        let courseStartDateFormatted = '';
+        if (Placeholders && (Placeholders['Course Commencement'] || Placeholders['Start Date'] || Placeholders['First Class Date'])) {
+            courseStartDateFormatted = Placeholders['Course Commencement'] || Placeholders['Start Date'] || Placeholders['First Class Date'];
+        }
+        if (!courseStartDateFormatted && scInfo && scInfo.length > 0 && scInfo[0].Start_Date) {
+            const cd = new Date(scInfo[0].Start_Date);
+            if (!isNaN(cd.getTime())) {
+                courseStartDateFormatted = `${String(cd.getDate()).padStart(2, '0')}/${String(cd.getMonth() + 1).padStart(2, '0')}/${cd.getFullYear()}`;
+            }
+        }
+        if (!courseStartDateFormatted && scInfo && scInfo.length > 0 && scInfo[0].Enrollment_Date) {
+            const cd = new Date(scInfo[0].Enrollment_Date);
+            if (!isNaN(cd.getTime())) {
+                courseStartDateFormatted = `${String(cd.getDate()).padStart(2, '0')}/${String(cd.getMonth() + 1).padStart(2, '0')}/${cd.getFullYear()}`;
+            }
+        }
+        if (!courseStartDateFormatted) {
+            courseStartDateFormatted = enrolmentDateFormatted;
         }
 
         // 2. Replace placeholders if any
@@ -430,10 +473,13 @@ Aives Australia's TESTPREP
         Placeholders['Programme'] = Placeholders['Programme'] || courseName;
         Placeholders['Course Name'] = Placeholders['Course Name'] || courseName;
         Placeholders['Course_Name'] = Placeholders['Course_Name'] || courseName;
-        Placeholders['Duration'] = Placeholders['Duration'] || dynamicDuration;
-        Placeholders['Training Duration'] = Placeholders['Training Duration'] || dynamicDuration;
-        Placeholders['Session Duration'] = Placeholders['Session Duration'] || dynamicDuration;
-        Placeholders['Course Duration'] = Placeholders['Course Duration'] || dynamicDuration;
+        Placeholders['Duration'] = dynamicDuration;
+        Placeholders['Course Duration'] = dynamicDuration;
+        Placeholders['Course_Duration'] = dynamicDuration;
+        Placeholders['Training Duration'] = dynamicDuration;
+        Placeholders['Session Duration'] = dynamicSessionDuration;
+        Placeholders['Class Duration'] = dynamicSessionDuration;
+        Placeholders['Daily Class Duration'] = dynamicSessionDuration;
         Placeholders['Training Mode'] = Placeholders['Training Mode'] || trainingMode;
         Placeholders['Training_Mode'] = Placeholders['Training_Mode'] || trainingMode;
         Placeholders['Online/Classroom'] = Placeholders['Online/Classroom'] || trainingMode;
@@ -448,6 +494,9 @@ Aives Australia's TESTPREP
         Placeholders['Daily Training Time'] = Placeholders['Daily Training Time'] || dynamicTrainingTime;
         Placeholders['Start Time \u2013 End Time'] = Placeholders['Start Time \u2013 End Time'] || dynamicTrainingTime;
         Placeholders['Start Time - End Time'] = Placeholders['Start Time - End Time'] || dynamicTrainingTime;
+        Placeholders['Start Date'] = Placeholders['Start Date'] || courseStartDateFormatted;
+        Placeholders['Course Commencement'] = Placeholders['Course Commencement'] || courseStartDateFormatted;
+        Placeholders['First Class Date'] = Placeholders['First Class Date'] || courseStartDateFormatted;
 
         Object.keys(Placeholders).forEach(key => {
             const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -475,6 +524,10 @@ Aives Australia's TESTPREP
                 .replace(/Programme:\s*PTE Academic Training/gi, `Programme: ${courseName}`)
                 .replace(/Programme:\tPTE Academic Training/gi, `Programme:\t${courseName}`)
                 .replace(/\[Duration\]/gi, dynamicDuration)
+                .replace(/\[(?:Course|Training)[\s_]*Duration\]/gi, dynamicDuration)
+                .replace(/\[(?:Session|Class)[\s_]*Duration\]/gi, dynamicSessionDuration)
+                .replace(/(•\s*Duration:\s*)1 Hour 15 Minutes/gi, `$1${dynamicDuration}`)
+                .replace(/(Duration:\s*)1 Hour 15 Minutes/gi, `$1${dynamicDuration}`)
                 .replace(/\[Online\s*[\/\\]\s*Classroom\]/gi, trainingMode)
                 .replace(/\[Training[\s_]*Mode\]/gi, trainingMode)
                 .replace(/\[Date\]/gi, enrolmentDateFormatted)
@@ -485,8 +538,7 @@ Aives Australia's TESTPREP
                 .replace(/\[Roll[\s_]*(?:Number|No)\]/gi, admissionNo)
                 .replace(/\[Start[\s_]*Time[\s\u2013\-—]+End[\s_]*Time\]/gi, dynamicTrainingTime)
                 .replace(/\[Daily[\s_]*Training[\s_]*Time\]/gi, dynamicTrainingTime)
-                .replace(/\[Time[\s_]*Zone\]/gi, 'IST')
-                .replace(/\[(?:Session|Training|Course)[\s_]*Duration\]/gi, dynamicDuration);
+                .replace(/\[Time[\s_]*Zone\]/gi, 'IST');
         }
         if (subject) {
             subject = subject
@@ -505,6 +557,8 @@ Aives Australia's TESTPREP
                 .replace(/Programme:\s*PTE Academic Training/gi, `Programme: ${courseName}`)
                 .replace(/Programme:\tPTE Academic Training/gi, `Programme:\t${courseName}`)
                 .replace(/\[Duration\]/gi, dynamicDuration)
+                .replace(/\[(?:Course|Training)[\s_]*Duration\]/gi, dynamicDuration)
+                .replace(/\[(?:Session|Class)[\s_]*Duration\]/gi, dynamicSessionDuration)
                 .replace(/\[Online\s*[\/\\]\s*Classroom\]/gi, trainingMode)
                 .replace(/\[Training[\s_]*Mode\]/gi, trainingMode)
                 .replace(/\[Date\]/gi, enrolmentDateFormatted)
@@ -515,8 +569,7 @@ Aives Australia's TESTPREP
                 .replace(/\[Roll[\s_]*(?:Number|No)\]/gi, admissionNo)
                 .replace(/\[Start[\s_]*Time[\s\u2013\-—]+End[\s_]*Time\]/gi, dynamicTrainingTime)
                 .replace(/\[Daily[\s_]*Training[\s_]*Time\]/gi, dynamicTrainingTime)
-                .replace(/\[Time[\s_]*Zone\]/gi, 'IST')
-                .replace(/\[(?:Session|Training|Course)[\s_]*Duration\]/gi, dynamicDuration);
+                .replace(/\[Time[\s_]*Zone\]/gi, 'IST');
         }
 
         // 2b. If template contains verification buttons or lead-response links, ensure they are personalized for THIS student

@@ -614,6 +614,7 @@ router.post('/Save_student/', async (req, res, next) => {
                 courseId: req.body.Course_ID || (req.body.Course && req.body.Course.Course_ID) || null,
                 batchId: req.body.Batch_ID || null,
                 slotId: req.body.Slot_Id || null,
+                currency: req.body.Currency || req.body.currency || null,
                 req
             }).catch(err => console.error('[Save_student] Registration emails error:', err));
         }
@@ -784,6 +785,7 @@ router.post('/enroleCourseFromAdmin/', async (req, res, next) => {
                 courseId: courseIdVal,
                 batchId: batchIdVal,
                 slotId: slotIdVal,
+                currency: req.body.Currency || req.body.currency || null,
                 req
             }).catch(err => console.error('[enroleCourseFromAdmin] Registration emails error:', err));
         } else if (courseStudentId && isRegistrationLocked(courseStudentId)) {

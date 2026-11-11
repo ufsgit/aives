@@ -643,6 +643,7 @@ export class StudentLeadComponent implements OnInit {
         this.student_Details.Roll_No = event[0].RollNumber;
       }
     }
+    this.currentPage = 1;
     this.Search_student_lead(); // Refresh the lead list with updated data in background
     // Stay on student creation page (do not set this.view = 'list')
   }

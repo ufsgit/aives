@@ -189,9 +189,9 @@ export class StudentFeesComponent {
               'Online/Classroom': student.Branch_Name || 'Online',
               'Time Zone': 'IST',
               'Daily Training Time': student.Batch_Time || '10:00 AM - 11:15 AM',
-              'Date': new Date().toLocaleDateString('en-GB'),
-              'Enrolment Date': new Date().toLocaleDateString('en-GB'),
-              'Course Commencement': new Date().toLocaleDateString('en-GB'),
+              'Date': student?.Admission_Date ? new Date(student.Admission_Date).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB'),
+              'Enrolment Date': student?.Admission_Date ? new Date(student.Admission_Date).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB'),
+              'Course Commencement': student?.Start_Date ? new Date(student.Start_Date).toLocaleDateString('en-GB') : (student?.Admission_Date ? new Date(student.Admission_Date).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB')),
               'Payment Amount': `${this.getCurrencySymbol(feeData?.Currency || student?.Currency || this.feesForm?.get('Currency')?.value, true)} ${Number(feeData?.Paid_Amount || feeData?.tempPaidAmount || feeData?.Amount || 0).toFixed(2)}`,
               'Amount': `${this.getCurrencySymbol(feeData?.Currency || student?.Currency || this.feesForm?.get('Currency')?.value, true)} ${Number(feeData?.Paid_Amount || feeData?.tempPaidAmount || feeData?.Amount || 0).toFixed(2)}`,
               'Transaction ID': feeData?.Transaction_ID || feeData?.Transaction_Id || '-',
@@ -290,6 +290,8 @@ export class StudentFeesComponent {
     const transactionId = feeData?.Transaction_ID || feeData?.Transaction_Id || '-';
     const paymentMode = feeData?.Payment_Mode || feeData?.Payment_mode || '-';
 
+    const rollNo = student?.Roll_No || student?.Roll_No_Character || student?.RollNumber || student?.Student_ID || '-';
+
     autoTable(doc, {
       startY: 48,
       margin: { left: pageMargin, right: pageMargin },
@@ -297,18 +299,34 @@ export class StudentFeesComponent {
       styles: { fontSize: 10, cellPadding: 3 },
       body: [
         [{ content: 'Student Name:', fontStyle: 'bold' }, studentName, { content: 'Payment Date:', fontStyle: 'bold' }, formattedPaymentDate],
-        [{ content: 'Phone Number:', fontStyle: 'bold' }, phone, { content: 'Course:', fontStyle: 'bold' }, course]
+        [{ content: 'Phone Number:', fontStyle: 'bold' }, phone, { content: 'Course:', fontStyle: 'bold' }, course],
+        [{ content: 'Roll No:', fontStyle: 'bold' }, rollNo, { content: '', fontStyle: 'bold' }, '']
       ]
     });
 
     const detailsFinalY = (doc as any).lastAutoTable?.finalY || 70;
 
     // Payment Breakdown Table
-    const paidAmount = Number(feeData?.Paid_Amount || feeData?.tempPaidAmount || feeData?.Amount || feeData?.Total_Amount || 0);
+    let pAmount = Number(feeData?.Paid_Amount || 0);
+    if (pAmount === 0) {
+      pAmount = Number(
+        feeData?.tempPaidAmount ||
+        feeData?.Amount ||
+        feeData?.Total_Amount ||
+        feeData?.Total_FeeAmount ||
+        feeData?.Fee_Amount ||
+        student?.Total_FeeAmount ||
+        student?.Fee_Amount ||
+        student?.Total_Amount ||
+        this.feesForm?.get('Fee_Amount')?.value ||
+        0
+      );
+    }
+    const paidAmount = pAmount;
     const fineAmount = Number(feeData?.Fine_Amount || 0);
     const totalAmount = paidAmount + fineAmount;
 
-    const currencySymbol = this.getCurrencySymbol(feeData?.Currency || student?.Currency || this.feesForm?.get('Currency')?.value || 'INR', true);
+    const currencySymbol = this.getCurrencySymbol(feeData?.Currency || student?.Currency || this.feesForm?.get('Currency')?.value || 'AUD', true);
 
     const tableBody: any[][] = [
       ['Fee Amount', `${currencySymbol} ${paidAmount.toFixed(2)}`]

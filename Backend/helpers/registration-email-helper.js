@@ -4,6 +4,18 @@ const emailLog = require('../models/email_log');
 const { getOfficialContactInfo, isValidEmail } = require('./lead-welcome-helper');
 const PDFDocument = require('pdfkit');
 
+function formatCurrencySymbol(curr) {
+    if (!curr) return 'A$';
+    const c = String(curr).trim().toUpperCase();
+    if (c === 'AUD') return 'A$';
+    if (c === 'USD') return '$';
+    if (c === 'GBP') return '£';
+    if (c === 'EUR' || c === 'EURO') return 'EUR';
+    if (c === 'AED') return 'AED';
+    if (c === 'INR' || c === 'RS' || c === 'RS.' || c === '₹' || c === '\u20B9') return 'Rs.';
+    return c;
+}
+
 /**
  * Generates a payment receipt PDF as a base64 string using pdfkit.
  * Mirrors the layout produced by the frontend generateReceiptPDFBase64 method.
@@ -11,7 +23,7 @@ const PDFDocument = require('pdfkit');
 function generateReceiptPDFBase64({ student, feeData, currencySymbol }) {
     return new Promise((resolve, reject) => {
         try {
-            const doc = new PDFDocument({ size: 'A4', margin: 40 });
+            const doc = new PDFDocument({ size: 'A4', margin: 42.5 });
             const buffers = [];
             doc.on('data', chunk => buffers.push(chunk));
             doc.on('end', () => {
@@ -21,102 +33,110 @@ function generateReceiptPDFBase64({ student, feeData, currencySymbol }) {
             doc.on('error', reject);
 
             const pageWidth = doc.page.width;
-            const margin = 40;
+            const margin = 42.5;
 
             // ── Header ──────────────────────────────────────────────────
-            doc.font('Helvetica-Bold').fontSize(16)
-               .text('AIVES Australia Testprep', margin, 40, { align: 'left' });
+            doc.font('Helvetica-Bold').fontSize(18).fillColor('#000000')
+               .text('AIVES Australia Testprep', margin, 45);
 
-            doc.font('Helvetica').fontSize(8)
+            doc.font('Helvetica').fontSize(9).fillColor('#000000')
                .text(
                    'Address: 2nd Floor, Geo Centre, Door No. 45, 1920 B3, NH-66, Chakkaraparambu, Vennala, Ernakulam, Kerala 682032',
-                   margin, 60, { width: pageWidth - margin * 2 }
+                   margin, 70, { width: pageWidth - margin * 2 }
                );
 
-            doc.moveTo(margin, 82).lineTo(pageWidth - margin, 82).lineWidth(0.5).stroke();
+            doc.moveTo(margin, 96).lineTo(pageWidth - margin, 96).lineWidth(0.5).strokeColor('#000000').stroke();
 
             // ── Title ───────────────────────────────────────────────────
-            doc.font('Helvetica-Bold').fontSize(13)
-               .text('PAYMENT RECEIPT', margin, 90, { align: 'center', width: pageWidth - margin * 2 });
+            doc.font('Helvetica-Bold').fontSize(14).fillColor('#000000')
+               .text('PAYMENT RECEIPT', margin, 118, { align: 'center', width: pageWidth - margin * 2 });
 
-            // ── Student / Payment Details ────────────────────────────────
+            // ── Student / Payment Details (3 Rows, 2 Columns) ───────────
             const studentName = `${student.First_Name || ''} ${student.Last_Name || ''}`.trim() || 'Student';
             const phone = student.Phone_Number || student.MobileNo || '-';
-            const course = feeData.Course_Name || '-';
-            const transactionId = feeData.Transaction_ID || '-';
-            const paymentMode = feeData.Payment_Mode || '-';
+            const course = feeData.Course_Name || student.Course_Name || '-';
+            const rollNo = student.Roll_No || student.Roll_No_Character || student.RollNumber || student.Student_ID || '-';
             const paymentDate = feeData.Payment_Date
                 ? new Date(feeData.Payment_Date).toLocaleDateString('en-GB')
                 : new Date().toLocaleDateString('en-GB');
 
-            const detailsY = 112;
             const col1 = margin;
-            const col2 = margin + 120;
-            const col3 = margin + 290;
-            const col4 = margin + 400;
+            const col2 = margin + 110;
+            const col3 = margin + 260;
+            const col4 = margin + 370;
 
-            doc.font('Helvetica-Bold').fontSize(10).text('Student Name:', col1, detailsY);
-            doc.font('Helvetica').fontSize(10).text(studentName, col2, detailsY);
-            doc.font('Helvetica-Bold').text('Payment Date:', col3, detailsY);
-            doc.font('Helvetica').text(paymentDate, col4, detailsY);
+            const row1Y = 145;
+            const row2Y = 165;
+            const row3Y = 185;
 
-            doc.font('Helvetica-Bold').fontSize(10).text('Phone Number:', col1, detailsY + 18);
-            doc.font('Helvetica').fontSize(10).text(phone, col2, detailsY + 18);
-            doc.font('Helvetica-Bold').text('Course:', col3, detailsY + 18);
-            doc.font('Helvetica').text(course, col4, detailsY + 18, { width: pageWidth - col4 - margin });
+            doc.font('Helvetica-Bold').fontSize(10).fillColor('#000000').text('Student Name:', col1, row1Y);
+            doc.font('Helvetica').fontSize(10).fillColor('#000000').text(studentName, col2, row1Y);
+            doc.font('Helvetica-Bold').fontSize(10).fillColor('#000000').text('Payment Date:', col3, row1Y);
+            doc.font('Helvetica').fontSize(10).fillColor('#000000').text(paymentDate, col4, row1Y);
 
-            doc.font('Helvetica-Bold').fontSize(10).text('Transaction ID:', col1, detailsY + 36);
-            doc.font('Helvetica').fontSize(10).text(transactionId, col2, detailsY + 36);
-            doc.font('Helvetica-Bold').text('Payment Mode:', col3, detailsY + 36);
-            doc.font('Helvetica').text(paymentMode, col4, detailsY + 36);
+            doc.font('Helvetica-Bold').fontSize(10).fillColor('#000000').text('Phone Number:', col1, row2Y);
+            doc.font('Helvetica').fontSize(10).fillColor('#000000').text(phone, col2, row2Y);
+            doc.font('Helvetica-Bold').fontSize(10).fillColor('#000000').text('Course:', col3, row2Y);
+            doc.font('Helvetica').fontSize(10).fillColor('#000000').text(course, col4, row2Y, { width: pageWidth - margin - col4 });
+
+            doc.font('Helvetica-Bold').fontSize(10).fillColor('#000000').text('Roll No:', col1, row3Y);
+            doc.font('Helvetica').fontSize(10).fillColor('#000000').text(String(rollNo), col2, row3Y);
 
             // ── Payment Breakdown Table ──────────────────────────────────
-            const tableY = detailsY + 70;
+            const tableY = 215;
             const tableWidth = pageWidth - margin * 2;
-            const colWidths = [tableWidth * 0.65, tableWidth * 0.35];
+            const colWidth = tableWidth / 2;
+            const headerHeight = 22;
+            const rowHeight = 22;
 
-            // Header row
-            doc.rect(col1, tableY, colWidths[0], 20).fill('#337ab7');
-            doc.rect(col1 + colWidths[0], tableY, colWidths[1], 20).fill('#337ab7');
-            doc.font('Helvetica-Bold').fontSize(10).fillColor('white')
-               .text('Description', col1 + 5, tableY + 5, { width: colWidths[0] - 10 });
-            doc.text('Amount', col1 + colWidths[0] + 5, tableY + 5, { width: colWidths[1] - 10 });
+            // Header background (#337ab7)
+            doc.rect(margin, tableY, tableWidth, headerHeight).fill('#337ab7');
+            doc.font('Helvetica-Bold').fontSize(10).fillColor('#ffffff')
+               .text('Description', margin + 8, tableY + 6, { width: colWidth - 16 });
+            doc.font('Helvetica-Bold').fontSize(10).fillColor('#ffffff')
+               .text('Amount', margin + colWidth + 8, tableY + 6, { width: colWidth - 16 });
 
-            const paidAmount = Number(feeData.Paid_Amount || feeData.Amount || 0);
+            let pAmount = Number(feeData.Paid_Amount || 0);
+            if (pAmount === 0) {
+                pAmount = Number(feeData.Amount || feeData.Total_Amount || feeData.Total_FeeAmount || feeData.Fee_Amount || 0);
+            }
+            const paidAmount = pAmount;
             const fineAmount = Number(feeData.Fine_Amount || 0);
             const totalAmount = paidAmount + fineAmount;
+            const symbol = formatCurrencySymbol(currencySymbol || feeData.Currency || 'A$');
 
-            const rows = [['Fee Amount', `${currencySymbol} ${paidAmount.toFixed(2)}`]];
-            if (fineAmount > 0) rows.push(['Late Fine Applied', `${currencySymbol} ${fineAmount.toFixed(2)}`]);
-            rows.push(['Total Amount Paid', `${currencySymbol} ${totalAmount.toFixed(2)}`]);
+            const rows = [['Fee Amount', `${symbol} ${paidAmount.toFixed(2)}`]];
+            if (fineAmount > 0) rows.push(['Late Fine Applied', `${symbol} ${fineAmount.toFixed(2)}`]);
+            rows.push(['Total Amount Paid', `${symbol} ${totalAmount.toFixed(2)}`]);
 
-            let rowY = tableY + 20;
+            let curY = tableY + headerHeight;
             rows.forEach((row, idx) => {
                 const isTotalRow = idx === rows.length - 1;
-                const bg = idx % 2 === 0 ? '#f9f9f9' : '#ffffff';
-                doc.rect(col1, rowY, colWidths[0], 18).fill(bg).stroke('#dddddd');
-                doc.rect(col1 + colWidths[0], rowY, colWidths[1], 18).fill(bg).stroke('#dddddd');
+                const bg = idx % 2 === 0 ? '#f5f5f5' : '#ffffff';
+                doc.rect(margin, curY, tableWidth, rowHeight).fillAndStroke(bg, '#dddddd');
                 const font = isTotalRow ? 'Helvetica-Bold' : 'Helvetica';
-                doc.font(font).fontSize(10).fillColor('black')
-                   .text(row[0], col1 + 5, rowY + 4, { width: colWidths[0] - 10 });
-                doc.font(font).text(row[1], col1 + colWidths[0] + 5, rowY + 4, { width: colWidths[1] - 10 });
-                rowY += 18;
+                doc.font(font).fontSize(10).fillColor('#000000')
+                   .text(row[0], margin + 8, curY + 6, { width: colWidth - 16 });
+                doc.font(font).fontSize(10).fillColor('#000000')
+                   .text(row[1], margin + colWidth + 8, curY + 6, { width: colWidth - 16 });
+                curY += rowHeight;
             });
 
             // ── Terms & Conditions ───────────────────────────────────────
-            const termsY = rowY + 18;
-            doc.font('Helvetica-Bold').fontSize(9).fillColor('black').text('Terms and Conditions:', margin, termsY);
-            doc.font('Helvetica').fontSize(8)
-               .text('1. This receipt is subject to realisation of cheque.', margin, termsY + 14)
-               .text('2. This receipt should be carefully preserved and produced on demand.', margin, termsY + 22)
-               .text('3. Fees once paid are non-refundable/non-transferable under any circumstances.', margin, termsY + 30);
+            const termsY = curY + 25;
+            doc.font('Helvetica-Bold').fontSize(9).fillColor('#000000').text('Terms and Conditions:', margin, termsY);
+            doc.font('Helvetica').fontSize(8).fillColor('#000000')
+               .text('1. This receipt is subject to realisation of cheque.', margin, termsY + 15)
+               .text('2. This receipt should be carefully preserved and produced on demand.', margin, termsY + 27)
+               .text('3. Fees once paid are non-refundable/non-transferable under any circumstances.', margin, termsY + 39);
 
-            // ── Footer statement ─────────────────────────────────────────
-            doc.font('Helvetica').fontSize(9).fillColor('black')
+            // ── Footer Statement ─────────────────────────────────────────
+            const footerY = termsY + 75;
+            doc.font('Helvetica').fontSize(9).fillColor('#000000')
                .text(
                    'This is a computer-generated payment receipt and does not require a signature.',
-                   margin, termsY + 50,
-                   { align: 'center', width: pageWidth - margin * 2 }
+                   margin, footerY,
+                   { align: 'center', width: tableWidth }
                );
 
             doc.end();
@@ -246,13 +266,50 @@ function calculateDurationString(startStr, endStr) {
     return '1 Hour 15 Minutes';
 }
 
+function formatCourseDuration({ validity, startDate, endDate, customDuration } = {}) {
+    if (customDuration && typeof customDuration === 'string' && customDuration.trim() && !/hour|minute/i.test(customDuration)) {
+        return customDuration.trim();
+    }
+    // 1. From Course Validity
+    if (validity !== null && validity !== undefined && !isNaN(Number(validity)) && Number(validity) > 0) {
+        const v = Number(validity);
+        if (v >= 28) {
+            const months = Math.round(v / 30);
+            return `${months} ${months === 1 ? 'Month' : 'Months'}`;
+        }
+        if (v === 1) return '1 Month';
+        if (v > 1 && v <= 12) return `${v} Months`;
+        return `${v} Days`;
+    }
+    // 2. From Batch or Enrollment Start_Date & End_Date
+    if (startDate && endDate) {
+        const s = new Date(startDate);
+        const e = new Date(endDate);
+        if (!isNaN(s.getTime()) && !isNaN(e.getTime()) && e > s) {
+            const diffDays = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24));
+            if (diffDays >= 28) {
+                const months = Math.round(diffDays / 30);
+                return `${months} ${months === 1 ? 'Month' : 'Months'}`;
+            }
+            if (diffDays >= 7) {
+                const weeks = Math.round(diffDays / 7);
+                return `${weeks} ${weeks === 1 ? 'Week' : 'Weeks'}`;
+            }
+            if (diffDays > 0) {
+                return `${diffDays} ${diffDays === 1 ? 'Day' : 'Days'}`;
+            }
+        }
+    }
+    return '1 Month';
+}
+
 /**
  * Automatically dispatches Registration Confirmation and Assigned Staff emails.
  * EXACTLY TWO EMAILS ARE SENT PER REGISTRATION, BOTH DELIVERED TO THE STUDENT'S EMAIL:
  * 1. Exactly ONE Registration Email -> Student's registered email address (with PDF receipt attachment).
  * 2. Exactly ONE Assigned Staff Email -> Student's registered email address.
  */
-async function sendRegistrationConfirmationEmails({ studentId, courseId = null, batchId = null, slotId = null, req = null }) {
+async function sendRegistrationConfirmationEmails({ studentId, courseId = null, batchId = null, slotId = null, currency = null, req = null }) {
     const cleanStudentId = Number(studentId);
     if (!cleanStudentId || cleanStudentId <= 0) {
         console.log('[REGISTRATION EMAIL] Skipped: Invalid Student_ID.');
@@ -324,12 +381,13 @@ async function sendRegistrationConfirmationEmails({ studentId, courseId = null, 
         let resolvedCourseId = Number(courseId) || 0;
         let resolvedBatchId = Number(batchId) || 0;
         let resolvedSlotId = Number(slotId) || 0;
+        let resolvedEnrollmentDate = null;
+        let resolvedExpiryDate = null;
 
-        if (!resolvedCourseId || !resolvedBatchId) {
+        if (!resolvedCourseId || !resolvedBatchId || !resolvedEnrollmentDate) {
             try {
-                let resolvedEnrollmentDate = null;
                 const [scRows] = await db.promise().query(
-                    `SELECT Course_ID, Batch_ID, Slot_Id, Enrollment_Date 
+                    `SELECT Course_ID, Batch_ID, Slot_Id, Enrollment_Date, Expiry_Date 
                      FROM student_course 
                      WHERE Student_ID = ? AND (Delete_Status = 0 OR Delete_Status IS NULL) 
                      ORDER BY StudentCourse_ID DESC LIMIT 1`,
@@ -339,7 +397,8 @@ async function sendRegistrationConfirmationEmails({ studentId, courseId = null, 
                     if (!resolvedCourseId) resolvedCourseId = Number(scRows[0].Course_ID) || 0;
                     if (!resolvedBatchId) resolvedBatchId = Number(scRows[0].Batch_ID) || 0;
                     if (!resolvedSlotId) resolvedSlotId = Number(scRows[0].Slot_Id) || 0;
-                    if (scRows[0].Enrollment_Date) resolvedEnrollmentDate = scRows[0].Enrollment_Date;
+                    if (!resolvedEnrollmentDate && scRows[0].Enrollment_Date) resolvedEnrollmentDate = scRows[0].Enrollment_Date;
+                    if (!resolvedExpiryDate && scRows[0].Expiry_Date) resolvedExpiryDate = scRows[0].Expiry_Date;
                 }
             } catch (scErr) {
                 console.warn('[REGISTRATION EMAIL] Error looking up student_course:', scErr.message);
@@ -390,23 +449,26 @@ async function sendRegistrationConfirmationEmails({ studentId, courseId = null, 
             } catch (err) {}
         }
 
-        // Try batch timing from course_batch
-        if ((!rawStartTime || !rawEndTime) && resolvedBatchId > 0) {
+        let batchStartDate = null;
+        let batchEndDate = null;
+
+        // Try batch timing and dates from course_batch
+        if (resolvedBatchId > 0) {
             try {
                 const [bRows] = await db.promise().query(
-                    `SELECT Start_Time, End_Time, Commencing_Date FROM course_batch WHERE Batch_ID = ? LIMIT 1`,
+                    `SELECT Start_Date, End_Date FROM course_batch WHERE Batch_ID = ? LIMIT 1`,
                     [resolvedBatchId]
                 );
                 if (bRows && bRows.length > 0) {
-                    if (bRows[0].Start_Time && bRows[0].End_Time && !isDummyMidnight(bRows[0].Start_Time, bRows[0].End_Time)) {
-                        rawStartTime = bRows[0].Start_Time;
-                        rawEndTime = bRows[0].End_Time;
-                    }
-                    if (bRows[0].Commencing_Date) {
-                        commencingDateStr = new Date(bRows[0].Commencing_Date).toLocaleDateString('en-GB');
+                    batchStartDate = bRows[0].Start_Date;
+                    batchEndDate = bRows[0].End_Date;
+                    if (bRows[0].Start_Date && !commencingDateStr) {
+                        commencingDateStr = new Date(bRows[0].Start_Date).toLocaleDateString('en-GB');
                     }
                 }
-            } catch (bErr) {}
+            } catch (bErr) {
+                console.warn('[REGISTRATION EMAIL] Error querying course_batch for batchId:', bErr.message);
+            }
         }
 
         // Try teacher_time_slot by batch_id
@@ -446,29 +508,35 @@ async function sendRegistrationConfirmationEmails({ studentId, courseId = null, 
         }
 
         // Try course_batch for the course
-        if ((!rawStartTime || !rawEndTime) && resolvedCourseId > 0) {
+        if (resolvedCourseId > 0 && (!batchStartDate || !batchEndDate)) {
             try {
                 const [cbRows] = await db.promise().query(
-                    `SELECT Start_Time, End_Time, Commencing_Date FROM course_batch WHERE Course_ID = ? AND IFNULL(Delete_Status, 0) = 0 ORDER BY Batch_ID DESC LIMIT 1`,
+                    `SELECT Start_Date, End_Date FROM course_batch WHERE Course_ID = ? AND IFNULL(Delete_Status, 0) = 0 ORDER BY Batch_ID DESC LIMIT 1`,
                     [resolvedCourseId]
                 );
                 if (cbRows && cbRows.length > 0) {
-                    if (cbRows[0].Start_Time && cbRows[0].End_Time && !isDummyMidnight(cbRows[0].Start_Time, cbRows[0].End_Time)) {
-                        rawStartTime = cbRows[0].Start_Time;
-                        rawEndTime = cbRows[0].End_Time;
-                    }
-                    if (cbRows[0].Commencing_Date && !commencingDateStr) {
-                        commencingDateStr = new Date(cbRows[0].Commencing_Date).toLocaleDateString('en-GB');
+                    if (!batchStartDate && cbRows[0].Start_Date) batchStartDate = cbRows[0].Start_Date;
+                    if (!batchEndDate && cbRows[0].End_Date) batchEndDate = cbRows[0].End_Date;
+                    if (cbRows[0].Start_Date && !commencingDateStr) {
+                        commencingDateStr = new Date(cbRows[0].Start_Date).toLocaleDateString('en-GB');
                     }
                 }
-            } catch (err) {}
+            } catch (err) {
+                console.warn('[REGISTRATION EMAIL] Error querying course_batch for courseId:', err.message);
+            }
         }
 
-        // Format dynamic training time & duration
+        // Format dynamic training time & durations
         const formattedStart = formatTime12h(rawStartTime) || '10:00 AM';
         const formattedEnd = formatTime12h(rawEndTime) || '11:15 AM';
         const dailyTrainingTimeStr = `${formattedStart} \u2013 ${formattedEnd}`;
         const sessionDurationStr = calculateDurationString(rawStartTime || '10:00:00', rawEndTime || '11:15:00');
+        const courseDurationStr = formatCourseDuration({
+            validity: courseValidity,
+            startDate: batchStartDate || resolvedEnrollmentDate,
+            endDate: batchEndDate || resolvedExpiryDate,
+            customDuration: req?.body?.Course_Duration || student?.Course_Duration
+        });
 
         // 4. Resolve Assigned Trainer / Staff details with availability check
         let trainerName = student.To_User_Name || 'Assigned Trainer';
@@ -563,40 +631,127 @@ async function sendRegistrationConfirmationEmails({ studentId, courseId = null, 
         const trainerContact = trainerPhone ? `${trainerPhone} | ${trainerEmail}` : (trainerEmail || '+91 79944 43028');
 
         // 5. Resolve Fee & Receipt details
+        const rawCurrency = currency || req?.body?.Currency || req?.body?.currency || (req?.body?.feesForm && req?.body?.feesForm.Currency) || null;
+        let currencySymbol = formatCurrencySymbol(rawCurrency);
         let paidAmount = '0.00';
         let transactionId = '-';
-        let currencySymbol = '\u20B9';
         let feeDataForPdf = null;
 
         try {
-            const [feeRows] = await db.promise().query(
-                `SELECT Amount, Paid_Amount, Transaction_ID, Fee_Status, Currency, Payment_Mode, Payment_Date, Course_Name, Fine_Amount 
-                 FROM student_fees 
-                 WHERE Student_ID = ? 
-                 ORDER BY Student_Fees_ID DESC LIMIT 1`,
+            // 5a. Check receipts table first (stores completed payment transactions)
+            const [receiptRows] = await db.promise().query(
+                `SELECT r.Receipt_Id, r.Amount, r.Payment_mode, r.Transaction_ID, r.Payment_Date, r.Fine_Amount 
+                 FROM receipts r 
+                 WHERE r.Student_Id = ? AND IFNULL(r.DeleteStatus, 0) = 0 
+                 ORDER BY r.Receipt_Id DESC LIMIT 1`,
                 [cleanStudentId]
             );
-            if (feeRows && feeRows.length > 0) {
-                const f = feeRows[0];
-                const p = parseFloat(f.Paid_Amount || f.Amount || 0);
+
+            // 5b. Check student_fees_details table (stores fee structure, installments, and payment status)
+            const [feeRows] = await db.promise().query(
+                `SELECT sfd.Student_Fees_ID, sfd.Total_Amount, sfd.Paid_Amount, sfd.Remaining_Amount, 
+                        sfd.Transaction_ID, sfd.Fee_Status, sfd.Payment_Mode, sfd.Payment_Date, sfd.Course_Name 
+                 FROM student_fees_details sfd 
+                 WHERE sfd.Student_ID = ? AND IFNULL(sfd.Delete_Status, 0) = 0 
+                 ORDER BY sfd.Student_Fees_ID DESC LIMIT 1`,
+                [cleanStudentId]
+            );
+
+            // 5c. Check student_course table (stores course registration fee amounts)
+            const [scRows] = await db.promise().query(
+                `SELECT sc.Total_FeeAmount, sc.Fee_Amount, sc.Price 
+                 FROM student_course sc 
+                 WHERE sc.Student_ID = ? AND IFNULL(sc.Delete_Status, 0) = 0 
+                 ORDER BY sc.StudentCourse_ID DESC LIMIT 1`,
+                [cleanStudentId]
+            );
+
+            if (receiptRows && receiptRows.length > 0 && parseFloat(receiptRows[0].Amount || 0) > 0) {
+                const r = receiptRows[0];
+                const p = parseFloat(r.Amount || 0);
                 paidAmount = p.toFixed(2);
-                transactionId = f.Transaction_ID || '-';
-                if (f.Currency === 'AUD') currencySymbol = 'A$';
-                else if (f.Currency === 'USD') currencySymbol = '$';
-                else if (f.Currency === 'GBP') currencySymbol = '\u00A3';
-                else if (f.Currency === 'EUR') currencySymbol = '\u20AC';
-                else if (f.Currency === 'AED') currencySymbol = 'AED';
+                transactionId = r.Transaction_ID || '-';
                 feeDataForPdf = {
                     Paid_Amount: p,
                     Amount: p,
+                    Total_Amount: p,
+                    Transaction_ID: r.Transaction_ID || '-',
+                    Payment_Mode: r.Payment_mode || 'Online',
+                    Payment_Date: r.Payment_Date || new Date(),
+                    Course_Name: courseName,
+                    Fine_Amount: parseFloat(r.Fine_Amount || 0),
+                    Currency: currencySymbol
+                };
+            } else if (feeRows && feeRows.length > 0) {
+                const f = feeRows[0];
+                let p = parseFloat(f.Paid_Amount || 0);
+                if (p === 0 && parseFloat(f.Total_Amount || 0) > 0) {
+                    p = parseFloat(f.Total_Amount);
+                } else if (p === 0 && parseFloat(f.Remaining_Amount || 0) > 0) {
+                    p = parseFloat(f.Remaining_Amount);
+                }
+                if (p === 0 && scRows && scRows.length > 0) {
+                    p = parseFloat(scRows[0].Total_FeeAmount || scRows[0].Fee_Amount || scRows[0].Price || 0);
+                }
+                paidAmount = p.toFixed(2);
+                transactionId = f.Transaction_ID || '-';
+                feeDataForPdf = {
+                    Paid_Amount: p,
+                    Amount: p,
+                    Total_Amount: p,
                     Transaction_ID: f.Transaction_ID || '-',
-                    Payment_Mode: f.Payment_Mode || '-',
-                    Payment_Date: f.Payment_Date || null,
+                    Payment_Mode: f.Payment_Mode || 'Online',
+                    Payment_Date: f.Payment_Date || new Date(),
                     Course_Name: f.Course_Name || courseName,
-                    Fine_Amount: parseFloat(f.Fine_Amount || 0)
+                    Fine_Amount: 0,
+                    Currency: currencySymbol
+                };
+            } else if (scRows && scRows.length > 0 && parseFloat(scRows[0].Total_FeeAmount || scRows[0].Fee_Amount || scRows[0].Price || 0) > 0) {
+                const sc = scRows[0];
+                const p = parseFloat(sc.Total_FeeAmount || sc.Fee_Amount || sc.Price || 0);
+                paidAmount = p.toFixed(2);
+                feeDataForPdf = {
+                    Paid_Amount: p,
+                    Amount: p,
+                    Total_Amount: p,
+                    Transaction_ID: '-',
+                    Payment_Mode: 'Online',
+                    Payment_Date: new Date(),
+                    Course_Name: courseName,
+                    Fine_Amount: 0,
+                    Currency: currencySymbol
+                };
+            } else {
+                let p = parseFloat(req?.body?.Total_FeeAmount || req?.body?.Fee_Amount || req?.body?.Amount || req?.body?.Total_Amount || 0);
+                paidAmount = p.toFixed(2);
+                feeDataForPdf = {
+                    Paid_Amount: p,
+                    Amount: p,
+                    Total_Amount: p,
+                    Transaction_ID: '-',
+                    Payment_Mode: 'Online',
+                    Payment_Date: new Date(),
+                    Course_Name: courseName,
+                    Fine_Amount: 0,
+                    Currency: currencySymbol
                 };
             }
-        } catch (feeErr) {}
+        } catch (feeErr) {
+            console.warn('[REGISTRATION EMAIL] Error looking up fee details:', feeErr.message);
+            let p = parseFloat(req?.body?.Total_FeeAmount || req?.body?.Fee_Amount || req?.body?.Amount || 0);
+            paidAmount = p.toFixed(2);
+            feeDataForPdf = {
+                Paid_Amount: p,
+                Amount: p,
+                Total_Amount: p,
+                Transaction_ID: '-',
+                Payment_Mode: 'Online',
+                Payment_Date: new Date(),
+                Course_Name: courseName,
+                Fine_Amount: 0,
+                Currency: currencySymbol
+            };
+        }
 
         // 6. Contact Information & Dynamic Placeholders
         const contactInfo = await getOfficialContactInfo(student.Branch_Id);
@@ -604,7 +759,6 @@ async function sendRegistrationConfirmationEmails({ studentId, courseId = null, 
         const contactNumber = contactInfo.phone || '+91 79944 43028';
 
         const todayFormatted = new Date().toLocaleDateString('en-GB');
-        const startDateFormatted = commencingDateStr || (student.Admission_Date ? new Date(student.Admission_Date).toLocaleDateString('en-GB') : todayFormatted);
         const studentFullName = `${student.First_Name || ''} ${student.Last_Name || ''}`.trim() || 'Student';
         const firstName = student.First_Name ? student.First_Name.trim() : studentFullName.split(' ')[0];
         
@@ -622,14 +776,27 @@ async function sendRegistrationConfirmationEmails({ studentId, courseId = null, 
             trainingMode = rawBranchName;
         }
 
-        // 6. Enrolment Date: Fetch actual Registration Date (Student Enrolled Date) from DB
+        // 6. Enrolment Date: MUST be student.Admission_Date (as requested by user)
         let enrolmentDateFormatted = todayFormatted;
-        const rawEnrolDate = student.Registered_On || (typeof resolvedEnrollmentDate !== 'undefined' ? resolvedEnrollmentDate : null) || student.Admission_Date;
+        const rawEnrolDate = student.Admission_Date || student.Registered_On || (typeof resolvedEnrollmentDate !== 'undefined' ? resolvedEnrollmentDate : null);
         if (rawEnrolDate) {
             const ed = new Date(rawEnrolDate);
             if (!isNaN(ed.getTime())) {
                 enrolmentDateFormatted = `${String(ed.getDate()).padStart(2, '0')}/${String(ed.getMonth() + 1).padStart(2, '0')}/${ed.getFullYear()}`;
             }
+        }
+
+        // 7. Course Commencement / Start Date: MUST be Course / Batch Start Date (as requested by user)
+        let courseStartDateRaw = batchStartDate || (typeof resolvedEnrollmentDate !== 'undefined' ? resolvedEnrollmentDate : null);
+        let courseCommencementFormatted = '';
+        if (courseStartDateRaw) {
+            const cd = new Date(courseStartDateRaw);
+            if (!isNaN(cd.getTime())) {
+                courseCommencementFormatted = `${String(cd.getDate()).padStart(2, '0')}/${String(cd.getMonth() + 1).padStart(2, '0')}/${cd.getFullYear()}`;
+            }
+        }
+        if (!courseCommencementFormatted) {
+            courseCommencementFormatted = commencingDateStr || enrolmentDateFormatted;
         }
 
         const placeholders = {
@@ -649,10 +816,13 @@ async function sendRegistrationConfirmationEmails({ studentId, courseId = null, 
             'Course Name': courseName,
             'Course_Name': courseName,
             'Programme': courseName,
-            'Duration': sessionDurationStr,
-            'Training Duration': sessionDurationStr,
+            'Duration': courseDurationStr,
+            'Course Duration': courseDurationStr,
+            'Course_Duration': courseDurationStr,
+            'Training Duration': courseDurationStr,
             'Session Duration': sessionDurationStr,
-            'Course Duration': sessionDurationStr,
+            'Class Duration': sessionDurationStr,
+            'Daily Class Duration': sessionDurationStr,
             'Training Mode': trainingMode,
             'Training_Mode': trainingMode,
             'Online/Classroom': trainingMode,
@@ -664,9 +834,9 @@ async function sendRegistrationConfirmationEmails({ studentId, courseId = null, 
             'Enrollment_Date': enrolmentDateFormatted,
             'Registration Date': enrolmentDateFormatted,
             'Registration_Date': enrolmentDateFormatted,
-            'Start Date': startDateFormatted,
-            'Course Commencement': startDateFormatted,
-            'First Class Date': startDateFormatted,
+            'Start Date': courseCommencementFormatted,
+            'Course Commencement': courseCommencementFormatted,
+            'First Class Date': courseCommencementFormatted,
             'Daily Training Time': dailyTrainingTimeStr,
             'Start Time \u2013 End Time': dailyTrainingTimeStr,
             'Start Time - End Time': dailyTrainingTimeStr,
@@ -703,8 +873,11 @@ async function sendRegistrationConfirmationEmails({ studentId, courseId = null, 
                 .replace(/\[Course[\s_]*Name\]/gi, courseName)
                 .replace(/Programme:\s*PTE Academic Training/gi, `Programme: ${courseName}`)
                 .replace(/Programme:\tPTE Academic Training/gi, `Programme:\t${courseName}`)
-                .replace(/\[Duration\]/gi, sessionDurationStr)
-                .replace(/\[(?:Session|Training|Course)[\s_]*Duration\]/gi, sessionDurationStr)
+                .replace(/\[Duration\]/gi, courseDurationStr)
+                .replace(/\[(?:Course|Training)[\s_]*Duration\]/gi, courseDurationStr)
+                .replace(/\[(?:Session|Class)[\s_]*Duration\]/gi, sessionDurationStr)
+                .replace(/(•\s*Duration:\s*)1 Hour 15 Minutes/gi, `$1${courseDurationStr}`)
+                .replace(/(Duration:\s*)1 Hour 15 Minutes/gi, `$1${courseDurationStr}`)
                 .replace(/\[Online\s*[\/\\]\s*Classroom\]/gi, trainingMode)
                 .replace(/\[Training[\s_]*Mode\]/gi, trainingMode)
                 .replace(/\[Date\]/gi, enrolmentDateFormatted)
@@ -766,7 +939,8 @@ Aives Australia's TESTPREP
                     student: {
                         First_Name: student.First_Name,
                         Last_Name: student.Last_Name,
-                        Phone_Number: student.Phone_Number
+                        Phone_Number: student.Phone_Number || student.MobileNo,
+                        Roll_No: admissionNo
                     },
                     feeData: { ...feeDataForPdf, Course_Name: feeDataForPdf.Course_Name || courseName },
                     currencySymbol
@@ -881,6 +1055,7 @@ module.exports = {
     sendRegistrationConfirmationEmails,
     formatTime12h,
     calculateDurationString,
+    formatCourseDuration,
     isRegistrationLocked,
     acquireRegistrationLock,
     releaseRegistrationLock
