@@ -47,7 +47,27 @@ export const ADMIN_ROUTES: Routes = [
   {
     path: "",
     pathMatch: "full",
-    redirectTo: "dash",
+    redirectTo: () => {
+      const staffId = parseInt(localStorage.getItem('User_Id') || localStorage.getItem('User_ID') || '0');
+      const userEmail = (localStorage.getItem('Email') || '').toLowerCase().trim();
+      const isSuperAdmin = staffId === 1 || userEmail === 'admin_user@g.com' || userEmail === 'cs.mgr@testprepinenglish.com';
+
+      const allowedMenus: string[] = JSON.parse(localStorage.getItem('Allowed_Menus') || '[]');
+
+      if (isSuperAdmin || allowedMenus.includes('Dashboard')) {
+        return 'dash';
+      }
+      if (allowedMenus.includes('Lead')) {
+        return 'Student_Lead';
+      }
+      if (allowedMenus.includes('Student')) {
+        return 'student';
+      }
+      if (allowedMenus.includes('Attendance') || allowedMenus.includes('Mark Attendance')) {
+        return 'Mark_Attendance';
+      }
+      return 'dash';
+    },
   },
   {
     path: 'dash',

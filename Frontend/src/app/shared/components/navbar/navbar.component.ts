@@ -133,95 +133,115 @@ export class NavbarComponent implements OnInit {
           return { ...item, Menu_Name: name };
         });
 
-        // ✅ 👉 Ensure Mail Report is always present
-        const mailReportExists = items.some(
-          (item: any) => item.Menu_Name === 'Mail Report'
-        );
+        // Deduplicate items by Menu_Name
+        const seen = new Set();
+        items = items.filter((item: any) => {
+          const key = item.Menu_Name;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
 
-        if (!mailReportExists) {
-          items.push({
-            Menu_ID: 'fallback-mail-report',
-            Menu_Name: 'Mail Report',
-            Route: '/admin/Mail_Report',
-          });
-        }
+        // Store allowed menu names in localStorage for route guards
+        const allowedMenuNames = items.map((item: any) => item.Menu_Name);
+        localStorage.setItem('Allowed_Menus', JSON.stringify(allowedMenuNames));
 
-        // ✅ 👉 Ensure Batch Mail Report is always present
-        const batchMailReportExists = items.some(
-          (item: any) => item.Menu_Name === 'Batch Mail Report'
-        );
+        const staffId = parseInt(localStorage.getItem('User_Id') || localStorage.getItem('User_ID') || '0');
+        const userEmail = (localStorage.getItem('Email') || '').toLowerCase().trim();
+        const isAdmin = staffId === 1 || userEmail === 'admin_user@g.com' || userEmail === 'cs.mgr@testprepinenglish.com';
 
-        if (!batchMailReportExists) {
-          items.push({
-            Menu_ID: 'fallback-batch-mail-report',
-            Menu_Name: 'Batch Mail Report',
-            Route: '/admin/batch-mail-report',
-          });
-        }
+        // ✅ Only inject fallback reports for Super Admin so other users see ONLY their assigned permissions
+        if (isAdmin) {
+          // ✅ 👉 Ensure Mail Report is always present
+          const mailReportExists = items.some(
+            (item: any) => item.Menu_Name === 'Mail Report'
+          );
 
-        // ✅ 👉 Ensure Status Report is always present
-        const statusReportExists = items.some(
-          (item: any) => item.Menu_Name === 'Status Report'
-        );
+          if (!mailReportExists) {
+            items.push({
+              Menu_ID: 'fallback-mail-report',
+              Menu_Name: 'Mail Report',
+              Route: '/admin/Mail_Report',
+            });
+          }
 
-        if (!statusReportExists) {
-          items.push({
-            Menu_ID: 'fallback-status-report',
-            Menu_Name: 'Status Report',
-            Route: '/admin/Status_Report',
-          });
-        }
+          // ✅ 👉 Ensure Batch Mail Report is always present
+          const batchMailReportExists = items.some(
+            (item: any) => item.Menu_Name === 'Batch Mail Report'
+          );
 
-        // ✅ 👉 Ensure Lead Summary is always present
-        const leadSummaryExists = items.some(
-          (item: any) => item.Menu_Name === 'Lead Summary'
-        );
+          if (!batchMailReportExists) {
+            items.push({
+              Menu_ID: 'fallback-batch-mail-report',
+              Menu_Name: 'Batch Mail Report',
+              Route: '/admin/batch-mail-report',
+            });
+          }
 
-        if (!leadSummaryExists) {
-          items.push({
-            Menu_ID: 'fallback-lead-summary',
-            Menu_Name: 'Lead Summary',
-            Route: '/admin/Lead_Summary',
-          });
-        }
+          // ✅ 👉 Ensure Status Report is always present
+          const statusReportExists = items.some(
+            (item: any) => item.Menu_Name === 'Status Report'
+          );
 
-        // ✅ 👉 Ensure Mock Test Subscribed is always present
-        const mockTestExists = items.some(
-          (item: any) => item.Menu_Name === 'Mock Test Subscribed'
-        );
+          if (!statusReportExists) {
+            items.push({
+              Menu_ID: 'fallback-status-report',
+              Menu_Name: 'Status Report',
+              Route: '/admin/Status_Report',
+            });
+          }
 
-        if (!mockTestExists) {
-          items.push({
-            Menu_ID: 'fallback-mock-test',
-            Menu_Name: 'Mock Test Subscribed',
-            Route: '/admin/mock-test-subscribed',
-          });
-        }
+          // ✅ 👉 Ensure Lead Summary is always present
+          const leadSummaryExists = items.some(
+            (item: any) => item.Menu_Name === 'Lead Summary'
+          );
 
-        // ✅ 👉 Ensure Registration Summary is always present
-        const registrationSummaryExists = items.some(
-          (item: any) => item.Menu_Name === 'Registration Summary'
-        );
+          if (!leadSummaryExists) {
+            items.push({
+              Menu_ID: 'fallback-lead-summary',
+              Menu_Name: 'Lead Summary',
+              Route: '/admin/Lead_Summary',
+            });
+          }
 
-        if (!registrationSummaryExists) {
-          items.push({
-            Menu_ID: 'fallback-registration-summary',
-            Menu_Name: 'Registration Summary',
-            Route: '/admin/Registration_Summary',
-          });
-        }
+          // ✅ 👉 Ensure Mock Test Subscribed is always present
+          const mockTestExists = items.some(
+            (item: any) => item.Menu_Name === 'Mock Test Subscribed'
+          );
 
-        // ✅ 👉 Ensure Attendance is always present
-        const attendanceExists = items.some(
-          (item: any) => item.Menu_Name === 'Attendance' || item.Menu_Name === 'Mark Attendance'
-        );
+          if (!mockTestExists) {
+            items.push({
+              Menu_ID: 'fallback-mock-test',
+              Menu_Name: 'Mock Test Subscribed',
+              Route: '/admin/mock-test-subscribed',
+            });
+          }
 
-        if (!attendanceExists) {
-          items.push({
-            Menu_ID: 'fallback-attendance',
-            Menu_Name: 'Attendance',
-            Route: '/admin/Mark_Attendance',
-          });
+          // ✅ 👉 Ensure Registration Summary is always present
+          const registrationSummaryExists = items.some(
+            (item: any) => item.Menu_Name === 'Registration Summary'
+          );
+
+          if (!registrationSummaryExists) {
+            items.push({
+              Menu_ID: 'fallback-registration-summary',
+              Menu_Name: 'Registration Summary',
+              Route: '/admin/Registration_Summary',
+            });
+          }
+
+          // ✅ 👉 Ensure Attendance is always present
+          const attendanceExists = items.some(
+            (item: any) => item.Menu_Name === 'Attendance' || item.Menu_Name === 'Mark Attendance'
+          );
+
+          if (!attendanceExists) {
+            items.push({
+              Menu_ID: 'fallback-attendance',
+              Menu_Name: 'Attendance',
+              Route: '/admin/Mark_Attendance',
+            });
+          }
         }
 
         // ✅ Fix routes
@@ -250,44 +270,51 @@ export class NavbarComponent implements OnInit {
       error: (err) => {
         console.error('Menu API error:', err);
 
-        // ✅ Fallback if API fails
-        this.menuItems = [
-          {
-            Menu_ID: 'fallback-mail-report',
-            Menu_Name: 'Mail Report',
-            Route: '/admin/Mail_Report',
-          },
-          {
-            Menu_ID: 'fallback-batch-mail-report',
-            Menu_Name: 'Batch Mail Report',
-            Route: '/admin/batch-mail-report',
-          },
-          {
-            Menu_ID: 'fallback-status-report',
-            Menu_Name: 'Status Report',
-            Route: '/admin/Status_Report',
-          },
-          {
-            Menu_ID: 'fallback-lead-summary',
-            Menu_Name: 'Lead Summary',
-            Route: '/admin/Lead_Summary',
-          },
-          {
-            Menu_ID: 'fallback-mock-test',
-            Menu_Name: 'Mock Test Subscribed',
-            Route: '/admin/mock-test-subscribed',
-          },
-          {
-            Menu_ID: 'fallback-registration-summary',
-            Menu_Name: 'Registration Summary',
-            Route: '/admin/Registration_Summary',
-          },
-          {
-            Menu_ID: 'fallback-attendance',
-            Menu_Name: 'Attendance',
-            Route: '/admin/Mark_Attendance',
-          },
-        ];
+        const staffId = parseInt(localStorage.getItem('User_Id') || localStorage.getItem('User_ID') || '0');
+        const userEmail = (localStorage.getItem('Email') || '').toLowerCase().trim();
+        const isAdmin = staffId === 1 || userEmail === 'admin_user@g.com' || userEmail === 'cs.mgr@testprepinenglish.com';
+
+        if (isAdmin) {
+          this.menuItems = [
+            {
+              Menu_ID: 'fallback-mail-report',
+              Menu_Name: 'Mail Report',
+              Route: '/admin/Mail_Report',
+            },
+            {
+              Menu_ID: 'fallback-batch-mail-report',
+              Menu_Name: 'Batch Mail Report',
+              Route: '/admin/batch-mail-report',
+            },
+            {
+              Menu_ID: 'fallback-status-report',
+              Menu_Name: 'Status Report',
+              Route: '/admin/Status_Report',
+            },
+            {
+              Menu_ID: 'fallback-lead-summary',
+              Menu_Name: 'Lead Summary',
+              Route: '/admin/Lead_Summary',
+            },
+            {
+              Menu_ID: 'fallback-mock-test',
+              Menu_Name: 'Mock Test Subscribed',
+              Route: '/admin/mock-test-subscribed',
+            },
+            {
+              Menu_ID: 'fallback-registration-summary',
+              Menu_Name: 'Registration Summary',
+              Route: '/admin/Registration_Summary',
+            },
+            {
+              Menu_ID: 'fallback-attendance',
+              Menu_Name: 'Attendance',
+              Route: '/admin/Mark_Attendance',
+            },
+          ];
+        } else {
+          this.menuItems = [];
+        }
       },
     });
   }

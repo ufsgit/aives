@@ -6,6 +6,7 @@ import { DialogBox_Component } from '../../shared/components/DialogBox/DialogBox
 import { ObservablesService } from '../../shared/services/observables.service';
 import { AuthService } from './auth.service';
 import { SharedModule } from '../../shared/shared.module';
+import { user_Service } from '../../admin/services/user.Service';
 
 @Component({
     selector: 'app-auth',
@@ -20,6 +21,7 @@ export class AuthComponent implements OnInit {
   private authService_ = inject(AuthService);
   dialog = inject(MatDialog);
   private observable = inject(ObservablesService);
+  private userService = inject(user_Service);
 
   
   loginForm: FormGroup;
@@ -66,15 +68,54 @@ export class AuthComponent implements OnInit {
         };
         const success = await this.authService_.login(payload);
         if (success) {
-          localStorage.setItem("Email", success[0].Email || '');
-          localStorage.setItem("Name", success[0].First_Name || '');
-          localStorage.setItem("User_Id", success[0].Id);
-          this.observable.setData('NavTitle', 'Student');
-          this.observable.setData('Email', localStorage.getItem('Email'));
-          this.observable.setData('Name', localStorage.getItem('Name'));
+          const userObj = success[0] || {};
+          const emailVal = userObj.Email || '';
+          const nameVal = userObj.First_Name || '';
+          const userIdVal = userObj.Id;
+          const userTypeIdVal = userObj.User_Type_Id;
+
+          localStorage.setItem("Email", emailVal);
+          localStorage.setItem("Name", nameVal);
+          localStorage.setItem("User_Id", userIdVal);
+          this.observable.setData('Email', emailVal);
+          this.observable.setData('Name', nameVal);
           localStorage.setItem("Access_Token", success['token']);
-          localStorage.setItem("User_Type", success[0].User_Type_Id);
-          this.router.navigateByUrl("/admin");
+          localStorage.setItem("User_Type", userTypeIdVal);
+
+          const isSuperAdmin = userIdVal == 1 || emailVal.toLowerCase() === 'admin_user@g.com' || emailVal.toLowerCase() === 'cs.mgr@testprepinenglish.com';
+
+          // Dynamically route based on user's assigned permissions
+          this.userService.Get_user_Menus(userIdVal).subscribe({
+            next: (menuRes: any) => {
+              const raw = Array.isArray(menuRes?.[0]) ? menuRes[0] : (Array.isArray(menuRes) ? menuRes : []);
+              const allowedNames = raw.map((m: any) => m.Menu_Name?.trim());
+              localStorage.setItem('Allowed_Menus', JSON.stringify(allowedNames));
+
+              if (isSuperAdmin || allowedNames.includes('Dashboard')) {
+                this.observable.setData('NavTitle', 'Dashboard');
+                this.router.navigateByUrl('/admin/dash');
+              } else if (raw.length > 0) {
+                const firstItem = raw[0];
+                let firstRoute = firstItem.Route || '';
+                if (!firstRoute.startsWith('/')) {
+                  firstRoute = `/admin/${firstRoute}`;
+                }
+                this.observable.setData('NavTitle', firstItem.Menu_Name);
+                this.router.navigateByUrl(firstRoute);
+              } else {
+                this.observable.setData('NavTitle', 'Mark Attendance');
+                this.router.navigateByUrl('/admin/Mark_Attendance');
+              }
+            },
+            error: () => {
+              if (isSuperAdmin) {
+                this.observable.setData('NavTitle', 'Dashboard');
+                this.router.navigateByUrl('/admin/dash');
+              } else {
+                this.router.navigateByUrl('/admin');
+              }
+            }
+          });
         } else {
           this.showErrorDialog('Login failed. Please check your credentials.');
         }

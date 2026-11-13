@@ -242,13 +242,22 @@ router.get('/Get_All_Menu_Permissions/:user_Id_?', async (req, res, next) => {
 
 router.get('/Get_user_Menus/:user_Id_?', async (req, res, next) => {
   try {
-
     const rows = await user.Get_user_Menus(req.userId);
-
+    // Deduplicate any menu entries by Menu_ID while preserving user permissions
+    if (Array.isArray(rows) && Array.isArray(rows[0])) {
+      const seen = new Set();
+      const uniqueMenus = rows[0].filter(item => {
+        if (!item || !item.Menu_ID) return false;
+        if (seen.has(item.Menu_ID)) return false;
+        seen.add(item.Menu_ID);
+        return true;
+      });
+      return res.json([uniqueMenus]);
+    }
     res.json(rows);
   }
   catch (e) {
-    res.status(500).json({ success: false, message: 'Failed to delete user', error: e.message });
+    res.status(500).json({ success: false, message: 'Failed to get user menus', error: e.message });
   }
 });
 

@@ -232,8 +232,10 @@ export class AttendanceHistoryComponent implements OnInit {
 
   ngOnInit() {
     this.staffId = parseInt(localStorage.getItem('User_Id') || localStorage.getItem('User_ID') || '0');
-    const userEmail = String(localStorage.getItem('Email') || '').toLowerCase();
-    this.isAdmin = this.staffId === 1 || userEmail === 'admin_user@g.com' || userEmail === 'cs.mgr@testprepinenglish.com';
+    const userEmail = String(localStorage.getItem('Email') || '').toLowerCase().trim();
+    const userName = String(localStorage.getItem('Name') || '').toLowerCase().trim();
+    const isTrainer = userName.includes('trainer') || userEmail.includes('trainer') || userEmail === 'ufsdev123@gmail.com';
+    this.isAdmin = !isTrainer && (this.staffId === 1 || userEmail === 'admin_user@g.com' || userEmail === 'cs.mgr@testprepinenglish.com');
     this.loadCourses();
     this.fetchHistory();
   }

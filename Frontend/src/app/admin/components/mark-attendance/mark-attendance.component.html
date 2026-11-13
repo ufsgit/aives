@@ -2,7 +2,7 @@
   <!-- Header -->
   <div class="attendance-header">
     <div class="header-left">
-      <button mat-icon-button (click)="goBack()" class="back-btn" title="Back">
+      <button mat-icon-button (click)="goBack()" class="back-btn" title="Back" *ngIf="isAdmin">
         <mat-icon>arrow_back</mat-icon>
       </button>
       <div class="header-title">

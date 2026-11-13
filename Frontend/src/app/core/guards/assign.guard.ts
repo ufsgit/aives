@@ -20,6 +20,28 @@ class PermissionsService {
     if (localStorage['Access_Token']) {
       const userType = Number(localStorage['User_Type']);
       if (userType === 1 || userType === 2 || userType === 3) {
+        const staffId = parseInt(localStorage.getItem('User_Id') || localStorage.getItem('User_ID') || '0');
+        const userEmail = (localStorage.getItem('Email') || '').toLowerCase().trim();
+        const isSuperAdmin = staffId === 1 || userEmail === 'admin_user@g.com' || userEmail === 'cs.mgr@testprepinenglish.com';
+
+        const allowedMenus: string[] = JSON.parse(localStorage.getItem('Allowed_Menus') || '[]');
+
+        if (isSuperAdmin || allowedMenus.includes('Dashboard')) {
+          this.router.navigateByUrl('/admin/dash');
+          return false;
+        }
+        if (allowedMenus.includes('Lead')) {
+          this.router.navigateByUrl('/admin/Student_Lead');
+          return false;
+        }
+        if (allowedMenus.includes('Student')) {
+          this.router.navigateByUrl('/admin/student');
+          return false;
+        }
+        if (allowedMenus.includes('Attendance') || allowedMenus.includes('Mark Attendance')) {
+          this.router.navigateByUrl('/admin/Mark_Attendance');
+          return false;
+        }
         this.router.navigateByUrl('/admin');
         return false;
       } else {

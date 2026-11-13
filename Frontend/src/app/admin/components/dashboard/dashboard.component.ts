@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import { HttpClient } from '@angular/common/http';
 import { user_Service } from '../../services/user.Service';
@@ -16,6 +17,7 @@ import { LeadSummaryComponent } from '../lead-summary/lead-summary.component';
 export class DashboardComponent implements OnInit {
   private http = inject(HttpClient);
   private userService = inject(user_Service);
+  private router = inject(Router);
 
   public pieChartOptions: ChartConfiguration['options'] = {
     responsive: true,
@@ -198,6 +200,24 @@ export class DashboardComponent implements OnInit {
 
 
   ngOnInit(): void {
+    const staffId = parseInt(localStorage.getItem('User_Id') || localStorage.getItem('User_ID') || '0');
+    const userEmail = (localStorage.getItem('Email') || '').toLowerCase().trim();
+    const isSuperAdmin = staffId === 1 || userEmail === 'admin_user@g.com' || userEmail === 'cs.mgr@testprepinenglish.com';
+
+    const allowedMenus: string[] = JSON.parse(localStorage.getItem('Allowed_Menus') || '[]');
+
+    if (!isSuperAdmin && !allowedMenus.includes('Dashboard')) {
+      if (allowedMenus.includes('Lead')) {
+        this.router.navigate(['/admin/Student_Lead']);
+      } else if (allowedMenus.includes('Student')) {
+        this.router.navigate(['/admin/student']);
+      } else if (allowedMenus.includes('Attendance') || allowedMenus.includes('Mark Attendance')) {
+        this.router.navigate(['/admin/Mark_Attendance']);
+      } else {
+        this.router.navigate(['/admin']);
+      }
+      return;
+    }
     this.getDashboardData();
   }
 
