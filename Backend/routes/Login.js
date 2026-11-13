@@ -114,7 +114,7 @@ router.post("/Check_User_Exist", async (req, res, next) => {
 
     if (finalEmail) {
       try {
-        const processedBody = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        const processedBody = `<div style="font-family: Arial, sans-serif; width: 100%; text-align: left;">
                                 <h2 style="color: #333;">Login Verification</h2>
                                 <p>Hello,</p>
                                 <p>Please use the following OTP code to complete your login:</p>
@@ -341,7 +341,7 @@ router.post("/Generate-forget-Password", async (req, res) => {
     }
 
     const textContent = `Hello, Your OTP for Track Box login is: ${otp}. This code will expire in 10 minutes.`;
-    const processedBody = `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+    const processedBody = `<div style="font-family: Arial, sans-serif; width: 100%; text-align: left;">
                           <h2>Password Reset Request</h2>
                           <p>Hello,</p>
                           <p>You have requested to reset your password. Please use the following OTP to complete the process:</p>

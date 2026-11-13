@@ -192,15 +192,15 @@ router.post('/Send_Email_With_Template', async (req, res) => {
 
 Welcome to Aives Australia's TESTPREP! We are delighted to confirm your enrolment in our [Course Name] programme.
 
-Your Enrolment Details:
-• Student Name: [Student Name]
-• Roll Number: [Roll Number]
-• Programme: [Course Name]
-• Training Mode: [Training Mode]
-• Course Commencement: [Start Date]
-• Daily Training Time: [Daily Training Time] ([Time Zone])
-• Payment Amount: [Payment Amount]
-• Transaction Reference: [Transaction ID]
+**Your Enrolment Details:**
+• **Student Name:** [Student Name]
+• **Roll Number:** [Roll Number]
+• **Programme:** [Course Name]
+• **Training Mode:** [Training Mode]
+• **Course Commencement:** [Start Date]
+• **Daily Training Time:** [Daily Training Time] ([Time Zone])
+• **Payment Amount:** [Payment Amount]
+• **Transaction Reference:** [Transaction ID]
 
 Attached to this email is your official Payment Receipt for your records.
 
@@ -210,8 +210,8 @@ We wish you the very best in achieving your target score!
 
 Warm regards,
 
-Student Admissions & Administration Team
-Aives Australia's TESTPREP
+**Student Admissions & Administration Team**
+**Aives Australia's TESTPREP**
 [Official Email] | [Contact Number]`,
                     Is_Active: 1
                 };
@@ -227,11 +227,11 @@ Greetings from Aives Australia's TESTPREP!
 
 We are pleased to inform you that your trainer has been allocated for the [Course Name] programme.
 
-Trainer & Class Details:
-• Assigned Trainer: [Trainer Name]
-• Trainer Contact: [Trainer Contact Details]
-• Batch Time: [Daily Training Time] ([Time Zone])
-• First Class Date: [Start Date]
+**Trainer & Class Details:**
+• **Assigned Trainer:** [Trainer Name]
+• **Trainer Contact:** [Trainer Contact Details]
+• **Batch Time:** [Daily Training Time] ([Time Zone])
+• **First Class Date:** [Start Date]
 
 Your trainer will guide you throughout the training journey, conduct practice sessions, provide individual feedback, and assist you in achieving your required examination score.
 
@@ -239,8 +239,8 @@ Please be ready for your first session at the scheduled batch time. If you need 
 
 Warm regards,
 
-Academic Coordination Team
-Aives Australia's TESTPREP
+**Academic Coordination Team**
+**Aives Australia's TESTPREP**
 [Official Email] | [Contact Number]`,
                     Is_Active: 1
                 };

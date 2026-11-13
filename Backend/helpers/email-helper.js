@@ -2,18 +2,121 @@ const axios = require('axios');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const dns = require('dns');
+
+// Prefer IPv4 first to avoid IPv6 getaddrinfo ENOTFOUND timeouts/failures on Windows networks
+try {
+    if (dns.setDefaultResultOrder) {
+        dns.setDefaultResultOrder('ipv4first');
+    }
+} catch (e) {}
+
+// Fallback DNS resolver querying public DNS (Google 8.8.8.8, Cloudflare 1.1.1.1) when local router DNS fails
+const fallbackResolver = new dns.Resolver();
+try {
+    fallbackResolver.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
+} catch (e) {}
+
+let cachedBrevoIps = [];
+
+function customDnsLookup(hostname, options, callback) {
+    if (typeof options === 'function') {
+        callback = options;
+        options = {};
+    }
+
+    // 1. First try system lookup
+    dns.lookup(hostname, options, (err, address, family) => {
+        if (!err && address) {
+            if (hostname === 'api.brevo.com') {
+                cachedBrevoIps = Array.isArray(address) ? address : [{ address, family: family || 4 }];
+            }
+            return callback(null, address, family);
+        }
+
+        // 2. If system lookup failed with ENOTFOUND or EAI_AGAIN, query public DNS fallback directly
+        fallbackResolver.resolve4(hostname, (fallbackErr, addresses) => {
+            if (!fallbackErr && addresses && addresses.length > 0) {
+                console.log(`[DNS Fallback] Public DNS resolved ${hostname} -> ${addresses[0]}`);
+                cachedBrevoIps = addresses.map(ip => ({ address: ip, family: 4 }));
+                if (options && options.all) {
+                    return callback(null, cachedBrevoIps);
+                }
+                return callback(null, addresses[0], 4);
+            }
+
+            // 3. If public DNS also failed, check if we have previously cached IPs in memory
+            if (hostname === 'api.brevo.com' && cachedBrevoIps.length > 0) {
+                const cachedIp = cachedBrevoIps[0].address || cachedBrevoIps[0];
+                console.warn(`[DNS Fallback] Using cached IP for ${hostname} -> ${cachedIp}`);
+                if (options && options.all) {
+                    return callback(null, cachedBrevoIps);
+                }
+                return callback(null, cachedIp, 4);
+            }
+
+            return callback(err || fallbackErr);
+        });
+    });
+}
 
 const httpsAgent = new https.Agent({
-    keepAlive: false,
-    maxCachedSessions: 0
+    keepAlive: true,
+    maxCachedSessions: 10,
+    lookup: customDnsLookup
 });
 
-let logoBase64 = '';
+let AWS = null;
 try {
-    const logoPath = path.join(__dirname, 'aiveslogo_small.png');
-    logoBase64 = fs.readFileSync(logoPath, 'base64');
-} catch (e) {
-    console.error('Failed to load logo image:', e);
+    AWS = require('aws-sdk');
+} catch (e) {}
+
+let isLogoUploaded = false;
+async function ensureLogoUploadedToS3() {
+    if (isLogoUploaded || !AWS) return;
+    try {
+        const bucket = process.env.AWS_S3_BUCKET || 'ufsnabeelphotoalbum';
+        const region = process.env.AWS_REGION || 'us-east-2';
+        const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+        const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+        if (!accessKeyId || !secretAccessKey) return;
+
+        const s3 = new AWS.S3({
+            accessKeyId,
+            secretAccessKey,
+            region
+        });
+
+        const logoPath = path.join(__dirname, 'aiveslogo_small.png');
+        if (!fs.existsSync(logoPath)) return;
+        const fileContent = fs.readFileSync(logoPath);
+
+        await s3.putObject({
+            Bucket: bucket,
+            Key: 'aiveslogo.png',
+            Body: fileContent,
+            ContentType: 'image/png'
+        }).promise();
+
+        isLogoUploaded = true;
+        console.log('[Logo S3 Sync] Successfully synced aiveslogo.png to S3 bucket:', bucket);
+    } catch (err) {
+        console.warn('[Logo S3 Sync] S3 sync notice:', err && err.message ? err.message : err);
+    }
+}
+
+// Trigger initial sync attempt in background
+try {
+    ensureLogoUploadedToS3().catch(() => {});
+} catch (e) {}
+
+function getLogoUrl() {
+    if (process.env.LOGO_URL && process.env.LOGO_URL.trim()) {
+        return process.env.LOGO_URL.trim();
+    }
+    const bucket = process.env.AWS_S3_BUCKET || 'ufsnabeelphotoalbum';
+    const region = process.env.AWS_REGION || 'us-east-2';
+    return `https://${bucket}.s3.${region}.amazonaws.com/aiveslogo.png`;
 }
 
 /**
@@ -76,6 +179,93 @@ function getBrevoConfig(fromEmail = null, fromName = null) {
     };
 }
 
+/**
+ * Formats email body HTML so that key sentences, headings, bullet titles,
+ * and markdown bold/italic tags (**bold**, *italic*) are rendered cleanly
+ * with strong inline styling visible across all email clients.
+ */
+function formatEmailBodyHtml(html) {
+    if (!html || typeof html !== 'string') return '';
+    let formatted = html.trim();
+
+    // 1. Markdown bold (**text** or __text__)
+    formatted = formatted.replace(/\*\*([\s\S]+?)\*\*/g, '<strong style="font-weight: 700; color: #0f172a;">$1</strong>');
+    formatted = formatted.replace(/__([\s\S]+?)__/g, '<strong style="font-weight: 700; color: #0f172a;">$1</strong>');
+
+    // 2. Markdown italic (*text* not adjacent to another * and not a bullet)
+    formatted = formatted.replace(/(?<!\*)\*([^*\n\r<]+?)\*(?!\*)/g, '<em style="font-style: italic; color: #64748b;">$1</em>');
+
+    // 3. Ensure existing <strong> and <b> tags have explicit font-weight: 700 inline for email client compatibility
+    formatted = formatted.replace(/<strong\b(?![^>]*style=)/gi, '<strong style="font-weight: 700; color: #0f172a;"');
+    formatted = formatted.replace(/<b\b(?![^>]*style=)/gi, '<b style="font-weight: 700; color: #0f172a;"');
+
+    // 4. Bullet list labels: • Title: (bold label before colon)
+    formatted = formatted.replace(
+        /(^|<br\s*\/?>|\n|<p[^>]*>|<div>)(\s*•\s*)([A-Za-z0-9\s/&–\-]+?:)(?!\s*<\/strong>)/g,
+        '$1$2<strong style="font-weight: 700; color: #0f172a;">$3</strong>'
+    );
+
+    // 5. Numbered list labels: 1. Non-Refundable:
+    formatted = formatted.replace(
+        /(^|<br\s*\/?>|\n|<p[^>]*>|<div>)(\s*[0-9]+\.\s*[A-Za-z0-9\s/&–\-]+?:)(?!\s*<\/strong>)/g,
+        '$1<strong style="font-weight: 700; color: #0f172a;">$2</strong>'
+    );
+
+    // 6. Section headings across all templates
+    const headings = [
+        "Why Choose Aives Australia's TESTPREP\\??",
+        "Our distinctive training approach combines:?",
+        "Please Verify Your Interest",
+        "Didn't Submit This Enquiry\\??",
+        "Your Enrolment [Dd]etails:?",
+        "Your Training Details:?",
+        "Your Zoom Classroom Access",
+        "Important\\s*[–\\-]\\s*Non-Refundable\\s*&\\s*Non-Transferable\\s*Programme",
+        "A Final Word Before You Begin",
+        "Trainer & Class Details:?",
+        "Student & Course Details:?",
+        "Payment Breakdown:?",
+        "Payment Details:?"
+    ];
+
+    for (const h of headings) {
+        const regex = new RegExp(`(^|<br\\s*\\/?>|\\n|<p[^>]*>|<div>)(?!<strong[^>]*>)\\s*(${h})\\s*(?!\\s*<\\/strong>)(?=<br\\s*\\/?>|\\n|<\\/p>|<\\/div>|$)`, 'gi');
+        formatted = formatted.replace(regex, '$1<strong style="font-weight: 700; color: #0f172a;">$2</strong>');
+    }
+
+    // 7. Prominent sentences in body
+    const prominentPhrases = [
+        "qualified Australian immigration law professionals with 20 years of practical experience in understanding English language testing requirements for Australian migration, professional registration, and education pathways\\.",
+        "NON-REFUNDABLE AND NON-TRANSFERABLE"
+    ];
+
+    for (const p of prominentPhrases) {
+        const regex = new RegExp(`(?!<strong[^>]*>)(${p})(?!<\\/strong>)`, 'gi');
+        formatted = formatted.replace(regex, '<strong style="font-weight: 700; color: #0f172a;">$1</strong>');
+    }
+
+    // 8. Sign-off team titles
+    const signoffTeams = [
+        "Student Admissions Team",
+        "Student Admissions & Administration Team",
+        "Academic Coordination Team",
+        "Admissions Team"
+    ];
+
+    for (const st of signoffTeams) {
+        const regex = new RegExp(`(^|<br\\s*\\/?>|\\n)\\s*(${st})\\s*(?=<br\\s*\\/?>|\\n|$)`, 'gi');
+        formatted = formatted.replace(regex, '$1<strong style="font-weight: 700; color: #0f172a;">$2</strong>');
+    }
+
+    // Also bold company name right under the sign-off team name
+    formatted = formatted.replace(
+        /(<strong style="font-weight: 700; color: #0f172a;">(?:Student Admissions Team|Student Admissions & Administration Team|Academic Coordination Team|Admissions Team)<\/strong>\s*(?:<br\s*\/?>|\n)\s*)(Aives Australia's TESTPREP|TESTPREP)/gi,
+        '$1<strong style="font-weight: 700; color: #0f172a;">$2</strong>'
+    );
+
+    return formatted;
+}
+
 const sendEmail = async (to, subject, html, fromEmail = null, fromName = null, attachments = null) => {
     let brevoConfig = null;
     let apiKey = null;
@@ -111,99 +301,201 @@ const sendEmail = async (to, subject, html, fromEmail = null, fromName = null, a
         });
 
         const year = new Date().getFullYear();
+        const logoUrl = getLogoUrl();
+        try {
+            ensureLogoUploadedToS3().catch(() => {});
+        } catch (e) {}
+        // Sanitize incoming HTML to avoid nested full documents or containers
+        let cleanHtml = (html && typeof html === 'string') ? html.trim() : '';
+        const bodyContentMatch = cleanHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+        if (bodyContentMatch && bodyContentMatch[1]) {
+            cleanHtml = bodyContentMatch[1].trim();
+        }
+        // Unwrap any legacy .email-container if passed
+        const legacyContainerMatch = cleanHtml.match(/<div class=["']email-container["'][^>]*>([\s\S]*?)<\/div>\s*$/i);
+        if (legacyContainerMatch && legacyContainerMatch[1]) {
+            const innerBodyMatch = legacyContainerMatch[1].match(/<div class=["']email-body["'][^>]*>([\s\S]*?)<\/div>/i);
+            if (innerBodyMatch && innerBodyMatch[1]) {
+                cleanHtml = innerBodyMatch[1].trim();
+            }
+        }
+
+        // Strip any legacy header if present
+        cleanHtml = cleanHtml.replace(/<div class=["']email-header["'][\s\S]*?<\/div>/gi, '');
+
+        // Apply bold formatting to important sentences, headings, and markdown tags
+        cleanHtml = formatEmailBodyHtml(cleanHtml);
+
+        const safeSubject = subject ? String(subject).replace(/"/g, '&quot;') : "Aives Australia's TESTPREP";
         const wrappedHtml = `
             <!DOCTYPE html>
-            <html>
+            <html lang="en">
                 <head>
                     <meta charset="utf-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+                    <meta name="x-apple-disable-message-reformatting">
+                    <title>${safeSubject}</title>
                     <style>
-                        body {
-                            margin: 0;
-                            padding: 0;
-                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                            background-color: #f8fafc;
-                            color: #1e293b;
+                        html, body {
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            width: 100% !important;
+                            min-width: 100% !important;
+                            background-color: #ffffff !important;
+                            color: #1e293b !important;
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+                            -webkit-text-size-adjust: 100% !important;
+                            -ms-text-size-adjust: 100% !important;
+                            text-align: left !important;
+                        }
+                        table, td {
+                            border-collapse: collapse !important;
+                            mso-table-lspace: 0pt !important;
+                            mso-table-rspace: 0pt !important;
+                        }
+                        img {
+                            border: 0 !important;
+                            outline: none !important;
+                            text-decoration: none !important;
+                            -ms-interpolation-mode: bicubic !important;
+                            display: block !important;
+                        }
+                        .email-full-wrapper {
+                            width: 100% !important;
+                            max-width: 100% !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            background-color: #ffffff !important;
+                            text-align: left !important;
                         }
                         .email-container {
-                            max-width: 600px;
-                            margin: 40px auto;
-                            background-color: #ffffff;
-                            border-radius: 12px;
-                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-                            overflow: hidden;
-                        }
-                        .email-header {
-                            background-color: #ffffff;
-                            padding: 20px;
-                            border-bottom: 4px solid #f10505ff;
-                        }
-                        .email-header h1 {
-                            margin: 0;
-                            font-weight: 800;
-                            letter-spacing: 0.5px;
-                            text-transform: uppercase;
-                        }
-                        .email-header .title-top {
-                            color: #003366;
-                            font-size: 20px;
-                            display: block;
-                            margin-bottom: 4px;
-                        }
-                        .email-header .title-bottom {
-                            color: #f20808ff;
-                            font-size: 38px;
-                            letter-spacing: -1px;
+                            width: 100% !important;
+                            max-width: 100% !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                            background-color: #ffffff !important;
+                            text-align: left !important;
                         }
                         .email-body {
-                            padding: 40px 30px;
-                            font-size: 16px;
-                            line-height: 1.6;
-                            color: #334155;
+                            background-color: #ffffff !important;
+                            padding: 28px 28px !important;
+                            font-size: 15px !important;
+                            line-height: 1.65 !important;
+                            color: #334155 !important;
+                            text-align: left !important;
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+                            word-break: break-word !important;
+                            overflow-wrap: break-word !important;
+                        }
+                        .email-footer-details {
+                            background-color: #ffffff !important;
+                            padding: 24px 28px 20px 28px !important;
+                            border-top: 1px solid #e2e8f0 !important;
+                            text-align: left !important;
                         }
                         .email-footer {
-                            background-color: #003366;
-                            padding: 24px 30px;
-                            text-align: center;
-                            font-size: 13px;
-                            color: #e2e8f0;
+                            background-color: #003366 !important;
+                            padding: 20px 28px !important;
+                            text-align: left !important;
+                            font-size: 13px !important;
+                            line-height: 1.5 !important;
+                            color: #e2e8f0 !important;
+                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
                         }
                         .email-footer p {
-                            margin: 0 0 8px 0;
+                            margin: 0 0 6px 0 !important;
+                        }
+                        .email-footer p:last-child {
+                            margin-bottom: 0 !important;
                         }
                         .email-footer a {
-                            color: #93c5fd;
-                            text-decoration: none;
+                            color: #93c5fd !important;
+                            text-decoration: none !important;
+                        }
+                        /* Responsive layout for mobile devices */
+                        @media only screen and (max-width: 600px) {
+                            .email-body {
+                                padding: 20px 16px !important;
+                                font-size: 14.5px !important;
+                                line-height: 1.6 !important;
+                            }
+                            .email-footer-details {
+                                padding: 18px 16px 14px 16px !important;
+                            }
+                            .footer-table {
+                                display: block !important;
+                                width: 100% !important;
+                            }
+                            .footer-col-left {
+                                display: block !important;
+                                width: 100% !important;
+                                max-width: 100% !important;
+                                text-align: left !important;
+                                padding: 0 0 10px 0 !important;
+                            }
+                            .footer-col-right {
+                                display: block !important;
+                                width: 100% !important;
+                                max-width: 100% !important;
+                                text-align: left !important;
+                                padding: 0 !important;
+                            }
+                            .footer-col-right h2 {
+                                font-size: 15px !important;
+                                margin-bottom: 3px !important;
+                            }
+                            .footer-col-right p {
+                                font-size: 11.5px !important;
+                                line-height: 1.4 !important;
+                            }
+                            .email-footer {
+                                padding: 16px 16px !important;
+                                font-size: 12px !important;
+                            }
+                            .responsive-logo {
+                                max-width: 120px !important;
+                                width: 120px !important;
+                                height: auto !important;
+                            }
                         }
                     </style>
                 </head>
-                <body>
-                    <div class="email-container">
-                        <div class="email-header">
-                            <table width="100%" border="0" cellspacing="0" cellpadding="0">
-                                <tr>
-                                    <td align="left" valign="middle" width="140">
-                                        ${logoBase64 ? `<img src="cid:aiveslogo.png" alt="Aives Australia Test Prep" width="130" border="0" style="max-width: 130px; height: auto; border: none; outline: none; display: block;" />` : `
-                                        <h1 style="margin: 0; color: #003366; font-size: 18px;">Aives Australia</h1>`}
-                                    </td>
-                                    <td align="right" valign="middle" style="text-align: right; padding-left: 15px;">
-                                        <h2 style="margin: 0 0 5px 0; color: #000000; font-size: 18px; font-weight: 700;">AIVES Australia Testprep</h2>
-                                        <p style="margin: 0; color: #333333; font-size: 12px; line-height: 1.4;">
-                                            Address: 2nd Floor, Geo Centre, Door No. 45, 1920 B3,<br/>
-                                            NH-66, Chakkaraparambu, Vennala, Ernakulam, Kerala 682032
-                                        </p>
-                                    </td>
-                                </tr>
-                            </table>
-                        </div>
-                        <div class="email-body">
-                            ${html}
-                        </div>
-                        <div class="email-footer">
-                            <p>&copy; ${year} Aives Australia Test Prep. All rights reserved.</p>
-                            <p>You can reply directly to this email.</p>
-                        </div>
-                    </div>
+                <body style="margin: 0; padding: 0; width: 100% !important; min-width: 100%; background-color: #ffffff; color: #1e293b; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: left; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" align="left" class="email-full-wrapper" style="width: 100%; max-width: 100%; border-collapse: collapse; margin: 0; padding: 0; background-color: #ffffff; text-align: left;">
+                        <tr>
+                            <td align="left" valign="top" style="padding: 0; margin: 0; text-align: left; background-color: #ffffff;">
+                                <div class="email-container" style="width: 100%; max-width: 100%; margin: 0; padding: 0; background-color: #ffffff; text-align: left;">
+                                    <!-- Email Content Body -->
+                                    <div class="email-body" style="background-color: #ffffff; padding: 28px 28px; font-size: 15px; line-height: 1.65; color: #334155; text-align: left; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; word-break: break-word; overflow-wrap: break-word;">
+                                        ${cleanHtml}
+                                    </div>
+                                    <!-- Footer Section: Logo & Address Details above existing footer content -->
+                                    <div class="email-footer-details" style="background-color: #ffffff; padding: 24px 28px 20px 28px; border-top: 1px solid #e2e8f0; text-align: left;">
+                                        <table role="presentation" class="footer-table" width="100%" border="0" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse;">
+                                            <tr>
+                                                <td class="footer-col-left" align="left" valign="middle" style="text-align: left; vertical-align: middle; width: 140px; padding: 0 15px 0 0;">
+                                                    <img src="${logoUrl}" alt="Aives Australia Test Prep" width="130" border="0" class="responsive-logo" style="max-width: 130px; width: 130px; height: auto; border: 0; outline: none; display: block;" />
+                                                </td>
+                                                <td class="footer-col-right" align="right" valign="middle" style="text-align: right; vertical-align: middle; padding: 0;">
+                                                    <h2 style="margin: 0 0 4px 0; color: #000000; font-size: 16px; font-weight: 700; line-height: 1.3;">AIVES Australia Testprep</h2>
+                                                    <p style="margin: 0; color: #333333; font-size: 12px; line-height: 1.45;">
+                                                        Address: 2nd Floor, Geo Centre, Door No. 45, 1920 B3,<br/>
+                                                        NH-66, Chakkaraparambu, Vennala, Ernakulam, Kerala 682032
+                                                    </p>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <!-- Existing Footer Content -->
+                                    <div class="email-footer" style="background-color: #003366; padding: 20px 28px; text-align: left; font-size: 13px; line-height: 1.5; color: #e2e8f0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+                                        <p style="margin: 0 0 4px 0; color: #ffffff; font-weight: 600; font-size: 13px;">&copy; ${year} Aives Australia Test Prep. All rights reserved.</p>
+                                        <p style="margin: 0; color: #cbd5e1; font-size: 12px;">You can reply directly to this email.</p>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
                 </body>
             </html>
         `;
@@ -232,14 +524,6 @@ const sendEmail = async (to, subject, html, fromEmail = null, fromName = null, a
             finalAttachments.push(...attachments);
         }
 
-        // Attach logo for inline display if available
-        if (logoBase64) {
-            finalAttachments.push({
-                content: logoBase64,
-                name: 'aiveslogo.png'
-            });
-        }
-
         if (finalAttachments.length > 0) {
             emailData.attachment = finalAttachments;
         }
@@ -263,7 +547,8 @@ const sendEmail = async (to, subject, html, fromEmail = null, fromName = null, a
         }
 
         let response;
-        for (let attempt = 1; attempt <= 3; attempt++) {
+        const maxAttempts = 4;
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
                 response = await axios({
                     method: 'post',
@@ -274,7 +559,7 @@ const sendEmail = async (to, subject, html, fromEmail = null, fromName = null, a
                         'content-type': 'application/json'
                     },
                     httpsAgent: httpsAgent,
-                    timeout: 15000,
+                    timeout: 20000,
                     data: emailData
                 });
                 break;
@@ -285,9 +570,11 @@ const sendEmail = async (to, subject, html, fromEmail = null, fromName = null, a
                     console.error(`[Brevo Auth Error] Authentication failed (status ${errStatus}): ${errMsg}. Halting retries. Please verify BREVO_API_KEY in .env and Brevo account permissions.`);
                     throw err;
                 }
-                if (attempt < 3 && (!err.response || err.code === 'EPROTO' || err.code === 'ECONNRESET' || errStatus >= 500)) {
-                    console.warn(`Transient SSL/network error sending email (attempt ${attempt}/3). Retrying...`, err.message);
-                    await new Promise(r => setTimeout(r, 600 * attempt));
+                const isNetworkOrDnsError = !err.response || err.code === 'ENOTFOUND' || err.code === 'EAI_AGAIN' || err.code === 'EPROTO' || err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT' || errStatus >= 500;
+                if (attempt < maxAttempts && isNetworkOrDnsError) {
+                    const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+                    console.warn(`[Brevo Network/DNS Warning] Attempt ${attempt}/${maxAttempts} failed (${err.code || err.message}). Retrying in ${delayMs}ms...`);
+                    await new Promise(r => setTimeout(r, delayMs));
                     continue;
                 }
                 throw err;

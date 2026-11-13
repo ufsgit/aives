@@ -908,15 +908,15 @@ async function sendRegistrationConfirmationEmails({ studentId, courseId = null, 
 
 Welcome to Aives Australia's TESTPREP! We are delighted to confirm your enrolment in our [Course Name] programme.
 
-Your Enrolment Details:
-• Student Name: [Student Name]
-• Student ID: [Student ID]
-• Programme: [Course Name]
-• Training Mode: [Training Mode]
-• Course Commencement: [Start Date]
-• Daily Training Time: [Daily Training Time] ([Time Zone])
-• Payment Amount: [Payment Amount]
-• Transaction Reference: [Transaction ID]
+**Your Enrolment Details:**
+• **Student Name:** [Student Name]
+• **Student ID:** [Student ID]
+• **Programme:** [Course Name]
+• **Training Mode:** [Training Mode]
+• **Course Commencement:** [Start Date]
+• **Daily Training Time:** [Daily Training Time] ([Time Zone])
+• **Payment Amount:** [Payment Amount]
+• **Transaction Reference:** [Transaction ID]
 
 Please find your official Payment Receipt attached to this email for your records.
 
@@ -926,8 +926,8 @@ We wish you the very best in achieving your target score!
 
 Warm regards,
 
-Student Admissions & Administration Team
-Aives Australia's TESTPREP
+**Student Admissions & Administration Team**
+**Aives Australia's TESTPREP**
 [Official Email] | [Contact Number]`;
 
         const receiptHtmlBody = replaceAllPlaceholders(receiptRawBody).replace(/\n/g, '<br>');
@@ -1002,24 +1002,24 @@ Greetings from Aives Australia's TESTPREP!
 I am delighted to introduce myself as your assigned PTE Academic Trainer.
 I will be conducting your training sessions over the next 20 live sessions helping you understand the PTE Academic examination, develop effective techniques, and improve your performance through structured learning and regular practice.
 
-Your Training Details
-• Student Name: [Student Name]
-• Student ID: [Student ID]
-• Assigned Trainer: [Trainer Name]
-• Course Commencement: [Course Commencement]
-• Daily Training Time: [Daily Training Time]
-• Time Zone: [Time Zone]
-• Training Duration: [Training Duration]
+**Your Training Details**
+• **Student Name:** [Student Name]
+• **Student ID:** [Student ID]
+• **Assigned Trainer:** [Trainer Name]
+• **Course Commencement:** [Course Commencement]
+• **Daily Training Time:** [Daily Training Time]
+• **Time Zone:** [Time Zone]
+• **Training Duration:** [Training Duration]
 
-Your Zoom Classroom Access
+**Your Zoom Classroom Access**
 Class link will be shared to you prior to class, Use the same link everyday.
 
 If you have any questions prior to class commencement, please feel free to reach out to us at [Official Email] or [Contact Number].
 
 Warm regards,
 
-Academic Coordination Team
-Aives Australia's TESTPREP
+**Academic Coordination Team**
+**Aives Australia's TESTPREP**
 [Official Email] | [Contact Number]`;
 
         const staffHtmlBody = replaceAllPlaceholders(staffRawBody).replace(/\n/g, '<br>');
