@@ -4,6 +4,17 @@ const email_template = require('../models/email_template');
 
 router.post('/Save_Email_Template', async (req, res) => {
     try {
+        if (req.body && req.body.Body && typeof req.body.Body === 'string') {
+            let body = req.body.Body.trim();
+            if (/&lt;(?:p|div|br|strong|b|span|ul|ol|li|h[1-6]|em|i)\b/i.test(body)) {
+                body = body
+                    .replace(/&lt;/g, '<')
+                    .replace(/&gt;/g, '>')
+                    .replace(/&quot;/g, '"')
+                    .replace(/&amp;/g, '&');
+            }
+            req.body.Body = body;
+        }
         const rows = await email_template.Save_Email_Template(req.body);
         res.json(rows);
     } catch (e) {
@@ -98,6 +109,7 @@ const emailLog = require('../models/email_log');
 const db = require('../config/dbconnection');
 const { buildLeadResponseBlock, getOfficialContactInfo } = require('../helpers/lead-welcome-helper');
 const { isRegistrationLocked, formatCourseDuration, calculateDurationString, formatTime12h } = require('../helpers/registration-email-helper');
+const { FIRST_WEEK_EMAIL_SUBJECT, FIRST_WEEK_EMAIL_HTML } = require('./Attendance');
 
 const templateSendLocks = new Map();
 
@@ -182,7 +194,16 @@ router.post('/Send_Email_With_Template', async (req, res) => {
 
         // Built-in fallback templates ensuring registration & assigned staff emails NEVER fail
         if (!template) {
-            if (isReceiptFlow) {
+            if (Number(Template_ID) === 11 || (pattern && /First\s*Week/i.test(pattern))) {
+                console.log('[Send_Email_With_Template] Using hardcoded template for First Week at TESTPREP.');
+                template = {
+                    Template_ID: 11,
+                    Template_Name: 'First Week at TESTPREP',
+                    Subject: FIRST_WEEK_EMAIL_SUBJECT,
+                    Body: FIRST_WEEK_EMAIL_HTML,
+                    Is_Active: 1
+                };
+            } else if (isReceiptFlow) {
                 console.log('[Send_Email_With_Template] Using built-in fallback template for Registration/Receipt Confirmation.');
                 template = {
                     Template_ID: 19,
@@ -620,9 +641,10 @@ Warm regards,
             }
         }
 
-        // 3. Send email
+        // 3. Send email: preserve HTML block tags if present, otherwise convert newlines to <br> for plain text
         console.log('Attempting to send email to:', To_Email);
-        const htmlBody = body ? body.replace(/\n/g, '<br>') : '';
+        const hasHtmlTags = /<\/?(?:p|div|table|tr|td|th|tbody|thead|ul|ol|li|h[1-6]|br|pre|blockquote|strong|b|em|i|span|a)\b/i.test(body || '');
+        const htmlBody = (body && !hasHtmlTags) ? body.replace(/\n/g, '<br>') : (body || '');
         const sendResult = await emailHelper.sendEmail(To_Email, subject, htmlBody, effectiveSenderEmail, effectiveSenderName, Attachments);
         console.log('Email sent successfully');
 

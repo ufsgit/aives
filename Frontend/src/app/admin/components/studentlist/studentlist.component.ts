@@ -1,12 +1,15 @@
 import {
   ChangeDetectorRef,
   Component,
+  ElementRef,
   EventEmitter,
   inject,
   Input,
   Output,
   ViewChild,
 } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { cleanHtmlForDisplay } from '../../../core/utils/html-formatter.util';
 import { CommonModule } from '@angular/common';
 import { StudentDocumentsComponent } from '../student-documents/student-documents.component';
 import { AttendanceService } from '../../services/attendance.service';
@@ -216,6 +219,10 @@ export class StudentlistComponent {
   private attendanceService = inject(AttendanceService);
   private fb = inject(FormBuilder);
   private url = inject(ActivatedRoute);
+  private sanitizer = inject(DomSanitizer);
+
+  @ViewChild('emailModalEditorRef') emailModalEditorRef?: ElementRef<HTMLDivElement>;
+  emailModalTab: 'edit' | 'preview' = 'edit';
   totals: any;
   originalInstallments: any[] = [];
   totalFeeAmount: any;
@@ -524,6 +531,12 @@ export class StudentlistComponent {
     this.emailSubject = '';
     this.emailBody = '';
     this.selectedTemplateId = null;
+    this.emailModalTab = 'edit';
+    setTimeout(() => {
+      if (this.emailModalEditorRef?.nativeElement) {
+        this.emailModalEditorRef.nativeElement.innerHTML = '';
+      }
+    }, 50);
   }
 
   closeEmailModal() {
@@ -535,15 +548,51 @@ export class StudentlistComponent {
       const template = this.emailTemplates.find(t => t.Template_ID === this.selectedTemplateId);
       if (template) {
         this.emailSubject = template.Subject;
-        this.emailBody = template.Body;
+        this.emailBody = cleanHtmlForDisplay(template.Body || '');
+        setTimeout(() => {
+          if (this.emailModalEditorRef?.nativeElement) {
+            this.emailModalEditorRef.nativeElement.innerHTML = this.emailBody;
+          }
+        }, 50);
       }
     } else {
       this.emailSubject = '';
       this.emailBody = '';
+      setTimeout(() => {
+        if (this.emailModalEditorRef?.nativeElement) {
+          this.emailModalEditorRef.nativeElement.innerHTML = '';
+        }
+      }, 50);
     }
   }
 
+  applyEmailModalFormat(command: string) {
+    if (this.emailModalEditorRef?.nativeElement) {
+      this.emailModalEditorRef.nativeElement.focus();
+    }
+    document.execCommand(command, false);
+    this.onEmailModalEditorInput();
+  }
+
+  onEmailModalEditorInput() {
+    if (this.emailModalEditorRef?.nativeElement) {
+      const html = this.emailModalEditorRef.nativeElement.innerHTML;
+      const textOnly = (this.emailModalEditorRef.nativeElement.innerText || '').trim();
+      this.emailBody = textOnly ? html : '';
+    }
+  }
+
+  getEmailModalSafeHtml(): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(cleanHtmlForDisplay(this.emailBody));
+  }
+
   sendEmail() {
+    if (this.emailModalEditorRef?.nativeElement) {
+      const html = this.emailModalEditorRef.nativeElement.innerHTML;
+      const textOnly = (this.emailModalEditorRef.nativeElement.innerText || '').trim();
+      this.emailBody = textOnly ? html : '';
+    }
+
     if (!this.emailSubject.trim() || !this.emailBody.trim()) {
       this.dialogBox.open(DialogBox_Component, {
         panelClass: 'Dialogbox-Class',

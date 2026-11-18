@@ -2,10 +2,14 @@
 @if(!Entry_View) {
 <section class="border border-gray-300 shadow p-6 rounded-lg bg-white mt-4">
   <div class="flex justify-between items-center mb-6">
-    <h2 class="text-2xl font-bold text-gray-800">Email Templates</h2>
-    <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition duration-300" 
+    <div>
+      <h2 class="text-2xl font-bold text-gray-800">Email Templates</h2>
+      <p class="text-xs text-gray-500 mt-1">Manage, format, and preview all automated email templates.</p>
+    </div>
+    <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow-md transition duration-300 flex items-center gap-2" 
             (click)="createNew()" style="background-color: #3b82f6 !important; color: white !important;">
-      + Create Template
+      <span class="material-symbols-outlined text-[18px]">add</span>
+      Create Template
     </button>
   </div>
 
@@ -36,13 +40,17 @@
             }
           </div>
         </div>
-        <div class="flex gap-3 ml-4">
+        <div class="flex gap-2.5 ml-4">
+          <button (click)="previewTemplate(item)" title="Preview Rendered Template"
+            class="material-symbols-outlined flex justify-center items-center h-10 w-10 border border-emerald-200 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition duration-200 shadow-xs">
+            visibility
+          </button>
           <button (click)="editTemplate(item)" title="Edit Template"
-            class="material-symbols-outlined flex justify-center items-center h-10 w-10 border border-blue-200 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition duration-200">
+            class="material-symbols-outlined flex justify-center items-center h-10 w-10 border border-blue-200 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition duration-200 shadow-xs">
             edit
           </button>
           <button (click)="deleteTemplate(item.Template_ID!)" title="Delete Template"
-            class="material-symbols-outlined flex justify-center items-center h-10 w-10 border border-red-200 rounded-full bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition duration-200">
+            class="material-symbols-outlined flex justify-center items-center h-10 w-10 border border-red-200 rounded-full bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition duration-200 shadow-xs">
             delete
           </button>
         </div>
@@ -81,7 +89,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label class="block text-sm font-bold text-gray-700 mb-2">Template Name <span class="text-red-500">*</span></label>
-          <input type="text" formControlName="Template_Name" placeholder="e.g., Welcome Email, Payment Reminder"
+          <input type="text" formControlName="Template_Name" placeholder="e.g., First Week at TESTPREP, Welcome Email"
             class="block w-full px-4 py-3 rounded-lg border border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-200"
             [ngClass]="{'!border-red-500 !ring-red-200': submitted && emailTemplateForm.get('Template_Name')?.invalid}">
           @if (submitted && emailTemplateForm.get('Template_Name')?.errors?.['required']) {
@@ -142,15 +150,170 @@
       </div>
       }
 
+      <!-- Formatted Email Body Section -->
       <div>
-        <label class="block text-sm font-bold text-gray-700 mb-2">Email Body <span class="text-red-500">*</span></label>
-        <textarea formControlName="Body" rows="8" placeholder="Write your email content here. You can use HTML tags."
-          class="block w-full px-4 py-3 rounded-lg border border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 transition duration-200 font-mono text-sm"
-          [ngClass]="{'!border-red-500 !ring-red-200': submitted && emailTemplateForm.get('Body')?.invalid}"></textarea>
+        <div class="flex items-center justify-between mb-2">
+          <label class="block text-sm font-bold text-gray-700">Email Body <span class="text-red-500">*</span></label>
+          <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-lg border border-gray-200 text-xs">
+            <button type="button" (click)="editorTab = 'edit'"
+              class="px-3 py-1 rounded font-semibold transition flex items-center gap-1.5"
+              [ngClass]="editorTab === 'edit' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'">
+              <span class="material-symbols-outlined text-[16px]">edit_note</span>
+              Visual Editor
+            </button>
+            <button type="button" (click)="editorTab = 'preview'"
+              class="px-3 py-1 rounded font-semibold transition flex items-center gap-1.5"
+              [ngClass]="editorTab === 'preview' ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-600 hover:text-gray-900'">
+              <span class="material-symbols-outlined text-[16px]">visibility</span>
+              Live Email Preview
+            </button>
+          </div>
+        </div>
+
+        <!-- Visual Editor Mode (Rendered, No HTML Tags visible) -->
+        <div [class.hidden]="editorTab !== 'edit'" 
+          class="border border-gray-300 rounded-lg overflow-hidden shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition"
+          [ngClass]="{'!border-red-500 !ring-red-200': submitted && emailTemplateForm.get('Body')?.invalid}">
+          
+          <!-- Formatting Toolbar -->
+          <div class="bg-gray-50 border-b border-gray-200 p-2 flex flex-wrap items-center gap-1 select-none">
+            <!-- Text styles -->
+            <button type="button" (mousedown)="$event.preventDefault(); applyFormat('bold')" title="Bold (Ctrl+B)"
+              class="p-1.5 rounded hover:bg-gray-200 text-gray-700 transition flex items-center justify-center">
+              <span class="material-symbols-outlined text-[18px]">format_bold</span>
+            </button>
+            <button type="button" (mousedown)="$event.preventDefault(); applyFormat('italic')" title="Italic (Ctrl+I)"
+              class="p-1.5 rounded hover:bg-gray-200 text-gray-700 transition flex items-center justify-center">
+              <span class="material-symbols-outlined text-[18px]">format_italic</span>
+            </button>
+            <button type="button" (mousedown)="$event.preventDefault(); applyFormat('underline')" title="Underline (Ctrl+U)"
+              class="p-1.5 rounded hover:bg-gray-200 text-gray-700 transition flex items-center justify-center">
+              <span class="material-symbols-outlined text-[18px]">format_underlined</span>
+            </button>
+
+            <span class="h-5 w-px bg-gray-300 mx-1"></span>
+
+            <!-- Alignment -->
+            <button type="button" (mousedown)="$event.preventDefault(); applyFormat('justifyLeft')" title="Align Left"
+              class="p-1.5 rounded hover:bg-gray-200 text-gray-700 transition flex items-center justify-center">
+              <span class="material-symbols-outlined text-[18px]">format_align_left</span>
+            </button>
+            <button type="button" (mousedown)="$event.preventDefault(); applyFormat('justifyCenter')" title="Align Center"
+              class="p-1.5 rounded hover:bg-gray-200 text-gray-700 transition flex items-center justify-center">
+              <span class="material-symbols-outlined text-[18px]">format_align_center</span>
+            </button>
+            <button type="button" (mousedown)="$event.preventDefault(); applyFormat('justifyRight')" title="Align Right"
+              class="p-1.5 rounded hover:bg-gray-200 text-gray-700 transition flex items-center justify-center">
+              <span class="material-symbols-outlined text-[18px]">format_align_right</span>
+            </button>
+            <button type="button" (mousedown)="$event.preventDefault(); applyFormat('justifyFull')" title="Justify"
+              class="p-1.5 rounded hover:bg-gray-200 text-gray-700 transition flex items-center justify-center">
+              <span class="material-symbols-outlined text-[18px]">format_align_justify</span>
+            </button>
+
+            <span class="h-5 w-px bg-gray-300 mx-1"></span>
+
+            <!-- Lists -->
+            <button type="button" (mousedown)="$event.preventDefault(); applyFormat('insertUnorderedList')" title="Bullet List"
+              class="p-1.5 rounded hover:bg-gray-200 text-gray-700 transition flex items-center justify-center">
+              <span class="material-symbols-outlined text-[18px]">format_list_bulleted</span>
+            </button>
+            <button type="button" (mousedown)="$event.preventDefault(); applyFormat('insertOrderedList')" title="Numbered List"
+              class="p-1.5 rounded hover:bg-gray-200 text-gray-700 transition flex items-center justify-center">
+              <span class="material-symbols-outlined text-[18px]">format_list_numbered</span>
+            </button>
+
+            <!-- Indent / Outdent -->
+            <button type="button" (mousedown)="$event.preventDefault(); applyFormat('outdent')" title="Decrease Indent"
+              class="p-1.5 rounded hover:bg-gray-200 text-gray-700 transition flex items-center justify-center">
+              <span class="material-symbols-outlined text-[18px]">format_indent_decrease</span>
+            </button>
+            <button type="button" (mousedown)="$event.preventDefault(); applyFormat('indent')" title="Increase Indent"
+              class="p-1.5 rounded hover:bg-gray-200 text-gray-700 transition flex items-center justify-center">
+              <span class="material-symbols-outlined text-[18px]">format_indent_increase</span>
+            </button>
+
+            <span class="h-5 w-px bg-gray-300 mx-1"></span>
+
+            <!-- Block format -->
+            <button type="button" (mousedown)="$event.preventDefault(); applyFormat('formatBlock', '<h2>')" title="Heading"
+              class="px-2.5 py-1 rounded hover:bg-gray-200 text-gray-700 text-xs font-bold transition">
+              Heading
+            </button>
+            <button type="button" (mousedown)="$event.preventDefault(); applyFormat('formatBlock', '<p>')" title="Paragraph"
+              class="px-2.5 py-1 rounded hover:bg-gray-200 text-gray-700 text-xs font-medium transition">
+              Paragraph
+            </button>
+
+            <span class="h-5 w-px bg-gray-300 mx-1"></span>
+
+            <button type="button" (mousedown)="$event.preventDefault(); applyFormat('removeFormat')" title="Clear Formatting"
+              class="p-1.5 rounded hover:bg-gray-200 text-gray-700 transition flex items-center justify-center">
+              <span class="material-symbols-outlined text-[18px]">format_clear</span>
+            </button>
+
+            <span class="h-5 w-px bg-gray-300 mx-1"></span>
+
+            <!-- Placeholders -->
+            <div class="relative inline-block text-xs">
+              <select (change)="onPlaceholderSelect($event)" 
+                class="bg-white border border-gray-300 rounded px-2.5 py-1 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer min-w-[170px]">
+                <option value="">+ Insert Placeholder</option>
+                <option value="[Student Name]">[Student Name]</option>
+                <option value="[First Name]">[First Name]</option>
+                <option value="[Roll Number]">[Roll Number]</option>
+                <option value="[Course Name]">[Course Name]</option>
+                <option value="[Start Date]">[Start Date]</option>
+                <option value="[Daily Training Time]">[Daily Training Time]</option>
+                <option value="[Payment Amount]">[Payment Amount]</option>
+                <option value="[Transaction ID]">[Transaction ID]</option>
+                <option value="[Official Email]">[Official Email]</option>
+                <option value="[Contact Number]">[Contact Number]</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Contenteditable Visual Editor -->
+          <div #editorRef
+            contenteditable="true"
+            (input)="onEditorInput()"
+            (blur)="onEditorBlur()"
+            class="email-rich-editor p-5 min-h-[300px] max-h-[500px] overflow-y-auto bg-white outline-none text-gray-800 text-[15px] leading-relaxed"
+            data-placeholder="Write your email content here. Formatting (bold text, paragraphs, spacing) appears directly as formatted text...">
+          </div>
+        </div>
+
+        <!-- Live Email Preview Mode -->
+        <div [class.hidden]="editorTab !== 'preview'" class="border border-gray-200 rounded-xl bg-gray-100 p-6">
+          <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div class="bg-gray-50 border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <div>
+                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider block">Subject</span>
+                <span class="text-sm font-bold text-gray-800">{{ emailTemplateForm.get('Subject')?.value || '(No Subject Line)' }}</span>
+              </div>
+              <div class="text-xs text-gray-500">
+                To: <span class="font-mono text-gray-700">student&#64;example.com</span>
+              </div>
+            </div>
+            <div class="p-8">
+              <!-- Rendered Email Body -->
+              <div class="email-preview-content text-gray-800 text-[15px] leading-relaxed"
+                [innerHTML]="getSafeHtml(emailTemplateForm.get('Body')?.value || '')">
+              </div>
+            </div>
+            <div class="bg-gray-50 border-t border-gray-200 px-6 py-3 text-center text-xs text-gray-500">
+              Aives Australia's TESTPREP &bull; Automated Email Communication
+            </div>
+          </div>
+        </div>
+
         @if (submitted && emailTemplateForm.get('Body')?.errors?.['required']) {
           <span class="text-red-500 text-xs mt-1 block font-medium">Body content is required</span>
         }
-        <p class="text-xs text-gray-500 mt-2 italic">Tip: Use plain text or HTML for formatting.</p>
+        <p class="text-xs text-gray-500 mt-2 italic flex items-center gap-1">
+          <span class="material-symbols-outlined text-[15px] text-blue-500">info</span>
+          Formatting (bold text, line spacing, paragraphs, and alignment) is rendered visually and managed automatically.
+        </p>
       </div>
     </div>
 
@@ -167,4 +330,71 @@
     </div>
   </form>
 </section>
+}
+
+<!-- Template Preview Modal -->
+@if (previewModalOpen && previewTemplateData) {
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 overflow-y-auto">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden border border-gray-200 animate-fadeIn my-8">
+    <!-- Modal Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5 flex items-center justify-between text-white">
+      <div>
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-[24px]">visibility</span>
+          <h3 class="text-xl font-bold">{{ previewTemplateData.Template_Name }}</h3>
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold"
+            [ngClass]="previewTemplateData.Is_Active ? 'bg-green-500/30 text-white border border-green-300' : 'bg-red-500/30 text-white border border-red-300'">
+            {{ previewTemplateData.Is_Active ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <p class="text-xs text-blue-100 mt-1 flex items-center gap-2">
+          <span>Subject: <strong class="text-white">{{ previewTemplateData.Subject }}</strong></span>
+          @if(previewTemplateData.Attendance_Count && previewTemplateData.Attendance_Count > 0) {
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-blue-300"></span>
+            <span class="bg-blue-500/40 px-2 py-0.5 rounded text-white font-medium">Trigger: Day {{ previewTemplateData.Attendance_Count }}</span>
+          }
+        </p>
+      </div>
+      <button type="button" (click)="closePreview()" class="text-white hover:bg-white/20 p-2 rounded-full transition">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <!-- Email Client Preview Area (Clean, Seamless Full Email View) -->
+    <div class="p-8 bg-white max-h-[70vh] overflow-y-auto">
+      <div class="max-w-3xl mx-auto">
+        <!-- Rendered Email Body directly in email area -->
+        <div class="email-preview-content text-gray-800 text-[15px] leading-relaxed"
+          [innerHTML]="getSafeHtml(previewTemplateData.Body || '')">
+        </div>
+
+        <!-- Seamless Email Footer (Left: Logo, Right: Address) -->
+        <div class="mt-8 pt-5 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs text-gray-500 gap-4">
+          <div class="flex items-center">
+            <img src="https://cdn.jsdelivr.net/gh/ufsgit/aives@main/Backend/public/images/aiveslogo.png" alt="AIVES Australia Testprep" class="w-14 h-14 object-contain" />
+          </div>
+          <div class="sm:text-right">
+            <p class="font-medium text-gray-800">AIVES Australia Testprep</p>
+            <p class="text-gray-500 mt-0.5">2nd Floor, Geo Centre, Door No. 45, 1920 B3, NH-66, Chakkaraparambu, Vennala, Ernakulam, Kerala 682032</p>
+            <p class="text-gray-400 mt-0.5">&copy; Aives Australia Test Prep. All rights reserved.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="bg-white px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+      <button type="button" (click)="closePreview()"
+        class="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition">
+        Close
+      </button>
+      <button type="button" (click)="editFromPreview(previewTemplateData)"
+        class="px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition flex items-center gap-1.5 shadow"
+        style="background-color: #3b82f6 !important; color: white !important;">
+        <span class="material-symbols-outlined text-[18px]">edit</span>
+        Edit Template
+      </button>
+    </div>
+  </div>
+</div>
 }

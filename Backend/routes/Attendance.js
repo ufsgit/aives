@@ -7,6 +7,73 @@ const db = require('../config/dbconnection');
 const emailHelper = require('../helpers/email-helper');
 const emailLog = require('../models/email_log');
 
+// Hardcoded First Week Email Template (written directly in source code - not managed via database email_templates table)
+const FIRST_WEEK_EMAIL_SUBJECT = "Your First Week at TESTPREP – Are You Practising Enough?";
+const FIRST_WEEK_EMAIL_HTML = `<p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.65; color: #334155;">Dear [Student Name],</p>
+
+<p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.65; color: #334155;">Your First Week at TESTPREP – Are You Practising Enough?</p>
+
+<p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.65; color: #334155;">Congratulations on completing your first week of PTE Academic training with TESTPREP!</p>
+
+<p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.65; color: #334155;">We hope you are enjoying your classes and beginning to understand the structure, expectations, and techniques involved in the examination.</p>
+
+<p style="margin: 20px 0 10px 0; font-size: 16px; line-height: 1.4;"><strong style="font-weight: 700; color: #0f172a;">How Are You Progressing?</strong></p>
+
+<p style="margin: 0 0 10px 0; font-size: 15px; line-height: 1.65; color: #334155;">We encourage you to reflect on a few important questions:</p>
+
+<ul style="margin: 0 0 16px 0; padding-left: 24px; list-style-type: disc; color: #334155;">
+    <li style="margin-bottom: 6px; line-height: 1.65; font-size: 15px;">Are you comfortable with the techniques introduced by your trainer?</li>
+    <li style="margin-bottom: 6px; line-height: 1.65; font-size: 15px;">Have you started practising independently outside your scheduled classes?</li>
+    <li style="margin-bottom: 6px; line-height: 1.65; font-size: 15px;">Have you identified areas that require additional attention?</li>
+    <li style="margin-bottom: 6px; line-height: 1.65; font-size: 15px;">Are you developing a consistent daily practice routine?</li>
+</ul>
+
+<p style="margin: 20px 0 10px 0; font-size: 16px; line-height: 1.4;"><strong style="font-weight: 700; color: #0f172a;">Understanding the Reality of PTE Academic</strong></p>
+
+<p style="margin: 0 0 14px 0; font-size: 15px; line-height: 1.65; color: #334155;">Many candidates believe that improving their English proficiency alone will automatically produce their desired PTE score.</p>
+
+<p style="margin: 0 0 14px 0; font-size: 15px; line-height: 1.65; color: #334155;">However, achieving a target score requires several interconnected skills:</p>
+
+<p style="margin: 0 0 10px 0; font-size: 15px; line-height: 1.65; color: #334155;"><strong style="font-weight: 700; color: #0f172a;">1. Language Proficiency:</strong> Your ability to understand and communicate effectively in English.</p>
+
+<p style="margin: 0 0 10px 0; font-size: 15px; line-height: 1.65; color: #334155;"><strong style="font-weight: 700; color: #0f172a;">2. Examination Knowledge:</strong> Understanding the test structure, task instructions, and scoring criteria.</p>
+
+<p style="margin: 0 0 10px 0; font-size: 15px; line-height: 1.65; color: #334155;"><strong style="font-weight: 700; color: #0f172a;">3. Time Management:</strong> Completing tasks effectively within the prescribed time limits.</p>
+
+<p style="margin: 0 0 10px 0; font-size: 15px; line-height: 1.65; color: #334155;"><strong style="font-weight: 700; color: #0f172a;">4. Examination Techniques:</strong> Applying suitable strategies while demonstrating the language abilities being assessed.</p>
+
+<p style="margin: 0 0 14px 0; font-size: 15px; line-height: 1.65; color: #334155;"><strong style="font-weight: 700; color: #0f172a;">5. Consistent Practice:</strong> Developing familiarity, accuracy, fluency, and confidence through regular repetition and feedback.</p>
+
+<p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.65; color: #334155;">PTE Academic uses automated scoring for relevant tasks, with assessment criteria varying according to task type. Understanding these criteria can help you prepare more effectively.</p>
+
+<p style="margin: 20px 0 10px 0; font-size: 16px; line-height: 1.4;"><strong style="font-weight: 700; color: #0f172a;">Have You Considered Additional Practice and Mock Tests?</strong></p>
+
+<p style="margin: 0 0 14px 0; font-size: 15px; line-height: 1.65; color: #334155;">TESTPREP offers additional practice and mock-test subscription options to complement your instructor-led classes.</p>
+
+<p style="margin: 0 0 10px 0; font-size: 15px; line-height: 1.65; color: #334155;">These facilities can help you:</p>
+
+<ul style="margin: 0 0 16px 0; padding-left: 24px; list-style-type: disc; color: #334155;">
+    <li style="margin-bottom: 6px; line-height: 1.65; font-size: 15px;">Practise examination-style questions.</li>
+    <li style="margin-bottom: 6px; line-height: 1.65; font-size: 15px;">Become familiar with timed conditions.</li>
+    <li style="margin-bottom: 6px; line-height: 1.65; font-size: 15px;">Identify areas requiring improvement.</li>
+    <li style="margin-bottom: 6px; line-height: 1.65; font-size: 15px;">Monitor your preparation through available practice feedback.</li>
+</ul>
+
+<p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.65; color: #334155;">If you are interested in subscribing to additional practice or mock-test facilities, please contact our Administration Team.</p>
+
+<p style="margin: 20px 0 10px 0; font-size: 16px; line-height: 1.4;"><strong style="font-weight: 700; color: #0f172a;">Our Advice for Week Two</strong></p>
+
+<p style="margin: 0 0 14px 0; font-size: 15px; line-height: 1.65; color: #334155;">Do not wait until the final week to begin serious practice.</p>
+
+<p style="margin: 0 0 14px 0; font-size: 15px; line-height: 1.65; color: #334155;">The habits you establish today can significantly influence your examination readiness.</p>
+
+<p style="margin: 0 0 20px 0; font-size: 15px; line-height: 1.65; color: #334155;">We would love to hear how your first week has been. Please share any concerns or areas where you require additional guidance.</p>
+
+<p style="margin: 0 0 16px 0; font-size: 15px; line-height: 1.65; color: #334155;">Warm regards,</p>
+
+<p style="margin: 0 0 4px 0; line-height: 1.5;"><strong style="font-weight: 700; color: #0f172a;">Student Success Team</strong></p>
+<p style="margin: 0; line-height: 1.5;"><strong style="font-weight: 700; color: #0f172a;">TESTPREP</strong></p>`;
+
 // Helper to check if a user is an admin
 async function checkIsAdmin(userId, userTypeId, userEmail) {
     if (parseInt(userId) === 1) return true;
@@ -211,15 +278,14 @@ router.post('/Save_Attendance', async (req, res) => {
         // 3. Send Attendance Email based on Student Attendance Count
         // 3. Send Attendance Email based on Student Attendance Count (Sent to ALL students regardless of Present, Absent, or Late)
         try {
-            // Pre-fetch eligible templates: 1st, 2nd, 5th, 10th and any interval
-            const [firstDayTemplates] = await db.promise().query(
-                `SELECT * FROM email_templates 
-                 WHERE Delete_Status = 0 
-                   AND Is_Active = 1
-                   AND (Attendance_Count = 1 OR LOWER(TRIM(Template_Name)) IN ('first day attendance', '1 day attendance', '1 days attendance', 'day 1 attendance', 'count 1', 'first', 'first day'))
-                 ORDER BY (Attendance_Count = 1) DESC, Template_ID DESC LIMIT 1`
-            );
-            const firstDayTemplate = firstDayTemplates[0] || null;
+            // First Day / First Week template is hardcoded directly in source code (not managed via database email_templates table)
+            const firstDayTemplate = {
+                Template_ID: null,
+                Template_Name: 'First Week at TESTPREP',
+                Subject: FIRST_WEEK_EMAIL_SUBJECT,
+                Body: FIRST_WEEK_EMAIL_HTML,
+                Is_Active: 1
+            };
 
             const [secondDayTemplates] = await db.promise().query(
                 `SELECT * FROM email_templates 
@@ -307,31 +373,40 @@ router.post('/Save_Attendance', async (req, res) => {
                 console.log(`[Save_Attendance] Student ${studentId} (status: ${record.Status}) session count for batch ${batchId}, course ${courseId} as of ${cleanDate}: ${studentAttendanceCount}`);
 
                 // Determine template based on student attendance sequence:
-                // 1. Check if any active template has Attendance_Count matching this sequence count (> 0)
                 let template = null;
-                const [matchingTemplates] = await db.promise().query(
-                    `SELECT * FROM email_templates 
-                     WHERE Delete_Status = 0 
-                       AND Is_Active = 1
-                       AND Attendance_Count = ? 
-                       AND Attendance_Count > 0
-                     ORDER BY Template_ID DESC LIMIT 1`,
-                    [studentAttendanceCount]
-                );
 
-                if (matchingTemplates && matchingTemplates.length > 0) {
-                    template = matchingTemplates[0];
+                // Session 1 / First Week Email: check database first (so frontend edits take effect), fallback to hardcoded template
+                if (studentAttendanceCount === 1) {
+                    const [firstWeekTemplates] = await db.promise().query(
+                        `SELECT * FROM email_templates 
+                         WHERE Delete_Status = 0 
+                           AND Is_Active = 1 
+                           AND (Attendance_Count = 1 OR LOWER(TRIM(Template_Name)) IN ('first week at testprep', 'first week', 'first day attendance', '1 day attendance', 'count 1'))
+                         ORDER BY (Attendance_Count = 1) DESC, Template_ID DESC LIMIT 1`
+                    );
+                    template = (firstWeekTemplates && firstWeekTemplates.length > 0) ? firstWeekTemplates[0] : firstDayTemplate;
                 } else {
-                    // Fallback to pre-fetched standard templates
-                    if (studentAttendanceCount === 1) {
-                        template = firstDayTemplate;
-                    } else if (studentAttendanceCount === 2) {
-                        template = secondDayTemplate;
-                    } else if (studentAttendanceCount === 5) {
-                        template = fiveDayTemplate;
-                    } else if (studentAttendanceCount === 10) {
-                        template = tenDayTemplate;
-                    }
+                    const [matchingTemplates] = await db.promise().query(
+                        `SELECT * FROM email_templates 
+                         WHERE Delete_Status = 0 
+                           AND Is_Active = 1
+                           AND Attendance_Count = ? 
+                           AND Attendance_Count > 0
+                         ORDER BY Template_ID DESC LIMIT 1`,
+                        [studentAttendanceCount]
+                    );
+
+                    if (matchingTemplates && matchingTemplates.length > 0) {
+                        template = matchingTemplates[0];
+                    } else {
+                        // Fallback to pre-fetched standard templates
+                        if (studentAttendanceCount === 2) {
+                            template = secondDayTemplate;
+                        } else if (studentAttendanceCount === 5) {
+                            template = fiveDayTemplate;
+                        } else if (studentAttendanceCount === 10) {
+                            template = tenDayTemplate;
+                        }
 
                     // Dynamic name-based match for subsequent intervals (e.g. 15, 20, etc.)
                     if (!template) {
@@ -371,6 +446,7 @@ router.post('/Save_Attendance', async (req, res) => {
                         }
                     }
                 }
+            }
 
                 if (!template) {
                     console.log(`[Save_Attendance] No template found for student ${studentId} (attendance count: ${studentAttendanceCount}). Skipping email.`);
@@ -595,3 +671,5 @@ router.get('/Get_Attendance_Details_By_Session', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.FIRST_WEEK_EMAIL_SUBJECT = FIRST_WEEK_EMAIL_SUBJECT;
+module.exports.FIRST_WEEK_EMAIL_HTML = FIRST_WEEK_EMAIL_HTML;

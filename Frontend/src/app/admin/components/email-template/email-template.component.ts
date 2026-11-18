@@ -1,8 +1,10 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ViewChild, ElementRef } from '@angular/core';
 import { FormGroup, FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { EmailTemplateService } from '../../services/email-template.service';
 import { EmailTemplate } from '../../../core/models/email_template';
 import { DialogBox_Component } from '../../../shared/components/DialogBox/DialogBox.component';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { cleanHtmlForDisplay } from '../../../core/utils/html-formatter.util';
 
 import { MatDialog } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
@@ -18,6 +20,9 @@ export class EmailTemplateComponent implements OnInit {
   private emailTemplateService = inject(EmailTemplateService);
   private fb = inject(FormBuilder);
   private dialog = inject(MatDialog);
+  private sanitizer = inject(DomSanitizer);
+
+  @ViewChild('editorRef') editorRef?: ElementRef<HTMLDivElement>;
 
   Entry_View = false;
   emailTemplateForm: FormGroup;
@@ -25,6 +30,11 @@ export class EmailTemplateComponent implements OnInit {
   isLoading = false;
   submitted = false;
   isCountSectionVisible = false;
+
+  // Rich visual editor & preview state
+  editorTab: 'edit' | 'preview' = 'edit';
+  previewModalOpen = false;
+  previewTemplateData: EmailTemplate | null = null;
 
   constructor() {
     this.emailTemplateForm = this.fb.group({
@@ -105,6 +115,7 @@ export class EmailTemplateComponent implements OnInit {
     this.Entry_View = true;
     this.submitted = false;
     this.isCountSectionVisible = false;
+    this.editorTab = 'edit';
     this.emailTemplateForm.reset({
       Template_ID: 0,
       Template_Name: '',
@@ -113,23 +124,101 @@ export class EmailTemplateComponent implements OnInit {
       Attendance_Count: 0,
       Is_Active: true
     });
+
+    setTimeout(() => {
+      if (this.editorRef?.nativeElement) {
+        this.editorRef.nativeElement.innerHTML = '';
+      }
+    }, 50);
   }
 
   editTemplate(template: EmailTemplate) {
     this.Entry_View = true;
     this.submitted = false;
+    this.editorTab = 'edit';
     const count = template.Attendance_Count ? Number(template.Attendance_Count) : 0;
     this.isCountSectionVisible = count > 0;
 
+    const formattedBody = cleanHtmlForDisplay(template.Body || '');
+
     this.emailTemplateForm.patchValue({
       ...template,
+      Body: formattedBody,
       Attendance_Count: count,
       Is_Active: template.Is_Active !== undefined ? !!template.Is_Active : true
     });
+
+    setTimeout(() => {
+      if (this.editorRef?.nativeElement) {
+        this.editorRef.nativeElement.innerHTML = formattedBody;
+      }
+    }, 50);
+  }
+
+  // Formatting commands for the contenteditable visual editor
+  applyFormat(command: string, value: string = '') {
+    if (this.editorRef?.nativeElement) {
+      this.editorRef.nativeElement.focus();
+    }
+    document.execCommand(command, false, value);
+    this.onEditorInput();
+  }
+
+  onEditorInput() {
+    if (!this.editorRef?.nativeElement) return;
+    const content = this.editorRef.nativeElement.innerHTML;
+    // If editor only has an empty <br> or whitespace, normalize
+    const textOnly = (this.editorRef.nativeElement.innerText || '').trim();
+    const cleanContent = textOnly ? content : '';
+    this.emailTemplateForm.patchValue({ Body: cleanContent }, { emitEvent: false });
+  }
+
+  onEditorBlur() {
+    this.onEditorInput();
+  }
+
+  onPlaceholderSelect(event: Event) {
+    const select = event.target as HTMLSelectElement;
+    const placeholder = select.value;
+    if (!placeholder) return;
+
+    if (this.editorRef?.nativeElement) {
+      this.editorRef.nativeElement.focus();
+      document.execCommand('insertText', false, placeholder);
+      this.onEditorInput();
+    }
+    select.value = '';
+  }
+
+  getSafeHtml(html: string): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(cleanHtmlForDisplay(html));
+  }
+
+  // Template List Preview Modal
+  previewTemplate(template: EmailTemplate) {
+    this.previewTemplateData = template;
+    this.previewModalOpen = true;
+  }
+
+  closePreview() {
+    this.previewModalOpen = false;
+    this.previewTemplateData = null;
+  }
+
+  editFromPreview(template: EmailTemplate) {
+    this.closePreview();
+    this.editTemplate(template);
   }
 
   saveTemplate() {
     this.submitted = true;
+
+    // Ensure content from visual editor is captured
+    if (this.editorRef?.nativeElement) {
+      const htmlContent = this.editorRef.nativeElement.innerHTML;
+      const textOnly = (this.editorRef.nativeElement.innerText || '').trim();
+      this.emailTemplateForm.patchValue({ Body: textOnly ? htmlContent : '' }, { emitEvent: false });
+    }
 
     const missing: string[] = [];
     const templateName = this.emailTemplateForm.get('Template_Name')?.value;

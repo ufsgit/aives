@@ -245,13 +245,14 @@ Warm regards,
 
             // 3d. Ensure Weekly Attendance email templates (First Week, Second Week, Third Week, Fourth Week) are properly formatted
             try {
+                const week1Subject = "Your First Week at TESTPREP – Are You Practising Enough?";
                 const week1Body = `<p style="margin: 0 0 16px 0;">Dear [Student Name],</p>
 
 <p style="margin: 0 0 16px 0;">Your First Week at TESTPREP – Are You Practising Enough?</p>
 
 <p style="margin: 0 0 16px 0;">Congratulations on completing your first week of PTE Academic training with TESTPREP!</p>
 
-<p style="margin: 0 0 16px 0;">We hope you are enjoying your classes and beginning to understand the structure, 41expectations, and techniques involved in the examination.</p>
+<p style="margin: 0 0 16px 0;">We hope you are enjoying your classes and beginning to understand the structure, expectations, and techniques involved in the examination.</p>
 
 <p style="margin: 20px 0 10px 0;"><strong style="font-weight: 700; color: #0f172a;">How Are You Progressing?</strong></p>
 
@@ -520,10 +521,51 @@ Warm regards,
 <p style="margin: 0 0 2px 0; line-height: 1.5; color: #334155;">7994445326</p>
 <p style="margin: 0; line-height: 1.5; color: #334155;">7994443028</p>`;
 
-                await db.promise().query(
-                    `UPDATE email_templates SET Body = ?, Attendance_Count = 1, Is_Active = 1, Delete_Status = 0 WHERE Template_ID = 11 OR Template_Name = 'First Week at TESTPREP'`,
-                    [week1Body]
+                // Ensure First Week Email is active and visible in email_templates table (Frontend Email Templates section)
+                const [existingWeek1] = await db.promise().query(
+                    `SELECT Template_ID FROM email_templates 
+                     WHERE (Template_ID = 11 OR Template_Name = 'First Week at TESTPREP' OR Template_Name = 'First Week' OR (Attendance_Count = 1 AND Template_Name LIKE '%Week%'))
+                     LIMIT 1`
                 );
+
+                if (existingWeek1 && existingWeek1.length > 0) {
+                    await db.promise().query(
+                        `UPDATE email_templates 
+                         SET Template_Name = 'First Week at TESTPREP',
+                             Subject = IFNULL(NULLIF(Subject, ''), ?),
+                             Body = ?,
+                             Attendance_Count = 1,
+                             Is_Active = 1,
+                             Delete_Status = 0 
+                         WHERE Template_ID = ?`,
+                        [week1Subject, week1Body, existingWeek1[0].Template_ID]
+                    );
+                } else {
+                    await db.promise().query(
+                        `INSERT INTO email_templates (
+                            Template_Name, Subject, Body, Attendance_Count, Category, Status, Created_Date, Delete_Status, Is_Active
+                        ) VALUES (
+                            'First Week at TESTPREP',
+                            ?,
+                            ?,
+                            1,
+                            'Attendance',
+                            'Active',
+                            NOW(),
+                            0,
+                            1
+                        )`,
+                        [week1Subject, week1Body]
+                    );
+                }
+
+                // Also un-delete any other First Week templates
+                await db.promise().query(
+                    `UPDATE email_templates 
+                     SET Delete_Status = 0, Is_Active = 1 
+                     WHERE Template_Name LIKE '%First Week%'`
+                ).catch(() => {});
+
                 await db.promise().query(
                     `UPDATE email_templates SET Body = ?, Attendance_Count = 5, Is_Active = 1, Delete_Status = 0 WHERE Template_ID = 22 OR Template_Name = 'Second Week'`,
                     [week2Body]
@@ -539,6 +581,90 @@ Warm regards,
                 console.log('[DB-INIT] Verified and updated Weekly Attendance email templates (First, Second, Third, Fourth Week).');
             } catch (wErr) {
                 console.warn('[DB-INIT] Warning verifying Weekly Attendance email templates:', wErr.message);
+            }
+
+            // 3e. Ensure "Greetings from the TESTPREP Administration Team" template is properly formatted and exists
+            try {
+                const greetingsSubject = "Greetings from the TESTPREP Administration Team";
+                const greetingsBody = `<p style="margin: 0 0 16px 0; line-height: 1.65; color: #334155;">Dear [Student Name],</p>
+
+<p style="margin: 0 0 16px 0; line-height: 1.65; color: #334155;">Greetings from the TESTPREP Administration Team!</p>
+
+<p style="margin: 0 0 18px 0; line-height: 1.65; color: #334155;">We are pleased to confirm that your enrolment has been successfully processed and your PTE Academic training programme is scheduled to commence.</p>
+
+<p style="margin: 22px 0 10px 0; line-height: 1.4;"><strong style="font-weight: 700; color: #0f172a;">Important Student Guidelines</strong></p>
+
+<p style="margin: 0 0 12px 0; line-height: 1.65; color: #334155;">To ensure a productive and well-organised training experience, we request your cooperation with the following:</p>
+
+<ol style="margin: 0 0 18px 0; padding-left: 24px; line-height: 1.65; color: #334155;">
+    <li style="margin-bottom: 6px; padding-left: 4px;">Attend your classes punctually and consistently.</li>
+    <li style="margin-bottom: 6px; padding-left: 4px;">Maintain a dedicated notebook for examination techniques and trainer feedback.</li>
+    <li style="margin-bottom: 6px; padding-left: 4px;">Complete assignments and practice exercises recommended by your trainer.</li>
+    <li style="margin-bottom: 6px; padding-left: 4px;">Allocate additional time for independent practice outside your regular classes.</li>
+    <li style="margin-bottom: 6px; padding-left: 4px;">Inform the Administration Team in advance if you are unable to attend a scheduled session.</li>
+    <li style="margin-bottom: 6px; padding-left: 4px;">Communicate administrative concerns through the designated TESTPREP support channels.</li>
+</ol>
+
+<p style="margin: 22px 0 10px 0; line-height: 1.4;"><strong style="font-weight: 700; color: #0f172a;">Important Reminder – Enrolment Policy</strong></p>
+
+<p style="margin: 0 0 14px 0; line-height: 1.65;"><strong style="font-weight: 700; color: #0f172a;">Your TESTPREP PTE Academic Training Programme is NON-REFUNDABLE and NON-TRANSFERABLE, except where applicable law provides otherwise.</strong></p>
+
+<p style="margin: 0 0 14px 0; line-height: 1.65; color: #334155;">This means that voluntary withdrawal, non-attendance, or a change in personal circumstances does not ordinarily entitle a student to a refund. Enrolment cannot be transferred to another individual.</p>
+
+<p style="margin: 0 0 14px 0; line-height: 1.65; color: #334155;">Missed classes and requests for rescheduling or extensions will be handled according to the programme's applicable terms and policies.</p>
+
+<p style="margin: 0 0 18px 0; line-height: 1.65; color: #334155;">We therefore encourage you to plan your training schedule carefully and make the best possible use of the learning opportunities provided.</p>
+
+<p style="margin: 22px 0 10px 0; line-height: 1.4;"><strong style="font-weight: 700; color: #0f172a;">Your Student Support</strong></p>
+
+<p style="margin: 0 0 14px 0; line-height: 1.65; color: #334155;">Our Administration Team will assist you with scheduling, programme coordination, and relevant student support throughout your training.</p>
+
+<p style="margin: 0 0 14px 0; line-height: 1.65; color: #334155;">Your assigned trainer will contact you separately to introduce themselves and explain the training approach.</p>
+
+<p style="margin: 0 0 16px 0; line-height: 1.65; color: #334155;"><strong style="font-weight: 700; color: #0f172a;">Remember:</strong> Your classes provide the foundation, but consistent practice is what helps transform learning into examination readiness.</p>
+
+<p style="margin: 0 0 22px 0; line-height: 1.65; color: #334155;">We wish you a rewarding learning experience.</p>
+
+<p style="margin: 0 0 14px 0; line-height: 1.65; color: #334155;">Warm regards,</p>
+
+<p style="margin: 0 0 2px 0; line-height: 1.5;"><strong style="font-weight: 700; color: #0f172a;">Roshni</strong></p>
+<p style="margin: 0; line-height: 1.5; color: #334155;">CRM Administration</p>`;
+
+                const [existingGreetings] = await db.promise().query(
+                    `SELECT Template_ID FROM email_templates 
+                     WHERE (Template_Name LIKE '%Greetings%' OR Subject LIKE '%Greetings%' OR Body LIKE '%Important Student Guidelines%')
+                       AND (Delete_Status = 0 OR Delete_Status IS NULL)
+                     LIMIT 1`
+                );
+
+                if (existingGreetings && existingGreetings.length > 0) {
+                    await db.promise().query(
+                        `UPDATE email_templates 
+                         SET Body = ?, Is_Active = 1, Delete_Status = 0 
+                         WHERE (Template_Name LIKE '%Greetings%' OR Subject LIKE '%Greetings%' OR Body LIKE '%Important Student Guidelines%')`,
+                        [greetingsBody]
+                    );
+                    console.log(`[DB-INIT] Verified and updated Greetings email template(s).`);
+                } else {
+                    await db.promise().query(
+                        `INSERT INTO email_templates (
+                            Template_Name, Subject, Body, Category, Status, Created_Date, Delete_Status, Is_Active
+                        ) VALUES (
+                            'Greetings from the TESTPREP Administration Team',
+                            ?,
+                            ?,
+                            'General',
+                            'Active',
+                            NOW(),
+                            0,
+                            1
+                        )`,
+                        [greetingsSubject, greetingsBody]
+                    );
+                    console.log('[DB-INIT] Seeded new "Greetings from the TESTPREP Administration Team" email template.');
+                }
+            } catch (gErr) {
+                console.warn('[DB-INIT] Warning verifying Greetings email template:', gErr.message);
             }
 
 
@@ -990,97 +1116,97 @@ Warm regards,
             console.warn('[DB-INIT] Warning verifying Get_Dashboard SP:', dashboardSpErr.message);
         }
 
-        // 11. Ensure Trainer 1, Trainer 2, and Trainer 3 accounts exist with ONLY Attendance permission
-        try {
-            const trainersConfig = [
-                { email: 'trainer1@testprepinenglish.com', altEmail: 'trainer1.admin@testprepinenglish.com', firstName: 'Trainer', lastName: '1', phone: '8974563256' },
-                { email: 'trainer2@testprepinenglish.com', altEmail: 'trainer2.admin@testprepinenglish.com', firstName: 'Trainer', lastName: '2', phone: '8974563257' },
-                { email: 'trainer3@testprepinenglish.com', altEmail: 'trainer3.admin@testprepinenglish.com', firstName: 'Trainer', lastName: '3', phone: '8741010022' }
-            ];
-
-            const trainerUserIds = [];
-
-            for (const t of trainersConfig) {
-                let [rows] = await db.promise().query(`SELECT User_ID FROM users WHERE Email = ?`, [t.email]);
-                let uid = rows && rows.length > 0 ? rows[0].User_ID : null;
-                if (!uid) {
-                    const [res] = await db.promise().query(
-                        `INSERT INTO users (First_Name, Last_Name, Email, PhoneNumber, Delete_Status, User_Type_Id, password, Branch_Id, Basic_Pay)
-                         VALUES (?, ?, ?, ?, 0, 2, '123', 1, '15000.00')`,
-                        [t.firstName, t.lastName, t.email, t.phone]
-                    );
-                    uid = res.insertId;
-                } else {
-                    await db.promise().query(
-                        `UPDATE users SET First_Name = ?, Last_Name = ?, password = '123', User_Type_Id = 2, Delete_Status = 0 WHERE User_ID = ?`,
-                        [t.firstName, t.lastName, uid]
-                    );
-                }
-                trainerUserIds.push(uid);
-
-                if (t.altEmail) {
-                    let [altRows] = await db.promise().query(`SELECT User_ID FROM users WHERE Email = ?`, [t.altEmail]);
-                    let altUid = altRows && altRows.length > 0 ? altRows[0].User_ID : null;
-                    if (!altUid) {
-                        const [res2] = await db.promise().query(
-                            `INSERT INTO users (First_Name, Last_Name, Email, PhoneNumber, Delete_Status, User_Type_Id, password, Branch_Id, Basic_Pay)
-                             VALUES (?, ?, ?, ?, 0, 2, '123', 1, '15000.00')`,
-                            [t.firstName, t.lastName, t.altEmail, t.phone]
-                        );
-                        altUid = res2.insertId;
-                    } else {
-                        await db.promise().query(
-                            `UPDATE users SET First_Name = ?, Last_Name = ?, password = '123', User_Type_Id = 2, Delete_Status = 0 WHERE User_ID = ?`,
-                            [t.firstName, t.lastName, altUid]
-                        );
-                    }
-                    trainerUserIds.push(altUid);
-                }
-            }
-
-            const allTrainerIds = [...new Set([...trainerUserIds, 128, 129, 132, 133])].filter(id => id > 0);
-
-            for (const uid of allTrainerIds) {
-                await db.promise().query(`DELETE FROM user_menu_selection WHERE User_Id = ? AND Menu_Id != 1016`, [uid]);
-
-                const [check1016] = await db.promise().query(`SELECT User_Menu_Selection_Id FROM user_menu_selection WHERE User_Id = ? AND Menu_Id = 1016`, [uid]);
-                if (!check1016 || check1016.length === 0) {
-                    await db.promise().query(
-                        `INSERT INTO user_menu_selection (Menu_Id, User_Id, IsEdit, IsSave, IsDelete, IsView, DeleteStatus)
-                         VALUES (1016, ?, 1, 1, 1, 1, 0)`,
-                        [uid]
-                    );
-                } else {
-                    await db.promise().query(
-                        `UPDATE user_menu_selection SET IsView = 1, IsEdit = 1, IsSave = 1, IsDelete = 1, DeleteStatus = 0 WHERE User_Id = ? AND Menu_Id = 1016`,
-                        [uid]
-                    );
-                }
-
-                const [activeCourses] = await db.promise().query(`SELECT Course_ID FROM course WHERE Delete_Status = 0`);
-                for (const c of activeCourses) {
-                    const [ctCheck] = await db.promise().query(
-                        `SELECT CourseTeacher_ID FROM course_teacher WHERE Teacher_ID = ? AND Course_ID = ?`,
-                        [uid, c.Course_ID]
-                    );
-                    if (!ctCheck || ctCheck.length === 0) {
-                        await db.promise().query(
-                            `INSERT INTO course_teacher (Course_ID, Teacher_ID, Delete_Status) VALUES (?, ?, 0)`,
-                            [c.Course_ID, uid]
-                        );
-                    } else {
-                        await db.promise().query(
-                            `UPDATE course_teacher SET Delete_Status = 0 WHERE Teacher_ID = ? AND Course_ID = ?`,
-                            [uid, c.Course_ID]
-                        );
-                    }
-                }
-            }
-
-            console.log('[DB-INIT] Verified Trainer 1, Trainer 2, and Trainer 3 accounts with ONLY Attendance permission.');
-        } catch (trainerInitErr) {
-            console.warn('[DB-INIT] Warning setting up trainers in db-init:', trainerInitErr.message);
-        }
+        // 11. (DISABLED) Automatic seeding of Trainer 1, Trainer 2, and Trainer 3 accounts
+        // try {
+        //     const trainersConfig = [
+        //         { email: 'trainer1@testprepinenglish.com', altEmail: 'trainer1.admin@testprepinenglish.com', firstName: 'Trainer', lastName: '1', phone: '8974563256' },
+        //         { email: 'trainer2@testprepinenglish.com', altEmail: 'trainer2.admin@testprepinenglish.com', firstName: 'Trainer', lastName: '2', phone: '8974563257' },
+        //         { email: 'trainer3@testprepinenglish.com', altEmail: 'trainer3.admin@testprepinenglish.com', firstName: 'Trainer', lastName: '3', phone: '8741010022' }
+        //     ];
+        //
+        //     const trainerUserIds = [];
+        //
+        //     for (const t of trainersConfig) {
+        //         let [rows] = await db.promise().query(`SELECT User_ID FROM users WHERE Email = ?`, [t.email]);
+        //         let uid = rows && rows.length > 0 ? rows[0].User_ID : null;
+        //         if (!uid) {
+        //             const [res] = await db.promise().query(
+        //                 `INSERT INTO users (First_Name, Last_Name, Email, PhoneNumber, Delete_Status, User_Type_Id, password, Branch_Id, Basic_Pay)
+        //                  VALUES (?, ?, ?, ?, 0, 2, '123', 1, '15000.00')`,
+        //                 [t.firstName, t.lastName, t.email, t.phone]
+        //             );
+        //             uid = res.insertId;
+        //         } else {
+        //             await db.promise().query(
+        //                 `UPDATE users SET First_Name = ?, Last_Name = ?, password = '123', User_Type_Id = 2, Delete_Status = 0 WHERE User_ID = ?`,
+        //                 [t.firstName, t.lastName, uid]
+        //             );
+        //         }
+        //         trainerUserIds.push(uid);
+        //
+        //         if (t.altEmail) {
+        //             let [altRows] = await db.promise().query(`SELECT User_ID FROM users WHERE Email = ?`, [t.altEmail]);
+        //             let altUid = altRows && altRows.length > 0 ? altRows[0].User_ID : null;
+        //             if (!altUid) {
+        //                 const [res2] = await db.promise().query(
+        //                     `INSERT INTO users (First_Name, Last_Name, Email, PhoneNumber, Delete_Status, User_Type_Id, password, Branch_Id, Basic_Pay)
+        //                      VALUES (?, ?, ?, ?, 0, 2, '123', 1, '15000.00')`,
+        //                     [t.firstName, t.lastName, t.altEmail, t.phone]
+        //                 );
+        //                 altUid = res2.insertId;
+        //             } else {
+        //                 await db.promise().query(
+        //                     `UPDATE users SET First_Name = ?, Last_Name = ?, password = '123', User_Type_Id = 2, Delete_Status = 0 WHERE User_ID = ?`,
+        //                     [t.firstName, t.lastName, altUid]
+        //                 );
+        //             }
+        //             trainerUserIds.push(altUid);
+        //         }
+        //     }
+        //
+        //     const allTrainerIds = [...new Set([...trainerUserIds, 128, 129, 132, 133])].filter(id => id > 0);
+        //
+        //     for (const uid of allTrainerIds) {
+        //         await db.promise().query(`DELETE FROM user_menu_selection WHERE User_Id = ? AND Menu_Id != 1016`, [uid]);
+        //
+        //         const [check1016] = await db.promise().query(`SELECT User_Menu_Selection_Id FROM user_menu_selection WHERE User_Id = ? AND Menu_Id = 1016`, [uid]);
+        //         if (!check1016 || check1016.length === 0) {
+        //             await db.promise().query(
+        //                 `INSERT INTO user_menu_selection (Menu_Id, User_Id, IsEdit, IsSave, IsDelete, IsView, DeleteStatus)
+        //                  VALUES (1016, ?, 1, 1, 1, 1, 0)`,
+        //                 [uid]
+        //             );
+        //         } else {
+        //             await db.promise().query(
+        //                 `UPDATE user_menu_selection SET IsView = 1, IsEdit = 1, IsSave = 1, IsDelete = 1, DeleteStatus = 0 WHERE User_Id = ? AND Menu_Id = 1016`,
+        //                 [uid]
+        //             );
+        //         }
+        //
+        //         const [activeCourses] = await db.promise().query(`SELECT Course_ID FROM course WHERE Delete_Status = 0`);
+        //         for (const c of activeCourses) {
+        //             const [ctCheck] = await db.promise().query(
+        //                 `SELECT CourseTeacher_ID FROM course_teacher WHERE Teacher_ID = ? AND Course_ID = ?`,
+        //                 [uid, c.Course_ID]
+        //             );
+        //             if (!ctCheck || ctCheck.length === 0) {
+        //                 await db.promise().query(
+        //                     `INSERT INTO course_teacher (Course_ID, Teacher_ID, Delete_Status) VALUES (?, ?, 0)`,
+        //                     [c.Course_ID, uid]
+        //                 );
+        //             } else {
+        //                 await db.promise().query(
+        //                     `UPDATE course_teacher SET Delete_Status = 0 WHERE Teacher_ID = ? AND Course_ID = ?`,
+        //                     [uid, c.Course_ID]
+        //                 );
+        //             }
+        //         }
+        //     }
+        //
+        //     console.log('[DB-INIT] Verified Trainer 1, Trainer 2, and Trainer 3 accounts with ONLY Attendance permission.');
+        // } catch (trainerInitErr) {
+        //     console.warn('[DB-INIT] Warning setting up trainers in db-init:', trainerInitErr.message);
+        // }
 
         console.log('[DB-INIT] ✅ Database schema and stored procedures verified successfully.');
     } catch (err) {

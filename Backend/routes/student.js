@@ -210,7 +210,8 @@ router.post('/Send_Bulk_Email', async (req, res, next) => {
 
             if (studentEmail) {
                 try {
-                    const htmlContent = customizedBody ? customizedBody.replace(/\n/g, '<br>') : '';
+                    const hasHtmlTags = /<\/?(?:p|div|table|tr|td|th|tbody|thead|ul|ol|li|h[1-6]|br|pre|blockquote|strong|b|em|i|span|a)\b/i.test(customizedBody || '');
+                    const htmlContent = (customizedBody && !hasHtmlTags) ? customizedBody.replace(/\n/g, '<br>') : (customizedBody || '');
                     const response = await emailHelper.sendEmail(studentEmail, customizedSubject, htmlContent, effectiveSenderEmail, effectiveSenderName);
                     const messageId = response?.messageId || null;
                     await emailLog.Save_Email_Log(studentId || null, templateId || null, studentEmail, customizedSubject, messageId, customizedBody, 'Success', null);

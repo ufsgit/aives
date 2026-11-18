@@ -143,6 +143,17 @@ function formatEmailBodyHtml(html) {
     if (!html || typeof html !== 'string') return '';
     let formatted = html.trim();
 
+    // 0. Heal accidental soft-wrap line breaks before headings or sentences
+    formatted = formatted.replace(/<br\s*\/?>\s*([a-z])/g, (match, letter) => {
+        if (letter === letter.toLowerCase() && letter !== letter.toUpperCase()) {
+            return ' ' + letter;
+        }
+        return match;
+    });
+    formatted = formatted.replace(/(TESTPREP\s+Administration)<br\s*\/?>\s*(Team)/gi, '$1 $2');
+    formatted = formatted.replace(/(Important)<br\s*\/?>\s*(Student\s+Guidelines)/gi, '$1 $2');
+    formatted = formatted.replace(/(Important\s+Reminder)<br\s*\/?>\s*([–\-]\s*Enrolment)/gi, '$1 $2');
+
     // 1. Markdown bold (**text** or __text__)
     formatted = formatted.replace(/\*\*([\s\S]+?)\*\*/g, '<strong style="font-weight: 700; color: #0f172a;">$1</strong>');
     formatted = formatted.replace(/__([\s\S]+?)__/g, '<strong style="font-weight: 700; color: #0f172a;">$1</strong>');
@@ -183,7 +194,10 @@ function formatEmailBodyHtml(html) {
         "Payment Details:?",
         "Week 3\\s*[–\\-]\\s*Transform Your PTE Training into Exam-Ready Performance",
         "Week 2\\s*[–\\-]\\s*Focus, Discipline & Prepare Your Mind for PTE Success",
-        "Your First Week at TESTPREP\\s*[–\\-]\\s*Are You Practising Enough\\??"
+        "Your First Week at TESTPREP\\s*[–\\-]\\s*Are You Practising Enough\\??",
+        "Important Student Guidelines",
+        "Important Reminder\\s*[–\\-]\\s*Enrolment Policy",
+        "Your Student Support"
     ];
 
     for (const h of headings) {
@@ -193,6 +207,7 @@ function formatEmailBodyHtml(html) {
 
     // 7. Prominent sentences in body
     const prominentPhrases = [
+        "Your TESTPREP PTE Academic Training Programme is NON-REFUNDABLE and NON-TRANSFERABLE, except where applicable law provides otherwise\\.?",
         "qualified Australian immigration law professionals with 20 years of practical experience in understanding English language testing requirements for Australian migration, professional registration, and education pathways\\.",
         "NON-REFUNDABLE AND NON-TRANSFERABLE"
     ];
@@ -202,7 +217,13 @@ function formatEmailBodyHtml(html) {
         formatted = formatted.replace(regex, '<strong style="font-weight: 700; color: #0f172a;">$1</strong>');
     }
 
-    // 8. Sign-off team titles
+    // 7b. Specific prompt labels like "Remember:"
+    formatted = formatted.replace(
+        /(^|<br\s*\/?>|\n|<p[^>]*>|<div>)(\s*)(Remember:)(?!\s*<\/strong>)/gi,
+        '$1$2<strong style="font-weight: 700; color: #0f172a;">$3</strong>'
+    );
+
+    // 8. Sign-off team titles & coordinator names
     const signoffTeams = [
         "Student Admissions Team",
         "Student Admissions & Administration Team",
@@ -217,6 +238,12 @@ function formatEmailBodyHtml(html) {
         formatted = formatted.replace(regex, '$1<strong style="font-weight: 700; color: #0f172a;">$2</strong>');
     }
 
+    // Bold coordinator name Roshni in sign-off
+    formatted = formatted.replace(
+        /(^|<br\s*\/?>|\n|<p[^>]*>|<div>)(\s*)(Roshni)(?=\s*(?:<br\s*\/?>|\n|<\/p>|CRM))/gi,
+        '$1$2<strong style="font-weight: 700; color: #0f172a;">$3</strong>'
+    );
+
     // Also bold company name right under the sign-off team name
     formatted = formatted.replace(
         /(<strong style="font-weight: 700; color: #0f172a;">(?:Student Admissions Team|Student Admissions & Administration Team|Academic Coordination Team|Admissions Team|Student Success Team|TESTPREP Training & Student Success Team)<\/strong>\s*(?:<br\s*\/?>|\n)\s*)(Aives Australia's TESTPREP|TESTPREP)/gi,
@@ -224,6 +251,132 @@ function formatEmailBodyHtml(html) {
     );
 
     return formatted;
+}
+
+/**
+ * Inlines consistent, client-safe CSS styles directly onto HTML tags
+ * ensuring full visual parity with the frontend template preview
+ * across Gmail (web/app), Outlook desktop/web, Apple Mail, and mobile devices.
+ */
+function applyEmailInlineStyles(html) {
+    if (!html || typeof html !== 'string') return '';
+    let content = html.trim();
+
+    // 1. If content lacks HTML block tags, structure it into styled paragraphs
+    const hasBlockTags = /<\/?(?:p|div|table|tr|td|th|tbody|thead|ul|ol|li|h[1-6]|blockquote)\b/i.test(content);
+    if (!hasBlockTags) {
+        const paragraphs = content.split(/\r?\n\s*\r?\n/);
+        content = paragraphs
+            .map(p => {
+                const trimmed = p.trim();
+                if (!trimmed) return '';
+                return `<p style="margin: 0 0 14px 0; line-height: 1.65; font-size: 15px; color: #334155; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">${trimmed.replace(/\r?\n/g, '<br>')}</p>`;
+            })
+            .filter(p => !!p)
+            .join('');
+    } else {
+        // If content already contains HTML block tags, collapse source newlines into spaces
+        // (prevents inadvertent soft wraps from rendering as line breaks in email clients)
+        content = content.replace(/\r?\n/g, ' ');
+    }
+
+    // 2. Heal accidental line wraps:
+    // e.g. <br> immediately followed by a lowercase letter was an accidental soft wrap
+    content = content.replace(/<br\s*\/?>\s*([a-z])/g, (match, letter) => {
+        if (letter === letter.toLowerCase() && letter !== letter.toUpperCase()) {
+            return ' ' + letter;
+        }
+        return match;
+    });
+
+    // Specifically heal common split phrases
+    content = content.replace(/(TESTPREP\s+Administration)<br\s*\/?>\s*(Team)/gi, '$1 $2');
+    content = content.replace(/(Important)<br\s*\/?>\s*(Student\s+Guidelines)/gi, '$1 $2');
+    content = content.replace(/(Important\s+Reminder)<br\s*\/?>\s*([–\-]\s*Enrolment)/gi, '$1 $2');
+
+    // 3. Clean up <br> tags adjacent to block elements to prevent unwanted whitespace
+    content = content.replace(/<(p|div|li|h[1-6]|blockquote)\b([^>]*)>\s*<br\s*\/?>/gi, '<$1$2>');
+    content = content.replace(/<br\s*\/?>\s*<\/(p|div|li|h[1-6]|blockquote)>/gi, '</$1>');
+    content = content.replace(/<\/(p|div|li|ol|ul|table|tr|td|h[1-6]|blockquote)>\s*<br\s*\/?>/gi, '</$1>');
+    content = content.replace(/<br\s*\/?>\s*<(p|div|li|ol|ul|table|tr|td|h[1-6]|blockquote)\b/gi, '<$1');
+    content = content.replace(/<(ol|ul)\b([^>]*)>\s*<br\s*\/?>/gi, '<$1$2>');
+    content = content.replace(/<br\s*\/?>\s*<\/(ol|ul)>/gi, '</$1>');
+
+    // 4. Style <p> tags with inline styles
+    content = content.replace(/<p\b([^>]*)>/gi, (match, attrs) => {
+        if (!attrs || !attrs.includes('style=')) {
+            return `<p style="margin: 0 0 14px 0; line-height: 1.65; font-size: 15px; color: #334155; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;"${attrs}>`;
+        }
+        let styleVal = '';
+        const styleMatch = attrs.match(/style=["']([^"']*)["']/i);
+        if (styleMatch) {
+            styleVal = styleMatch[1].trim();
+            if (!styleVal.endsWith(';')) styleVal += ';';
+            if (!styleVal.includes('font-family:')) {
+                styleVal += " font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;";
+            }
+            if (!styleVal.includes('line-height:')) {
+                styleVal += ' line-height: 1.65;';
+            }
+            if (!styleVal.includes('font-size:')) {
+                styleVal += ' font-size: 15px;';
+            }
+            if (!styleVal.includes('color:')) {
+                styleVal += ' color: #334155;';
+            }
+            if (!styleVal.includes('margin:')) {
+                styleVal += ' margin: 0 0 14px 0;';
+            }
+            const cleanAttrs = attrs.replace(/style=["'][^"']*["']/i, `style="${styleVal.trim()}"`);
+            return `<p${cleanAttrs}>`;
+        }
+        return match;
+    });
+
+    // 5. Style <ol> and <ul> lists
+    content = content.replace(/<ol\b([^>]*)>/gi, (match, attrs) => {
+        if (!attrs || !attrs.includes('style=')) {
+            return `<ol style="margin: 0 0 16px 0; padding-left: 24px; color: #334155; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;"${attrs}>`;
+        }
+        return match;
+    });
+    content = content.replace(/<ul\b([^>]*)>/gi, (match, attrs) => {
+        if (!attrs || !attrs.includes('style=')) {
+            return `<ul style="margin: 0 0 16px 0; padding-left: 24px; list-style-type: disc; color: #334155; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;"${attrs}>`;
+        }
+        return match;
+    });
+
+    // 6. Style <li> list items
+    content = content.replace(/<li\b([^>]*)>/gi, (match, attrs) => {
+        if (!attrs || !attrs.includes('style=')) {
+            return `<li style="margin-bottom: 6px; line-height: 1.65; font-size: 15px; color: #334155; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;"${attrs}>`;
+        }
+        return match;
+    });
+
+    // 7. Style <blockquote> tags (for indented sections)
+    content = content.replace(/<blockquote\b([^>]*)>/gi, (match, attrs) => {
+        if (!attrs || !attrs.includes('style=')) {
+            return `<blockquote style="margin: 0 0 14px 20px; padding: 4px 0 4px 14px; border-left: 3px solid #cbd5e1; color: #475569; font-style: normal; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;"${attrs}>`;
+        }
+        return match;
+    });
+
+    // 8. Style headings <h1> - <h4>
+    content = content.replace(/<h1\b([^>]*)>/gi, '<h1 style="margin: 20px 0 10px 0; font-size: 22px; font-weight: 700; color: #0f172a; line-height: 1.35; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif;"$1>');
+    content = content.replace(/<h2\b([^>]*)>/gi, '<h2 style="margin: 18px 0 10px 0; font-size: 19px; font-weight: 700; color: #0f172a; line-height: 1.35; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif;"$1>');
+    content = content.replace(/<h3\b([^>]*)>/gi, '<h3 style="margin: 16px 0 8px 0; font-size: 17px; font-weight: 700; color: #0f172a; line-height: 1.35; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif;"$1>');
+    content = content.replace(/<h4\b([^>]*)>/gi, '<h4 style="margin: 14px 0 6px 0; font-size: 15px; font-weight: 700; color: #0f172a; line-height: 1.35; font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Helvetica, Arial, sans-serif;"$1>');
+
+    // 9. Style strong, b, em, i, u inline elements
+    content = content.replace(/<strong\b(?![^>]*style=)/gi, '<strong style="font-weight: 700; color: #0f172a;"');
+    content = content.replace(/<b\b(?![^>]*style=)/gi, '<b style="font-weight: 700; color: #0f172a;"');
+    content = content.replace(/<em\b(?![^>]*style=)/gi, '<em style="font-style: italic; color: #475569;"');
+    content = content.replace(/<i\b(?![^>]*style=)/gi, '<i style="font-style: italic; color: #475569;"');
+    content = content.replace(/<u\b(?![^>]*style=)/gi, '<u style="text-decoration: underline;"');
+
+    return content;
 }
 
 const sendEmail = async (to, subject, html, fromEmail = null, fromName = null, attachments = null) => {
@@ -295,201 +448,133 @@ const sendEmail = async (to, subject, html, fromEmail = null, fromName = null, a
         // Replace any broken S3 or legacy logo URLs inside incoming HTML with the reliable CDN logo URL
         cleanHtml = cleanHtml.replace(
             /<img[^>]+src=["'][^"']*(?:aiveslogo|ufsnabeelphotoalbum)[^"']*["'][^>]*>/gi,
-            `<img src="${logoUrl}" alt="AIVES Australia Testprep" width="120" height="120" border="0" class="responsive-logo" style="width: 120px; max-width: 120px; height: 120px; border: 0; outline: none; display: block;" />`
+            `<img src="${logoUrl}" alt="AIVES Australia Testprep" width="80" height="80" border="0" class="header-logo" style="width: 80px; max-width: 80px; height: 80px; border: 0; outline: none; display: block;" />`
         );
 
         // Apply bold formatting to important sentences, headings, and markdown tags
         cleanHtml = formatEmailBodyHtml(cleanHtml);
 
+        // Inlined styling on all HTML elements ensuring exact layout preservation across email clients
+        cleanHtml = applyEmailInlineStyles(cleanHtml);
+
         const safeSubject = subject ? String(subject).replace(/"/g, '&quot;') : "Aives Australia's TESTPREP";
-        const wrappedHtml = `
-            <!DOCTYPE html>
-            <html lang="en">
-                <head>
-                    <meta charset="utf-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-                    <meta name="x-apple-disable-message-reformatting">
-                    <title>${safeSubject}</title>
-                    <style>
-                        html, body {
-                            margin: 0 !important;
-                            padding: 0 !important;
-                            width: 100% !important;
-                            min-width: 100% !important;
-                            background-color: #ffffff !important;
-                            color: #1e293b !important;
-                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
-                            -webkit-text-size-adjust: 100% !important;
-                            -ms-text-size-adjust: 100% !important;
-                            text-align: left !important;
-                        }
-                        table, td {
-                            border-collapse: collapse !important;
-                            mso-table-lspace: 0pt !important;
-                            mso-table-rspace: 0pt !important;
-                        }
-                        img {
-                            border: 0 !important;
-                            outline: none !important;
-                            text-decoration: none !important;
-                            -ms-interpolation-mode: bicubic !important;
-                            display: block !important;
-                        }
-                        .email-full-wrapper {
-                            width: 100% !important;
-                            max-width: 100% !important;
-                            margin: 0 !important;
-                            padding: 0 !important;
-                            background-color: #ffffff !important;
-                            text-align: left !important;
-                        }
-                        .email-container {
-                            width: 100% !important;
-                            max-width: 100% !important;
-                            margin: 0 !important;
-                            padding: 0 !important;
-                            background-color: #ffffff !important;
-                            text-align: left !important;
-                        }
-                        .email-body {
-                            background-color: #ffffff !important;
-                            padding: 28px 28px !important;
-                            font-size: 15px !important;
-                            line-height: 1.65 !important;
-                            color: #334155 !important;
-                            text-align: left !important;
-                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
-                            word-break: break-word !important;
-                            overflow-wrap: break-word !important;
-                        }
-                        .email-footer-details {
-                            background-color: #ffffff !important;
-                            padding: 24px 28px 20px 28px !important;
-                            border-top: 1px solid #e2e8f0 !important;
-                            text-align: left !important;
-                        }
-                        .email-footer {
-                            background-color: #003366 !important;
-                            padding: 20px 28px !important;
-                            text-align: center !important;
-                            font-size: 13px !important;
-                            line-height: 1.5 !important;
-                            color: #e2e8f0 !important;
-                            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
-                        }
-                        .email-footer p {
-                            margin: 0 0 6px 0 !important;
-                            text-align: center !important;
-                        }
-                        .email-footer p:last-child {
-                            margin-bottom: 0 !important;
-                        }
-                        .email-footer a {
-                            color: #93c5fd !important;
-                            text-decoration: none !important;
-                        }
-                        /* Responsive layout for mobile devices */
-                        @media only screen and (max-width: 600px) {
-                            .email-body {
-                                padding: 20px 16px !important;
-                                font-size: 14.5px !important;
-                                line-height: 1.6 !important;
-                            }
-                            .email-footer-details {
-                                padding: 18px 16px 14px 16px !important;
-                            }
-                            .footer-table {
-                                display: block !important;
-                                width: 100% !important;
-                            }
-                            .footer-col-left {
-                                display: block !important;
-                                width: 100% !important;
-                                max-width: 100% !important;
-                                text-align: left !important;
-                                padding: 0 0 10px 0 !important;
-                            }
-                            .footer-col-right {
-                                display: block !important;
-                                width: 100% !important;
-                                max-width: 100% !important;
-                                text-align: left !important;
-                                padding: 0 !important;
-                            }
-                            .footer-col-right h2 {
-                                font-size: 15px !important;
-                                margin-bottom: 3px !important;
-                            }
-                            .footer-col-right p {
-                                font-size: 11.5px !important;
-                                line-height: 1.4 !important;
-                            }
-                            .email-footer {
-                                padding: 16px 16px !important;
-                                font-size: 12px !important;
-                                text-align: center !important;
-                            }
-                            .responsive-logo {
-                                max-width: 105px !important;
-                                width: 105px !important;
-                                height: 105px !important;
-                            }
-                            .footer-disclaimer-cell {
-                                display: block !important;
-                                width: 100% !important;
-                                padding-top: 10px !important;
-                                text-align: left !important;
-                            }
-                        }
-                    </style>
-                </head>
-                <body style="margin: 0; padding: 0; width: 100% !important; min-width: 100%; background-color: #ffffff; color: #1e293b; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: left; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
-                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" align="left" class="email-full-wrapper" style="width: 100%; max-width: 100%; border-collapse: collapse; margin: 0; padding: 0; background-color: #ffffff; text-align: left;">
+        const wrappedHtml = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="x-apple-disable-message-reformatting" />
+        <title>${safeSubject}</title>
+        <!--[if mso]>
+        <noscript>
+            <xml>
+                <o:OfficeDocumentSettings>
+                    <o:PixelsPerInch>96</o:PixelsPerInch>
+                </o:OfficeDocumentSettings>
+            </xml>
+        </noscript>
+        <![endif]-->
+        <style type="text/css">
+            html, body {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                min-width: 100% !important;
+                background-color: #ffffff !important;
+                color: #1e293b !important;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+                -webkit-text-size-adjust: 100% !important;
+                -ms-text-size-adjust: 100% !important;
+                text-align: left !important;
+            }
+            table, td {
+                border-collapse: collapse !important;
+                mso-table-lspace: 0pt !important;
+                mso-table-rspace: 0pt !important;
+            }
+            img {
+                border: 0 !important;
+                outline: none !important;
+                text-decoration: none !important;
+                -ms-interpolation-mode: bicubic !important;
+                display: block !important;
+            }
+            .email-full-wrapper {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background-color: #ffffff !important;
+                text-align: left !important;
+            }
+            .email-main-body {
+                background-color: #ffffff !important;
+                padding: 24px 28px 24px 28px !important;
+                font-size: 15px !important;
+                line-height: 1.65 !important;
+                color: #334155 !important;
+                text-align: left !important;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+                word-break: break-word !important;
+                overflow-wrap: break-word !important;
+            }
+            /* Responsive styles for mobile email clients */
+            @media only screen and (max-width: 600px) {
+                .email-main-body {
+                    padding: 16px 16px 20px 16px !important;
+                    font-size: 14.5px !important;
+                    line-height: 1.6 !important;
+                }
+                .footer-table td {
+                    display: block !important;
+                    width: 100% !important;
+                    text-align: left !important;
+                    padding-left: 0 !important;
+                    padding-right: 0 !important;
+                }
+                .footer-col-right {
+                    margin-top: 12px !important;
+                    padding-top: 8px !important;
+                    text-align: left !important;
+                }
+            }
+        </style>
+    </head>
+    <body bgcolor="#ffffff" style="margin: 0; padding: 0; width: 100% !important; min-width: 100%; background-color: #ffffff; color: #1e293b; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; text-align: left;">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" bgcolor="#ffffff" class="email-full-wrapper" style="width: 100%; max-width: 100%; border-collapse: collapse; margin: 0; padding: 0; background-color: #ffffff; text-align: left;">
+            <tr>
+                <td align="left" valign="top" class="email-main-body" style="padding: 24px 28px 24px 28px; margin: 0; background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; line-height: 1.65; color: #334155; text-align: left; word-break: break-word; overflow-wrap: break-word;">
+                    <!-- Email Content directly in body without box/card container -->
+                    ${cleanHtml}
+
+                    <!-- Seamless Footer Section (Left: Logo, Right: Address) -->
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" class="footer-table" style="width: 100%; border-collapse: collapse; margin-top: 32px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
                         <tr>
-                            <td align="left" valign="top" style="padding: 0; margin: 0; text-align: left; background-color: #ffffff;">
-                                <div class="email-container" style="width: 100%; max-width: 100%; margin: 0; padding: 0; background-color: #ffffff; text-align: left;">
-                                    <!-- Email Content Body -->
-                                    <div class="email-body" style="background-color: #ffffff; padding: 28px 28px; font-size: 15px; line-height: 1.65; color: #334155; text-align: left; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; word-break: break-word; overflow-wrap: break-word;">
-                                        ${cleanHtml}
-                                    </div>
-                                    <!-- Footer Section: Logo & Address Details above existing footer content -->
-                                    <div class="email-footer-details" style="background-color: #ffffff; padding: 24px 28px 20px 28px; border-top: 1px solid #e2e8f0; text-align: left;">
-                                        <table role="presentation" class="footer-table" width="100%" border="0" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse;">
-                                            <tr>
-                                                <td class="footer-col-left" align="left" valign="middle" style="text-align: left; vertical-align: middle; width: 135px; min-width: 110px; padding: 0 16px 0 0;">
-                                                    <img src="${logoUrl}" alt="AIVES Australia Testprep" title="AIVES Australia Testprep" width="115" height="115" border="0" class="responsive-logo" style="width: 115px; max-width: 115px; height: 115px; max-height: 115px; object-fit: contain; border: 0; outline: none; text-decoration: none; display: block;" />
-                                                </td>
-                                                <td class="footer-col-right" align="right" valign="middle" style="text-align: right; vertical-align: middle; padding: 0;">
-                                                    <h2 style="margin: 0 0 4px 0; color: #000000; font-size: 16px; font-weight: 700; line-height: 1.3;">AIVES Australia Testprep</h2>
-                                                    <p style="margin: 0; color: #333333; font-size: 12px; line-height: 1.45;">
-                                                        Address: 2nd Floor, Geo Centre, Door No. 45, 1920 B3,<br/>
-                                                        NH-66, Chakkaraparambu, Vennala, Ernakulam, Kerala 682032
-                                                    </p>
-                                                </td>
-                                            </tr>
-                                            ${hasEnquiryDisclaimer ? `
-                                            <tr>
-                                                <td colspan="2" align="left" class="footer-disclaimer-cell" style="padding-top: 14px; text-align: left;">
-                                                    <p style="margin: 0; font-size: 12px; color: #64748b; font-style: italic; line-height: 1.45;">
-                                                        This is an automated enquiry verification email generated by Aives Australia's TESTPREP CRM
-                                                    </p>
-                                                </td>
-                                            </tr>` : ''}
-                                        </table>
-                                    </div>
-                                    <!-- Existing Footer Content -->
-                                    <div class="email-footer" style="background-color: #003366; padding: 20px 28px; text-align: center; font-size: 13px; line-height: 1.5; color: #e2e8f0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-                                        <p style="margin: 0 0 4px 0; color: #ffffff; font-weight: 600; font-size: 13px; text-align: center;">&copy; ${year} Aives Australia Test Prep. All rights reserved.</p>
-                                        <p style="margin: 0; color: #cbd5e1; font-size: 12px; text-align: center;">You can reply directly to this email.</p>
-                                    </div>
-                                </div>
+                            <td class="footer-col-left" align="left" valign="middle" style="padding-top: 18px; text-align: left; vertical-align: middle; width: 85px; min-width: 75px; padding-right: 16px;">
+                                <img src="${logoUrl}" alt="AIVES Australia Testprep" width="70" height="70" border="0" style="width: 70px; max-width: 70px; height: 70px; max-height: 70px; object-fit: contain; border: 0; outline: none; display: block;" />
+                            </td>
+                            <td class="footer-col-right" align="right" valign="middle" style="padding-top: 18px; text-align: right; vertical-align: middle; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.5; color: #475569;">
+                                <strong style="color: #0f172a; font-weight: 700; font-size: 12.5px;">AIVES Australia Testprep</strong><br/>
+                                2nd Floor, Geo Centre, Door No. 45, 1920 B3,<br/>
+                                NH-66, Chakkaraparambu, Vennala, Ernakulam, Kerala 682032
+                                <p style="margin: 4px 0 0 0; color: #64748b; font-size: 11px;">&copy; ${year} Aives Australia Test Prep. All rights reserved.</p>
                             </td>
                         </tr>
+                        ${hasEnquiryDisclaimer ? `
+                        <tr>
+                            <td colspan="2" align="left" class="footer-disclaimer-cell" style="padding-top: 14px; text-align: left;">
+                                <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 11.5px; color: #64748b; font-style: italic; line-height: 1.45;">
+                                    This is an automated enquiry verification email generated by Aives Australia's TESTPREP CRM
+                                </p>
+                            </td>
+                        </tr>` : ''}
                     </table>
-                </body>
-            </html>
-        `;
+                </td>
+            </tr>
+        </table>
+    </body>
+</html>`;
 
         console.log(`>>> Sending email TO: [${to}] | FROM: [${finalSenderEmail}] | SUBJECT: [${subject}]`);
 

@@ -930,7 +930,9 @@ Warm regards,
 **Aives Australia's TESTPREP**
 [Official Email] | [Contact Number]`;
 
-        const receiptHtmlBody = replaceAllPlaceholders(receiptRawBody).replace(/\n/g, '<br>');
+        const processedReceiptBody = replaceAllPlaceholders(receiptRawBody);
+        const hasReceiptHtmlTags = /<\/?(?:p|div|table|tr|td|th|tbody|thead|ul|ol|li|h[1-6]|br|pre|blockquote|strong|b|em|i|span|a)\b/i.test(processedReceiptBody || '');
+        const receiptHtmlBody = (processedReceiptBody && !hasReceiptHtmlTags) ? processedReceiptBody.replace(/\n/g, '<br>') : (processedReceiptBody || '');
         // Generate a PDF receipt attachment if fee data is available
         let receiptAttachments = [];
         if (feeDataForPdf) {
@@ -1022,7 +1024,9 @@ Warm regards,
 **Aives Australia's TESTPREP**
 [Official Email] | [Contact Number]`;
 
-        const staffHtmlBody = replaceAllPlaceholders(staffRawBody).replace(/\n/g, '<br>');
+        const processedStaffBody = replaceAllPlaceholders(staffRawBody);
+        const hasStaffHtmlTags = /<\/?(?:p|div|table|tr|td|th|tbody|thead|ul|ol|li|h[1-6]|br|pre|blockquote|strong|b|em|i|span|a)\b/i.test(processedStaffBody || '');
+        const staffHtmlBody = (processedStaffBody && !hasStaffHtmlTags) ? processedStaffBody.replace(/\n/g, '<br>') : (processedStaffBody || '');
 
         // The Assigned Staff Email is delivered directly to the REGISTERED STUDENT'S EMAIL
         console.log(`[REGISTRATION EMAIL] Sending Assigned Staff Email (2 of 2) to Student: ${studentEmail} (Trainer: ${trainerName})...`);

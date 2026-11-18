@@ -237,9 +237,77 @@
                                [(ngModel)]="emailSubject" placeholder="Email Subject" required>
                     </div>
                     <div class="flex flex-col">
-                        <label class="font-medium text-gray-700 text-sm mb-1">Message Body <span class="text-red-500">*</span></label>
-                        <textarea class="border border-gray-300 rounded p-2 text-sm focus:ring focus:ring-blue-200 h-40"
-                                  [(ngModel)]="emailBody" placeholder="Enter plain text or HTML message body" required></textarea>
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="font-medium text-gray-700 text-sm">Message Body <span class="text-red-500">*</span></label>
+                            <div class="flex items-center gap-1 bg-gray-100 p-0.5 rounded text-xs">
+                                <button type="button" (click)="emailModalTab = 'edit'"
+                                    class="px-2.5 py-1 rounded font-medium transition flex items-center gap-1"
+                                    [ngClass]="emailModalTab === 'edit' ? 'bg-white text-blue-700 shadow-xs' : 'text-gray-600 hover:text-gray-900'">
+                                    <span class="material-symbols-outlined text-[14px]">edit_note</span>
+                                    Formatted
+                                </button>
+                                <button type="button" (click)="emailModalTab = 'preview'"
+                                    class="px-2.5 py-1 rounded font-medium transition flex items-center gap-1"
+                                    [ngClass]="emailModalTab === 'preview' ? 'bg-white text-blue-700 shadow-xs' : 'text-gray-600 hover:text-gray-900'">
+                                    <span class="material-symbols-outlined text-[14px]">visibility</span>
+                                    Preview
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Visual Formatted Editor -->
+                        <div [class.hidden]="emailModalTab !== 'edit'" class="border border-gray-300 rounded-lg overflow-hidden focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition">
+                            <div class="bg-gray-50 border-b border-gray-200 px-2.5 py-1.5 flex items-center gap-1 text-xs select-none">
+                                <button type="button" (mousedown)="$event.preventDefault(); applyEmailModalFormat('bold')" title="Bold (Ctrl+B)"
+                                    class="p-1 rounded hover:bg-gray-200 text-gray-700 font-bold transition flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[16px]">format_bold</span>
+                                </button>
+                                <button type="button" (mousedown)="$event.preventDefault(); applyEmailModalFormat('italic')" title="Italic (Ctrl+I)"
+                                    class="p-1 rounded hover:bg-gray-200 text-gray-700 italic transition flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[16px]">format_italic</span>
+                                </button>
+                                <button type="button" (mousedown)="$event.preventDefault(); applyEmailModalFormat('underline')" title="Underline (Ctrl+U)"
+                                    class="p-1 rounded hover:bg-gray-200 text-gray-700 underline transition flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[16px]">format_underlined</span>
+                                </button>
+                                <span class="h-4 w-px bg-gray-300 mx-1"></span>
+                                <button type="button" (mousedown)="$event.preventDefault(); applyEmailModalFormat('insertUnorderedList')" title="Bullet List"
+                                    class="p-1 rounded hover:bg-gray-200 text-gray-700 transition flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[16px]">format_list_bulleted</span>
+                                </button>
+                                <button type="button" (mousedown)="$event.preventDefault(); applyEmailModalFormat('insertOrderedList')" title="Numbered List"
+                                    class="p-1 rounded hover:bg-gray-200 text-gray-700 transition flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[16px]">format_list_numbered</span>
+                                </button>
+                                <!-- Indent / Outdent -->
+                                <button type="button" (mousedown)="$event.preventDefault(); applyEmailModalFormat('outdent')" title="Decrease Indent"
+                                    class="p-1 rounded hover:bg-gray-200 text-gray-700 transition flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[16px]">format_indent_decrease</span>
+                                </button>
+                                <button type="button" (mousedown)="$event.preventDefault(); applyEmailModalFormat('indent')" title="Increase Indent"
+                                    class="p-1 rounded hover:bg-gray-200 text-gray-700 transition flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[16px]">format_indent_increase</span>
+                                </button>
+                                <span class="h-4 w-px bg-gray-300 mx-1"></span>
+                                <button type="button" (mousedown)="$event.preventDefault(); applyEmailModalFormat('removeFormat')" title="Clear Formatting"
+                                    class="p-1 rounded hover:bg-gray-200 text-gray-700 transition flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-[16px]">format_clear</span>
+                                </button>
+                            </div>
+                            <div #emailModalEditorRef
+                                contenteditable="true"
+                                (input)="onEmailModalEditorInput()"
+                                class="email-rich-editor p-3.5 min-h-[160px] max-h-[280px] overflow-y-auto bg-white outline-none text-gray-800 text-[14px] leading-relaxed"
+                                data-placeholder="Message content appears formatted here without raw HTML tags...">
+                            </div>
+                        </div>
+
+                        <!-- Rendered Preview Mode -->
+                        <div [class.hidden]="emailModalTab !== 'preview'" class="border border-gray-200 rounded-lg bg-gray-50 p-4 max-h-[280px] overflow-y-auto">
+                            <div class="email-preview-content text-[14px] text-gray-800 leading-relaxed bg-white p-4 rounded-lg border border-gray-200 shadow-xs"
+                                [innerHTML]="getEmailModalSafeHtml()">
+                            </div>
+                        </div>
                         <p class="text-xs text-gray-500 mt-1">Available placeholders: [Student Name], [Lead Name], [Course Name]</p>
                     </div>
                 </div>
