@@ -368,14 +368,14 @@
           [innerHTML]="getSafeHtml(previewTemplateData.Body || '')">
         </div>
 
-        <!-- Seamless Email Footer (Left: Logo, Right: Address) -->
-        <div class="mt-8 pt-5 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs text-gray-500 gap-4">
+        <!-- Seamless Email Footer (Logo with Address below it on the Left) -->
+        <div class="mt-8 pt-5 border-t border-gray-200 flex flex-col items-start text-xs text-gray-500 gap-2.5">
           <div class="flex items-center">
             <img src="https://cdn.jsdelivr.net/gh/ufsgit/aives@main/Backend/public/images/aiveslogo.png" alt="AIVES Australia Testprep" class="w-14 h-14 object-contain" />
           </div>
-          <div class="sm:text-right">
+          <div class="text-left">
             <p class="font-medium text-gray-800">AIVES Australia Testprep</p>
-            <p class="text-gray-500 mt-0.5">2nd Floor, Geo Centre, Door No. 45, 1920 B3, NH-66, Chakkaraparambu, Vennala, Ernakulam, Kerala 682032</p>
+            <p class="text-gray-500 mt-0.5">Address: 2nd Floor, Geo Centre, Door No. 45, 1920 B3, NH-66, Chakkaraparambu, Vennala, Ernakulam, Kerala 682032</p>
             <p class="text-gray-400 mt-0.5">&copy; Aives Australia Test Prep. All rights reserved.</p>
           </div>
         </div>
