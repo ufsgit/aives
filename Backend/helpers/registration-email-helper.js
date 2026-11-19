@@ -895,7 +895,7 @@ async function sendRegistrationConfirmationEmails({ studentId, courseId = null, 
         let receiptTemplate = null;
         try {
             const [rRows] = await db.promise().query(
-                `SELECT Template_ID, Subject, Body FROM email_templates 
+                `SELECT Template_ID, Subject, Body, Is_Active FROM email_templates 
                  WHERE (Template_ID = 19 OR Template_Name LIKE '%receipt%' OR Template_Name LIKE '%Welcome mail with receipt%' OR Template_Name LIKE '%Registration completed%') 
                    AND (Delete_Status = 0 OR Delete_Status IS NULL) 
                  ORDER BY (Template_ID = 19) DESC, (Is_Active = 1) DESC LIMIT 1`
@@ -960,27 +960,31 @@ Warm regards,
             }
         }
 
-        console.log(`[REGISTRATION EMAIL] Sending Registration Email (1 of 2) to Student: ${studentEmail} (Admission No: ${admissionNo})...`);
-        const sendReceiptRes = await emailHelper.sendEmail(
-            studentEmail,
-            receiptSubject,
-            receiptHtmlBody,
-            officialEmail,
-            "TestPerp Aives",
-            receiptAttachments.length > 0 ? receiptAttachments : null
-        );
+        if (receiptTemplate && parseInt(receiptTemplate.Is_Active) === 0) {
+            console.log(`[REGISTRATION EMAIL] Registration/Receipt template (ID ${receiptTemplate.Template_ID}) is marked Inactive. Skipping receipt email for Student ${cleanStudentId}.`);
+        } else {
+            console.log(`[REGISTRATION EMAIL] Sending Registration Email (1 of 2) to Student: ${studentEmail} (Admission No: ${admissionNo})...`);
+            const sendReceiptRes = await emailHelper.sendEmail(
+                studentEmail,
+                receiptSubject,
+                receiptHtmlBody,
+                officialEmail,
+                "TestPerp Aives",
+                receiptAttachments.length > 0 ? receiptAttachments : null
+            );
 
-        await emailLog.Save_Email_Log(
-            cleanStudentId,
-            receiptTemplate?.Template_ID || 19,
-            studentEmail,
-            receiptSubject,
-            sendReceiptRes?.messageId || null,
-            receiptHtmlBody,
-            'Success',
-            null
-        );
-        console.log(`[REGISTRATION EMAIL] ✅ Exactly ONE Registration email sent successfully to Student (${studentEmail})`);
+            await emailLog.Save_Email_Log(
+                cleanStudentId,
+                receiptTemplate?.Template_ID || 19,
+                studentEmail,
+                receiptSubject,
+                sendReceiptRes?.messageId || null,
+                receiptHtmlBody,
+                'Success',
+                null
+            );
+            console.log(`[REGISTRATION EMAIL] ✅ Exactly ONE Registration email sent successfully to Student (${studentEmail})`);
+        }
 
         // =========================================================================
         // EMAIL 2: Assigned Staff Email (ALSO Sent to Student's Email Address)
@@ -988,7 +992,7 @@ Warm regards,
         let staffTemplate = null;
         try {
             const [sRows] = await db.promise().query(
-                `SELECT Template_ID, Subject, Body FROM email_templates 
+                `SELECT Template_ID, Subject, Body, Is_Active FROM email_templates 
                  WHERE (Template_ID = 23 OR Template_Name LIKE '%Student Registration%' OR Template_Name LIKE '%assigned staff%' OR Template_Name LIKE '%assigned trainer%' OR Subject LIKE '%Student Registration%') 
                    AND (Delete_Status = 0 OR Delete_Status IS NULL) 
                  ORDER BY (Template_ID = 23) DESC, (Template_Name LIKE '%Student Registration%') DESC, (Is_Active = 1) DESC LIMIT 1`
@@ -996,8 +1000,11 @@ Warm regards,
             if (sRows && sRows.length > 0) staffTemplate = sRows[0];
         } catch (e) {}
 
-        const staffSubject = staffTemplate ? replaceAllPlaceholders(staffTemplate.Subject) : `Student Registration & Training Details – ${studentFullName}`;
-        const staffRawBody = staffTemplate?.Body || `Dear [First Name],
+        if (staffTemplate && parseInt(staffTemplate.Is_Active) === 0) {
+            console.log(`[REGISTRATION EMAIL] Assigned staff template (ID ${staffTemplate.Template_ID}) is marked Inactive. Skipping staff email for Student ${cleanStudentId}.`);
+        } else {
+            const staffSubject = staffTemplate ? replaceAllPlaceholders(staffTemplate.Subject) : `Student Registration & Training Details – ${studentFullName}`;
+            const staffRawBody = staffTemplate?.Body || `Dear [First Name],
 
 Greetings from Aives Australia's TESTPREP!
 
@@ -1024,25 +1031,26 @@ Warm regards,
 **Aives Australia's TESTPREP**
 [Official Email] | [Contact Number]`;
 
-        const processedStaffBody = replaceAllPlaceholders(staffRawBody);
-        const hasStaffHtmlTags = /<\/?(?:p|div|table|tr|td|th|tbody|thead|ul|ol|li|h[1-6]|br|pre|blockquote|strong|b|em|i|span|a)\b/i.test(processedStaffBody || '');
-        const staffHtmlBody = (processedStaffBody && !hasStaffHtmlTags) ? processedStaffBody.replace(/\n/g, '<br>') : (processedStaffBody || '');
+            const processedStaffBody = replaceAllPlaceholders(staffRawBody);
+            const hasStaffHtmlTags = /<\/?(?:p|div|table|tr|td|th|tbody|thead|ul|ol|li|h[1-6]|br|pre|blockquote|strong|b|em|i|span|a)\b/i.test(processedStaffBody || '');
+            const staffHtmlBody = (processedStaffBody && !hasStaffHtmlTags) ? processedStaffBody.replace(/\n/g, '<br>') : (processedStaffBody || '');
 
-        // The Assigned Staff Email is delivered directly to the REGISTERED STUDENT'S EMAIL
-        console.log(`[REGISTRATION EMAIL] Sending Assigned Staff Email (2 of 2) to Student: ${studentEmail} (Trainer: ${trainerName})...`);
-        const sendStaffRes = await emailHelper.sendEmail(studentEmail, staffSubject, staffHtmlBody, officialEmail, "TestPerp Aives");
+            // The Assigned Staff Email is delivered directly to the REGISTERED STUDENT'S EMAIL
+            console.log(`[REGISTRATION EMAIL] Sending Assigned Staff Email (2 of 2) to Student: ${studentEmail} (Trainer: ${trainerName})...`);
+            const sendStaffRes = await emailHelper.sendEmail(studentEmail, staffSubject, staffHtmlBody, officialEmail, "TestPerp Aives");
 
-        await emailLog.Save_Email_Log(
-            cleanStudentId,
-            staffTemplate?.Template_ID || 23,
-            studentEmail,
-            staffSubject,
-            sendStaffRes?.messageId || null,
-            staffHtmlBody,
-            'Success',
-            null
-        );
-        console.log(`[REGISTRATION EMAIL] ✅ Exactly ONE Assigned Staff email sent successfully to Student (${studentEmail})`);
+            await emailLog.Save_Email_Log(
+                cleanStudentId,
+                staffTemplate?.Template_ID || 23,
+                studentEmail,
+                staffSubject,
+                sendStaffRes?.messageId || null,
+                staffHtmlBody,
+                'Success',
+                null
+            );
+            console.log(`[REGISTRATION EMAIL] ✅ Exactly ONE Assigned Staff email sent successfully to Student (${studentEmail})`);
+        }
 
         // Mark completed in history
         releaseRegistrationLock(cleanStudentId, studentEmail, true);

@@ -271,9 +271,9 @@ Warm regards,
             }
         }
 
-        // Check if the template is active before sending (except for critical registration flows where student must receive receipt/trainer info)
-        if (parseInt(template.Is_Active) !== 1 && !isReceiptFlow && !isStaffFlow) {
-            console.log(`Template ID ${Template_ID} is inactive (Is_Active=${template.Is_Active}). Skipping email send.`);
+        // Check if the template is active before sending. If inactive, do not send.
+        if (parseInt(template.Is_Active) !== 1) {
+            console.log(`Template ID ${template.Template_ID || Template_ID} is inactive (Is_Active=${template.Is_Active}). Skipping email send.`);
             return res.json({ success: true, skipped: true, message: 'Template is inactive. Email not sent.' });
         }
 

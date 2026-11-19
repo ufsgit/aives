@@ -278,42 +278,6 @@ router.post('/Save_Attendance', async (req, res) => {
         // 3. Send Attendance Email based on Student Attendance Count
         // 3. Send Attendance Email based on Student Attendance Count (Sent to ALL students regardless of Present, Absent, or Late)
         try {
-            // First Day / First Week template is hardcoded directly in source code (not managed via database email_templates table)
-            const firstDayTemplate = {
-                Template_ID: null,
-                Template_Name: 'First Week at TESTPREP',
-                Subject: FIRST_WEEK_EMAIL_SUBJECT,
-                Body: FIRST_WEEK_EMAIL_HTML,
-                Is_Active: 1
-            };
-
-            const [secondDayTemplates] = await db.promise().query(
-                `SELECT * FROM email_templates 
-                 WHERE Delete_Status = 0 
-                   AND Is_Active = 1
-                   AND (Attendance_Count = 2 OR LOWER(TRIM(Template_Name)) IN ('second day attendance', '2 day attendance', '2 days attendance', 'day 2 attendance', 'count 2'))
-                 ORDER BY (Attendance_Count = 2) DESC, Template_ID DESC LIMIT 1`
-            );
-            const secondDayTemplate = secondDayTemplates[0] || null;
-
-            const [fiveDayTemplates] = await db.promise().query(
-                `SELECT * FROM email_templates 
-                 WHERE Delete_Status = 0 
-                   AND Is_Active = 1
-                   AND (Attendance_Count = 5 OR LOWER(TRIM(Template_Name)) IN ('five day attendance', '5 days attendance', '5 day attendance', 'day 5 attendance', 'count 5', '5', '5th mail', '5th email'))
-                 ORDER BY (Attendance_Count = 5) DESC, Template_ID DESC LIMIT 1`
-            );
-            const fiveDayTemplate = fiveDayTemplates[0] || null;
-
-            const [tenDayTemplates] = await db.promise().query(
-                `SELECT * FROM email_templates 
-                 WHERE Delete_Status = 0 
-                   AND Is_Active = 1
-                   AND (Attendance_Count = 10 OR LOWER(TRIM(Template_Name)) IN ('ten day attendance', '10 days attendance', '10 day attendance', '10 days', 'day 10 attendance', 'count 10', '10', '10th mail', '10th email'))
-                 ORDER BY (Attendance_Count = 10) DESC, Template_ID DESC LIMIT 1`
-            );
-            const tenDayTemplate = tenDayTemplates[0] || null;
-
             // Process ALL students in attendanceData regardless of their status (Present, Absent, or Late)
             const studentsToProcess = [];
             const seenStudentIds = new Set();
@@ -375,45 +339,45 @@ router.post('/Save_Attendance', async (req, res) => {
                 // Determine template based on student attendance sequence:
                 let template = null;
 
-                // Session 1 / First Week Email: check database first (so frontend edits take effect), fallback to hardcoded template
+                // Session 1 / First Week Email: check database first (so frontend edits take effect)
                 if (studentAttendanceCount === 1) {
                     const [firstWeekTemplates] = await db.promise().query(
                         `SELECT * FROM email_templates 
-                         WHERE Delete_Status = 0 
-                           AND Is_Active = 1 
+                         WHERE (Delete_Status = 0 OR Delete_Status IS NULL)
                            AND (Attendance_Count = 1 OR LOWER(TRIM(Template_Name)) IN ('first week at testprep', 'first week', 'first day attendance', '1 day attendance', 'count 1'))
                          ORDER BY (Attendance_Count = 1) DESC, Template_ID DESC LIMIT 1`
                     );
-                    template = (firstWeekTemplates && firstWeekTemplates.length > 0) ? firstWeekTemplates[0] : firstDayTemplate;
+                    if (firstWeekTemplates && firstWeekTemplates.length > 0) {
+                        if (parseInt(firstWeekTemplates[0].Is_Active) !== 1) {
+                            console.log(`[Save_Attendance] First Week template is Inactive. Skipping email for student ${studentId}.`);
+                            continue;
+                        }
+                        template = firstWeekTemplates[0];
+                    }
                 } else {
                     const [matchingTemplates] = await db.promise().query(
                         `SELECT * FROM email_templates 
-                         WHERE Delete_Status = 0 
-                           AND Is_Active = 1
+                         WHERE (Delete_Status = 0 OR Delete_Status IS NULL)
                            AND Attendance_Count = ? 
                            AND Attendance_Count > 0
-                         ORDER BY Template_ID DESC LIMIT 1`,
+                         ORDER BY (Is_Active = 1) DESC, Template_ID DESC LIMIT 1`,
                         [studentAttendanceCount]
                     );
 
                     if (matchingTemplates && matchingTemplates.length > 0) {
-                        template = matchingTemplates[0];
-                    } else {
-                        // Fallback to pre-fetched standard templates
-                        if (studentAttendanceCount === 2) {
-                            template = secondDayTemplate;
-                        } else if (studentAttendanceCount === 5) {
-                            template = fiveDayTemplate;
-                        } else if (studentAttendanceCount === 10) {
-                            template = tenDayTemplate;
+                        const matched = matchingTemplates[0];
+                        if (parseInt(matched.Is_Active) !== 1) {
+                            console.log(`[Save_Attendance] Attendance email template "${matched.Template_Name}" (ID: ${matched.Template_ID}) for count ${studentAttendanceCount} is Inactive. Skipping email for student ${studentId}.`);
+                            continue;
                         }
+                        template = matched;
+                    }
 
                     // Dynamic name-based match for subsequent intervals (e.g. 15, 20, etc.)
                     if (!template) {
                         const [dynamicTemplates] = await db.promise().query(
                             `SELECT * FROM email_templates 
-                             WHERE Delete_Status = 0 
-                               AND Is_Active = 1
+                             WHERE (Delete_Status = 0 OR Delete_Status IS NULL)
                                AND (
                                  Attendance_Count = ?
                                  OR LOWER(TRIM(Template_Name)) = ?
@@ -426,7 +390,7 @@ router.post('/Save_Attendance', async (req, res) => {
                                  OR LOWER(TRIM(Template_Name)) = CONCAT('day ', ?)
                                  OR LOWER(TRIM(Template_Name)) = CONCAT('count ', ?)
                                )
-                             ORDER BY (Attendance_Count = ?) DESC, Template_ID DESC LIMIT 1`,
+                             ORDER BY (Attendance_Count = ?) DESC, (Is_Active = 1) DESC, Template_ID DESC LIMIT 1`,
                             [
                               studentAttendanceCount, 
                               String(studentAttendanceCount), 
@@ -442,11 +406,15 @@ router.post('/Save_Attendance', async (req, res) => {
                             ]
                         );
                         if (dynamicTemplates && dynamicTemplates.length > 0) {
-                            template = dynamicTemplates[0];
+                            const matched = dynamicTemplates[0];
+                            if (parseInt(matched.Is_Active) !== 1) {
+                                console.log(`[Save_Attendance] Dynamic attendance template "${matched.Template_Name}" (ID: ${matched.Template_ID}) is Inactive. Skipping email for student ${studentId}.`);
+                                continue;
+                            }
+                            template = matched;
                         }
                     }
                 }
-            }
 
                 if (!template) {
                     console.log(`[Save_Attendance] No template found for student ${studentId} (attendance count: ${studentAttendanceCount}). Skipping email.`);

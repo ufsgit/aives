@@ -255,6 +255,12 @@ async function sendLeadWelcomeEmail({ studentId, name, email, phone, req = null,
             console.error('[LEAD WELCOME] Error fetching email template from DB:', dbErr.message);
         }
 
+        // If template is explicitly deactivated in the database, respect user configuration and skip sending
+        if (template && parseInt(template.Is_Active) === 0) {
+            console.log(`[LEAD WELCOME] Lead Welcome email template (ID: ${template.Template_ID}) is marked Inactive. Skipping welcome email for Student ${studentId}.`);
+            return { success: true, skipped: true, reason: 'Template is inactive' };
+        }
+
         // Built-in fallback template ensuring welcome emails NEVER fail due to missing DB templates
         if (!template) {
             console.log(`[LEAD WELCOME] Database template not found or inactive. Using built-in PTE template for Student ${studentId}.`);

@@ -118,20 +118,8 @@ Warm regards,
                 `, [latestTemplateSubject, latestTemplateBody]);
                 console.log('[DB-INIT] Seeded "Lead Welcome & Response Form" email template.');
             } else {
-                // Ensure existing template is up to date and does not contain hardcoded links or stale recipient IDs
-                await db.promise().query(
-                    `UPDATE email_templates SET Subject = ?, Body = ? WHERE Template_ID = ?`,
-                    [latestTemplateSubject, latestTemplateBody, templates[0].Template_ID]
-                );
-                console.log('[DB-INIT] Verified and updated "Lead Welcome & Response Form" email template.');
+                console.log('[DB-INIT] "Lead Welcome & Response Form" template already exists. Preserving live user configuration.');
             }
-
-            // Also clean up any other templates that may contain legacy button HTML tables or Open verification form
-            await db.promise().query(`
-                UPDATE email_templates 
-                SET Body = REPLACE(REPLACE(Body, '<table role="presentation"', '<div style="display:none"'), 'Open verification form', '')
-                WHERE Body LIKE '%Open verification form%' AND Template_Name != 'Lead Welcome & Response Form'
-            `).catch(() => {});
         } catch (tmplErr) {
             console.warn('[DB-INIT] Warning verifying email template:', tmplErr.message);
         }
@@ -173,16 +161,12 @@ Warm regards,
                     await db.promise().query(
                         `INSERT INTO email_templates (
                             Template_ID, Template_Name, Subject, Body, Category, Status, Created_Date, Delete_Status, Is_Active
-                        ) VALUES (19, 'Welcome mail with receipt', ?, ?, 'Registration', 'Active', NOW(), 0, 1)
-                        ON DUPLICATE KEY UPDATE Template_Name = 'Welcome mail with receipt', Subject = VALUES(Subject), Body = VALUES(Body), Is_Active = 1, Delete_Status = 0`,
+                        ) VALUES (19, 'Welcome mail with receipt', ?, ?, 'Registration', 'Active', NOW(), 0, 1)`,
                         [receiptSubject, receiptBody]
                     );
                     console.log('[DB-INIT] Seeded "Welcome mail with receipt" email template.');
                 } else {
-                    await db.promise().query(
-                        `UPDATE email_templates SET Is_Active = 1, Delete_Status = 0 WHERE Template_ID = ?`,
-                        [receiptTemplates[0].Template_ID]
-                    );
+                    console.log('[DB-INIT] "Welcome mail with receipt" template already exists. Preserving live user configuration.');
                 }
             } catch (rErr) {
                 console.warn('[DB-INIT] Warning verifying Welcome mail with receipt template:', rErr.message);
@@ -227,17 +211,12 @@ Warm regards,
                     await db.promise().query(
                         `INSERT INTO email_templates (
                             Template_ID, Template_Name, Subject, Body, Category, Status, Created_Date, Delete_Status, Is_Active
-                        ) VALUES (23, 'Student Registration & Training Details', ?, ?, 'Registration', 'Active', NOW(), 0, 1)
-                        ON DUPLICATE KEY UPDATE Template_Name = 'Student Registration & Training Details', Subject = VALUES(Subject), Body = VALUES(Body), Is_Active = 1, Delete_Status = 0`,
+                        ) VALUES (23, 'Student Registration & Training Details', ?, ?, 'Registration', 'Active', NOW(), 0, 1)`,
                         [staffSubject, staffBody]
                     );
                     console.log('[DB-INIT] Seeded "Student Registration & Training Details" email template.');
                 } else {
-                    await db.promise().query(
-                        `UPDATE email_templates SET Subject = ?, Body = ?, Is_Active = 1, Delete_Status = 0 WHERE Template_ID = ?`,
-                        [staffSubject, staffBody, staffTemplates[0].Template_ID]
-                    );
-                    console.log('[DB-INIT] Verified and updated "Student Registration & Training Details" email template.');
+                    console.log('[DB-INIT] "Student Registration & Training Details" template already exists. Preserving live user configuration.');
                 }
             } catch (sErr) {
                 console.warn('[DB-INIT] Warning verifying Assigned Staff / Registration template:', sErr.message);
@@ -529,17 +508,7 @@ Warm regards,
                 );
 
                 if (existingWeek1 && existingWeek1.length > 0) {
-                    await db.promise().query(
-                        `UPDATE email_templates 
-                         SET Template_Name = 'First Week at TESTPREP',
-                             Subject = IFNULL(NULLIF(Subject, ''), ?),
-                             Body = ?,
-                             Attendance_Count = 1,
-                             Is_Active = 1,
-                             Delete_Status = 0 
-                         WHERE Template_ID = ?`,
-                        [week1Subject, week1Body, existingWeek1[0].Template_ID]
-                    );
+                    console.log('[DB-INIT] "First Week at TESTPREP" template already exists. Preserving live user configuration.');
                 } else {
                     await db.promise().query(
                         `INSERT INTO email_templates (
@@ -557,28 +526,40 @@ Warm regards,
                         )`,
                         [week1Subject, week1Body]
                     );
+                    console.log('[DB-INIT] Seeded "First Week at TESTPREP" email template.');
                 }
 
-                // Also un-delete any other First Week templates
-                await db.promise().query(
-                    `UPDATE email_templates 
-                     SET Delete_Status = 0, Is_Active = 1 
-                     WHERE Template_Name LIKE '%First Week%'`
-                ).catch(() => {});
+                // Seed subsequent week templates only if they don't exist at all - NEVER overwrite user settings
+                const [existingWeek2] = await db.promise().query(`SELECT Template_ID FROM email_templates WHERE Template_ID = 22 OR Template_Name = 'Second Week' LIMIT 1`);
+                if (!existingWeek2 || existingWeek2.length === 0) {
+                    await db.promise().query(
+                        `INSERT INTO email_templates (Template_ID, Template_Name, Subject, Body, Attendance_Count, Category, Status, Created_Date, Delete_Status, Is_Active)
+                         VALUES (22, 'Second Week', 'Your Second Week at TESTPREP', ?, 5, 'Attendance', 'Active', NOW(), 0, 1)`,
+                        [week2Body]
+                    );
+                    console.log('[DB-INIT] Seeded "Second Week" email template.');
+                }
 
-                await db.promise().query(
-                    `UPDATE email_templates SET Body = ?, Attendance_Count = 5, Is_Active = 1, Delete_Status = 0 WHERE Template_ID = 22 OR Template_Name = 'Second Week'`,
-                    [week2Body]
-                );
-                await db.promise().query(
-                    `UPDATE email_templates SET Body = ?, Attendance_Count = 10, Is_Active = 1, Delete_Status = 0 WHERE Template_ID = 15 OR Template_Name = 'Third Week'`,
-                    [week3Body]
-                );
-                await db.promise().query(
-                    `UPDATE email_templates SET Body = ?, Attendance_Count = 15, Is_Active = 1, Delete_Status = 0 WHERE Template_ID = 17 OR Template_Name = 'Fourth Week'`,
-                    [week4Body]
-                );
-                console.log('[DB-INIT] Verified and updated Weekly Attendance email templates (First, Second, Third, Fourth Week).');
+                const [existingWeek3] = await db.promise().query(`SELECT Template_ID FROM email_templates WHERE Template_ID = 15 OR Template_Name = 'Third Week' LIMIT 1`);
+                if (!existingWeek3 || existingWeek3.length === 0) {
+                    await db.promise().query(
+                        `INSERT INTO email_templates (Template_ID, Template_Name, Subject, Body, Attendance_Count, Category, Status, Created_Date, Delete_Status, Is_Active)
+                         VALUES (15, 'Third Week', 'Your Third Week at TESTPREP', ?, 10, 'Attendance', 'Active', NOW(), 0, 1)`,
+                        [week3Body]
+                    );
+                    console.log('[DB-INIT] Seeded "Third Week" email template.');
+                }
+
+                const [existingWeek4] = await db.promise().query(`SELECT Template_ID FROM email_templates WHERE Template_ID = 17 OR Template_Name = 'Fourth Week' LIMIT 1`);
+                if (!existingWeek4 || existingWeek4.length === 0) {
+                    await db.promise().query(
+                        `INSERT INTO email_templates (Template_ID, Template_Name, Subject, Body, Attendance_Count, Category, Status, Created_Date, Delete_Status, Is_Active)
+                         VALUES (17, 'Fourth Week', 'Your Fourth Week at TESTPREP', ?, 15, 'Attendance', 'Active', NOW(), 0, 1)`,
+                        [week4Body]
+                    );
+                    console.log('[DB-INIT] Seeded "Fourth Week" email template.');
+                }
+                console.log('[DB-INIT] Verified Weekly Attendance email templates without altering live configurations.');
             } catch (wErr) {
                 console.warn('[DB-INIT] Warning verifying Weekly Attendance email templates:', wErr.message);
             }
@@ -638,13 +619,7 @@ Warm regards,
                 );
 
                 if (existingGreetings && existingGreetings.length > 0) {
-                    await db.promise().query(
-                        `UPDATE email_templates 
-                         SET Body = ?, Is_Active = 1, Delete_Status = 0 
-                         WHERE (Template_Name LIKE '%Greetings%' OR Subject LIKE '%Greetings%' OR Body LIKE '%Important Student Guidelines%')`,
-                        [greetingsBody]
-                    );
-                    console.log(`[DB-INIT] Verified and updated Greetings email template(s).`);
+                    console.log(`[DB-INIT] "Greetings from the TESTPREP Administration Team" template already exists. Preserving live user configuration.`);
                 } else {
                     await db.promise().query(
                         `INSERT INTO email_templates (
