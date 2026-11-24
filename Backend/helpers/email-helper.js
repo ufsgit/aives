@@ -379,6 +379,32 @@ function applyEmailInlineStyles(html) {
     return content;
 }
 
+/**
+ * Converts formatted HTML content into clean plain text for the email's textContent.
+ * Sending both htmlContent and textContent creates a standard multipart/alternative
+ * MIME message, preventing spam filters from flagging the email as HTML-only (MIME_HTML_ONLY).
+ */
+function htmlToPlainText(html) {
+    if (!html || typeof html !== 'string') return '';
+    return html
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/(?:p|div|h[1-6])>/gi, '\n\n')
+        .replace(/<\/li>/gi, '\n')
+        .replace(/<\/tr>/gi, '\n')
+        .replace(/<td[^>]*>/gi, '  ')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+}
+
 const sendEmail = async (to, subject, html, fromEmail = null, fromName = null, attachments = null) => {
     let brevoConfig = null;
     let apiKey = null;
@@ -573,6 +599,10 @@ const sendEmail = async (to, subject, html, fromEmail = null, fromName = null, a
 
         console.log(`>>> Sending email TO: [${to}] | FROM: [${finalSenderEmail}] | SUBJECT: [${subject}]`);
 
+        const plainTextBody = htmlToPlainText(cleanHtml);
+        const plainTextFooter = `\n\n---\nAIVES Australia Testprep\nAddress: 2nd Floor, Geo Centre, Door No. 45, 1920 B3, NH-66, Chakkaraparambu, Vennala, Ernakulam, Kerala 682032\n© ${year} Aives Australia Test Prep. All rights reserved.`;
+        const fullPlainText = plainTextBody ? (plainTextBody + plainTextFooter) : '';
+
         emailData = {
             sender: {
                 name: finalSenderName,
@@ -583,6 +613,14 @@ const sendEmail = async (to, subject, html, fromEmail = null, fromName = null, a
             }],
             subject: subject,
             htmlContent: wrappedHtml,
+            textContent: fullPlainText || undefined,
+            headers: {
+                'X-Mailer': 'AIVES-TESTPREP-CRM',
+                'X-Auto-Response-Suppress': 'OOF, AutoReply',
+                'X-Priority': '3',
+                'Importance': 'Normal'
+            },
+            tags: ['transactional', 'lead-welcome'],
             replyTo: {
                 name: finalSenderName,
                 email: finalSenderEmail

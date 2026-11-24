@@ -38,5 +38,33 @@ export function cleanHtmlForDisplay(html: string): string {
       .join('');
   }
 
+  // 5. Update legacy blue button colors to green
+  clean = clean.replace(/#003366/gi, '#16a34a');
+
+  // 6. Render interest verification button in green for live preview and modal views
+  const greenButtonHtml = `
+    <div style="margin: 20px 0; font-size: 14px; line-height: 1.8;">
+      <p style="margin: 0 0 6px 0;">
+        <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 18px 0 10px 0;">
+          <tr>
+            <td align="left" style="border-radius: 6px; background-color: #16a34a;">
+              <a href="javascript:void(0)" style="display: inline-block; padding: 14px 28px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #16a34a; letter-spacing: 0.5px;">
+                YES, I AM INTERESTED – VERIFY MY ENQUIRY
+              </a>
+            </td>
+          </tr>
+        </table>
+      </p>
+      <p style="margin: 0 0 14px 0; font-size: 13px; color: #64748b;">
+        <a href="javascript:void(0)" style="color: #64748b; text-decoration: underline;">Not Interested / Didn't submit this enquiry</a>
+      </p>
+    </div>`;
+
+  clean = clean
+    .replace(/<p[^>]*>\s*\[YES,\s*I\s*AM\s*INTERESTED[–\-\s]*VERIFY\s*MY\s*ENQUIRY\]\s*<\/p>/gi, greenButtonHtml)
+    .replace(/\[YES,\s*I\s*AM\s*INTERESTED[–\-\s]*VERIFY\s*MY\s*ENQUIRY\]/gi, greenButtonHtml)
+    .replace(/\[YES,\s*I\s*WOULD\s*LIKE\s*TO\s*DISCUSS\s*MY\s*PTE\s*TRAINING\s*OPTIONS\]/gi, greenButtonHtml)
+    .replace(/\[Response\s*Buttons\]/gi, greenButtonHtml);
+
   return clean;
 }

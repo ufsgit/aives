@@ -611,8 +611,9 @@ Warm regards,
                 req: req
             });
 
-            // Strip any old button tables or containers that may exist in saved templates
+            // Strip any old button tables or containers that may exist in saved templates and update legacy blue button styles
             body = body
+                .replace(/#003366/gi, '#16a34a')
                 .replace(/<table[^>]*role="presentation"[^>]*>[\s\S]*?(?:DISCUSS MY PTE TRAINING OPTIONS|OPTIONS|ENQUIRY)[\s\S]*?<\/table>/gi, buttonsHtml)
                 .replace(/<table[^>]*>[\s\S]*?Open verification form[\s\S]*?<\/table>/gi, buttonsHtml);
 

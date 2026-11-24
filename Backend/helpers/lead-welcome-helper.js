@@ -312,14 +312,14 @@ async function sendLeadWelcomeEmail({ studentId, name, email, phone, req = null,
                          .replace(/\[Official[\s_]*(?:Email|Mail)(?:[\s_]*Address)?\]/gi, officialEmail)
                          .replace(/\[(?:Official[\s_]*)?(?:Contact|Phone|Mobile)(?:[\s_]*(?:Number|No))?\]/gi, contactNumber);
 
-        // 5. Plain-Text Response Options (No Buttons)
+        // 5. Response Options with Green CTA Button
         const responseButtonsHtml = `
             <div style="margin: 20px 0; font-size: 14px; line-height: 1.8;">
                 <p style="margin: 0 0 6px 0;">
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 18px 0 10px 0;">
                         <tr>
-                            <td align="left" style="border-radius: 6px; background-color: #003366;">
-                                <a href="${interestedUrl}" target="_blank" style="display: inline-block; padding: 14px 28px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #003366; letter-spacing: 0.5px;">
+                            <td align="left" style="border-radius: 6px; background-color: #16a34a;">
+                                <a href="${interestedUrl}" target="_blank" style="display: inline-block; padding: 14px 28px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #16a34a; letter-spacing: 0.5px;">
                                     YES, I AM INTERESTED – VERIFY MY ENQUIRY
                                 </a>
                             </td>
@@ -344,8 +344,9 @@ async function sendLeadWelcomeEmail({ studentId, name, email, phone, req = null,
                            .replace(/\[Official[\s_]*(?:Email|Mail)(?:[\s_]*Address)?\]/gi, officialEmail)
                            .replace(/\[(?:Official[\s_]*)?(?:Contact|Phone|Mobile)(?:[\s_]*(?:Number|No))?\]/gi, contactNumber);
 
-        // Remove any old button tables or containers that may exist in saved templates
+        // Remove any old button tables or containers that may exist in saved templates, and update blue button colors to green
         bodyText = bodyText
+            .replace(/#003366/gi, '#16a34a')
             .replace(/<table[^>]*role="presentation"[^>]*>[\s\S]*?(?:DISCUSS MY PTE TRAINING OPTIONS|OPTIONS|ENQUIRY)[\s\S]*?<\/table>/gi, responseButtonsHtml)
             .replace(/<table[^>]*>[\s\S]*?Open verification form[\s\S]*?<\/table>/gi, responseButtonsHtml);
 
@@ -376,7 +377,7 @@ async function sendLeadWelcomeEmail({ studentId, name, email, phone, req = null,
             emailContentHtml = bodyWithBr.replace(/✓\s*YES,\s*I[\s\S]*?(?:OPTIONS|ENQUIRY)/gi, responseButtonsHtml);
         } else if (bodyWithBr.includes(interestedUrl) || bodyWithBr.includes('/lead-response')) {
             // Already contains the sanitized response link within the body text
-            emailContentHtml = bodyWithBr;
+            emailContentHtml = bodyWithBr.replace(/#003366/gi, '#16a34a');
         } else {
             emailContentHtml = `
                 ${bodyWithBr}
@@ -465,8 +466,8 @@ function buildLeadResponseBlock({ studentId, email, name = '', buttonLabel = '',
             <p style="margin: 0 0 6px 0;">
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 18px 0 10px 0;">
                         <tr>
-                            <td align="left" style="border-radius: 6px; background-color: #003366;">
-                                <a href="${interestedUrl}" target="_blank" style="display: inline-block; padding: 14px 28px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #003366; letter-spacing: 0.5px;">
+                            <td align="left" style="border-radius: 6px; background-color: #16a34a;">
+                                <a href="${interestedUrl}" target="_blank" style="display: inline-block; padding: 14px 28px; font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #16a34a; letter-spacing: 0.5px;">
                                     ${label}
                                 </a>
                             </td>
